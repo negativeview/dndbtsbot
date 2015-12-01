@@ -1,5 +1,3 @@
-var DiscordClient = require('discord.io');
-
 var diceHandler = require('./dice-handler.js');
 var timeHandler = require('./time-handler.js');
 var bot = require('./authenticate.js');
