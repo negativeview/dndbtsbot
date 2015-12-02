@@ -84,7 +84,14 @@ Dice.prototype.execute = function execute(command) {
     // do we need to keep a certain number of the rolls?
     if (parsed.keep) {
       outcome.original_rolls = outcome.rolls;
-      outcome.rolls = _.sample(outcome.original_rolls, parsed.keep);
+      switch (parsed.keepType) {
+        case 0:
+          outcome.rolls = _.sample(outcome.original_rolls, parsed.keep);
+          break;
+        case 1:
+          outcome.rolls = outcome.original_rolls.sort(function(a, b) { return b - a; }).slice(0, outcome.original_rolls.length - 1);
+          break;
+      }
       verbose.push('Keeping ' + parsed.keep + ' of ' + parsed.times + ' rolls: ' + outcome.rolls.toString());
     }
 
@@ -121,8 +128,11 @@ Dice.prototype.execute = function execute(command) {
     if (parsed.modifier > 0) {
       text.push('+ ' + parsed.modifier);
       verbose.push('Adding the modifier: ' + outcome.total + ' + ' + parsed.modifier + ' = ' + (outcome.total + parsed.modifier));
-      outcome.total += parsed.modifier;
+    } else {
+      text.push('- ' + Math.abs(parsed.modifier));
+      verbose.push('Adding the modifier: ' + outcome.total + ' - ' + Math.abs(parsed.modifier) + ' = ' + (outcome.total + parsed.modifier));
     }
+    outcome.total += parsed.modifier;
 
     verbose.push('The total of outcome #' + (n+1) + ' is ' + outcome.total);
 
@@ -176,6 +186,13 @@ Dice.prototype.parse = function parse(command) {
   // determine the number of dice to keep
   var keep = command.match(/\(k(\d+)\)/i);
   parsed.keep = keep && keep[1] && parseInt(keep[1]) || null;
+  parsed.keepType = 0;
+
+  if (!keep) {
+    keep = command.match(/\(kh(\d+)\)/i);
+    parsed.keep = keep && keep[1] && parseInt(keep[1]) || null;
+    parsed.keepType = 1;
+  }
 
   // determine if should keep the lowest rolled dice
   var lowest = /-L/.test(command);
@@ -238,7 +255,7 @@ Dice.prototype.format = function format(parsed) {
 
   // add the repeat and add command
   if (parsed.repeat) {
-    command = '(' + command + ')x' + parsed.repeat;
+    command = parsed.repeat + '(' + command + ')';
   }
 
   return command || undefined;
