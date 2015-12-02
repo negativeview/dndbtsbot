@@ -89,7 +89,7 @@ Dice.prototype.execute = function execute(command) {
           outcome.rolls = _.sample(outcome.original_rolls, parsed.keep);
           break;
         case 1:
-          outcome.rolls = outcome.original_rolls.sort(function(a, b) { return b - a; }).slice(0, outcome.original_rolls.length - 1);
+          outcome.rolls = outcome.original_rolls.sort(function(a, b) { return b - a; }).slice(0, parsed.keep);
           break;
       }
       verbose.push('Keeping ' + parsed.keep + ' of ' + parsed.times + ' rolls: ' + outcome.rolls.toString());
