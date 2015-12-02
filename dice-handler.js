@@ -1,4 +1,27 @@
 var Dice = require('./dice.js');
+var _ = require('lodash');
+
+
+function fancyFormatting(pruned, full) {
+	if (!full)
+		return '[' + pruned.join(', ') + ']';
+	
+	var result = '[';
+
+	for (var i = 0; i < full.length; i++) {
+		if (i != 0) result = result + ', ';
+
+		var index = _.indexOf(pruned, full[i]);
+		if (index == -1) {
+			result += '~~' + full[i] + '~~';
+		} else {
+			result += full[i];
+			pruned.splice(i, 1);
+		}
+	}
+	result += ']';
+	return result;
+}
 
 module.exports = function(pieces, message, rawEvent, bot, channelID, globalHandler) {
 	var rollString = '';
@@ -16,7 +39,7 @@ module.exports = function(pieces, message, rawEvent, bot, channelID, globalHandl
 		if (result.outcomes.length > 1) {
 			for (var i = 0; i < result.outcomes.length; i++) {
 				total += result.outcomes[i].total;
-				message += '[' + result.outcomes[i].rolls.join(', ') + ']';
+				message += fancyFormatting(result.outcomes[i].rolls, result.outcomes[i].original_rolls);
 				if (result.parsed.modifier) {
 					message += ' + ' + result.parsed.modifier;
 				}
@@ -28,7 +51,7 @@ module.exports = function(pieces, message, rawEvent, bot, channelID, globalHandl
 				message: message
 			});
 		} else {
-			message += '[' + result.outcomes[0].rolls.join(', ') + ']';
+			message += fancyFormatting(result.outcomes[0].rolls, result.outcomes[0].original_rolls)
 			if (result.parsed.modifier) {
 				message += ' + ' + result.parsed.modifier;
 			}
