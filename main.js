@@ -41,6 +41,7 @@ mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 	});
 
 	var handlers = {
+		'!r': diceHandler,
 		'!roll': diceHandler,
 		'!rollstats': rollstatsHandler.roll,
 		'!time': timeHandler.parse,
