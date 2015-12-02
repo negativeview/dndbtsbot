@@ -1,48 +1,74 @@
 var diceHandler = require('./dice-handler.js');
+var echoHandler = require('./echo-handler.js');
+var helpHandler = require('./help-handler.js');
+var macroHandler = require('./macro-handler.js');
 var timeHandler = require('./time-handler.js');
 var bot = require('./authenticate.js');
+var mongoose = require('mongoose');
 
-var usedTimezones = [];
+macroHandler.init(mongoose);
 
-for (i = -14; i < 0; i++) {
-	usedTimezones[usedTimezones.length] = {
-		code: 'Etc/GMT' + i,
-		name: 'GMT+' + (-1 * i)
-	};
-}
-usedTimezones[usedTimezones.length] = {
-	code: 'Etc/GMT+0',
-	name: 'GMT'
-};
-for (i = 1; i <= 12; i++) {
-	usedTimezones[usedTimezones.length] = {
-		code: 'Etc/GMT+' + i,
-		name: 'GMT-' + i
-	};
-}
+var Macro = mongoose.model('Macro');
 
-bot.on('ready', function() {
-	console.log(bot.username + " - (" + bot.id + ")");
-});
+mongoose.connect('mongodb://127.0.0.1/test', function(err) {
+	if (err) throw err;
 
-bot.on('message', function(user, userID, channelID, message, rawEvent) {
-	if (message[0] == '!') {
-		var pieces = message.split(" ");
-		switch (pieces[0]) {
-			case '!roll':
-				diceHandler(pieces, rawEvent, bot, channelID);
-				break;
-			case '!time':
-				timeHandler(pieces, rawEvent, bot, channelID);
-				break;
-			default:
-				bot.sendMessage({
-					to: channelID,
-					message: 'Command: ' + pieces[0] + ' not recognized.'
-				});
-				break;
-		}
+	var usedTimezones = [];
+
+	for (i = -14; i < 0; i++) {
+		usedTimezones[usedTimezones.length] = {
+			code: 'Etc/GMT' + i,
+			name: 'GMT+' + (-1 * i)
+		};
 	}
+	usedTimezones[usedTimezones.length] = {
+		code: 'Etc/GMT+0',
+		name: 'GMT'
+	};
+
+	for (i = 1; i <= 12; i++) {
+		usedTimezones[usedTimezones.length] = {
+			code: 'Etc/GMT+' + i,
+			name: 'GMT-' + i
+		};
+	}
+
+	bot.on('ready', function() {
+		console.log(bot.username + " - (" + bot.id + ")");
+	});
+
+	var handlers = {
+		'!roll': diceHandler,
+		'!time': timeHandler,
+		'!setmacro': macroHandler.set,
+		'!viewmacro': macroHandler.view,
+		'!removemacro': macroHandler.remove,
+		'!echo': echoHandler,
+		'!help': helpHandler
+	}
+
+	var globalHandler = function(user, userID, channelID, message, rawEvent) {
+		if (user == bot.username || user == bot.id) return;
+		
+		if (message[0] == '!') {
+			var pieces = message.split(" ");
+			if (pieces[0] in handlers) {
+				console.log(pieces[0]);
+				handlers[pieces[0]](pieces, message, rawEvent, bot, channelID, globalHandler);
+			} else {
+				if (user == '' && userID == '') {
+					return;
+				} else {
+					var successful = macroHandler.attempted(pieces, message, rawEvent, bot, channelID, globalHandler);
+					if (!successful) {
+						return;
+					}
+				}
+			}
+		}
+	};
+
+	bot.on('message', globalHandler);
 });
 
 function getRandomInt(min, max) {

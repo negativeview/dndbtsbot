@@ -3,7 +3,7 @@ var moment = require('moment-timezone');
 var timestampByChannel = {};
 var timezoneByUser = {};
 
-module.exports = function(pieces, rawEvent, bot, channelID) {
+module.exports = function(pieces, message, rawEvent, bot, channelID, globalHandler) {
 	var username = rawEvent.d.author.username;
 
 	switch (pieces.length) {

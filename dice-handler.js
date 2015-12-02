@@ -1,6 +1,6 @@
 var Dice = require('node-dice-js');
 
-module.exports = function(pieces, rawEvent, bot, channelID) {
+module.exports = function(pieces, message, rawEvent, bot, channelID, globalHandler) {
 	var rollString = '';
 	for (var i = 1; i < pieces.length; i++) {
 		rollString += pieces[i];
@@ -10,7 +10,7 @@ module.exports = function(pieces, rawEvent, bot, channelID) {
 	try {
 		result = dice.execute(rollString);
 
-		var message = '@' + rawEvent.d.author.username + ' `';
+		var message = '@' + rawEvent.d.author.username + ' ' + rollString + "\n";
 
 		var total = 0;
 		if (result.outcomes.length > 1) {
@@ -20,25 +20,29 @@ module.exports = function(pieces, rawEvent, bot, channelID) {
 				if (result.parsed.modifier) {
 					message += ' + ' + result.parsed.modifier;
 				}
-				message += ' = ' + result.outcomes[i].total;
-				if (i != result.outcomes.length - 1) {
-					message += ' // ';
-				}
+				message += ' = `' + result.outcomes[i].total + '`' + "\n";
 			}
-			message += ' // Grand Total: ' + total + '`';
+			message += 'Grand Total: `' + total + '`';
+			bot.sendMessage({
+				to: channelID,
+				message: message
+			});
 		} else {
 			message += '[' + result.outcomes[0].rolls.join(', ') + ']';
 			if (result.parsed.modifier) {
 				message += ' + ' + result.parsed.modifier;
 			}
-			message += ' = ' + result.outcomes[0].total + '`';
+			message += ' = `' + result.outcomes[0].total + '`';
+			bot.sendMessage({
+				to: channelID,
+				message: message
+			});
 		}
 	} catch (e) {
 		var message = '`' + e.message + '`';
+		bot.sendMessage({
+			to: channelID,
+			message: message
+		});
 	}
-
-	bot.sendMessage({
-		to: channelID,
-		message: message
-	});
 };
