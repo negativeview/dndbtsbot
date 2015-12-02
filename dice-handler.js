@@ -5,7 +5,7 @@ var _ = require('lodash');
 function fancyFormatting(pruned, full) {
 	if (!full)
 		return '[' + pruned.join(', ') + ']';
-	
+
 	var result = '[';
 
 	for (var i = 0; i < full.length; i++) {
@@ -16,7 +16,7 @@ function fancyFormatting(pruned, full) {
 			result += '~~' + full[i] + '~~';
 		} else {
 			result += full[i];
-			pruned.splice(i, 1);
+			pruned.splice(index, 1);
 		}
 	}
 	result += ']';
