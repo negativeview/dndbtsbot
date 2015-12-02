@@ -2,12 +2,14 @@ var diceHandler = require('./dice-handler.js');
 var echoHandler = require('./echo-handler.js');
 var helpHandler = require('./help-handler.js');
 var macroHandler = require('./macro-handler.js');
+var rollstatsHandler = require('./roll-stats.js');
 var timeHandler = require('./time-handler.js');
 var bot = require('./authenticate.js');
 var mongoose = require('mongoose');
 
 macroHandler.init(mongoose);
 timeHandler.init(mongoose);
+rollstatsHandler.init(diceHandler);
 
 var Macro = mongoose.model('Macro');
 
@@ -40,6 +42,7 @@ mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 
 	var handlers = {
 		'!roll': diceHandler,
+		'!rollstats': rollstatsHandler.roll,
 		'!time': timeHandler.parse,
 		'!timezone': timeHandler.timezone,
 		'!setmacro': macroHandler.set,
