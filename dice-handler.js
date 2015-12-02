@@ -1,4 +1,4 @@
-var Dice = require('node-dice-js');
+var Dice = require('./dice.js');
 
 module.exports = function(pieces, message, rawEvent, bot, channelID, globalHandler) {
 	var rollString = '';

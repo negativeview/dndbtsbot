@@ -7,6 +7,7 @@ var bot = require('./authenticate.js');
 var mongoose = require('mongoose');
 
 macroHandler.init(mongoose);
+timeHandler.init(mongoose);
 
 var Macro = mongoose.model('Macro');
 
@@ -39,7 +40,8 @@ mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 
 	var handlers = {
 		'!roll': diceHandler,
-		'!time': timeHandler,
+		'!time': timeHandler.parse,
+		'!timezone': timeHandler.timezone,
 		'!setmacro': macroHandler.set,
 		'!viewmacro': macroHandler.view,
 		'!removemacro': macroHandler.remove,
