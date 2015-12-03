@@ -56,7 +56,8 @@ mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 		'!setmacro': macroHandler.set,
 		'!viewmacro': macroHandler.view,
 		'!removemacro': macroHandler.remove,
-		'!echo': echoHandler,
+		'!echo': echoHandler.echo,
+		'!pm': echoHandler.pm,
 		'!help': helpHandler.run
 	}
 
