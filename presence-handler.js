@@ -22,9 +22,8 @@ ret.presence = function(user, userID, status, rawEvent) {
 
 			for (var i in ret.bot.servers) {
 				for (var m in ret.bot.servers[i].channels) {
-					console.log(m);
-					if (m.position == 0) {
-						channel = m.id;
+					if (ret.bot.servers[i].channels[m].position == 0) {
+						channel = ret.bot.servers[i].channels[m].id;
 						break;
 					}
 				}
