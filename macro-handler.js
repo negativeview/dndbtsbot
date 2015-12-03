@@ -171,7 +171,8 @@ ret.attempted = function(pieces, message, rawEvent, bot, channelID, globalHandle
 			return;
 		}
 
-		next(pieces, message, rawEvent, bot, channelID, globalHandler, null);
+		if (next)
+			next(pieces, message, rawEvent, bot, channelID, globalHandler, null);
 		return;
 	});
 };
