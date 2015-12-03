@@ -12,7 +12,7 @@ var mongoose = require('mongoose');
 adminmacroHandler.init(mongoose);
 macroHandler.init(mongoose);
 timeHandler.init(mongoose);
-presenceHandler.init(mongoose);
+presenceHandler.init(mongoose, bot);
 rollstatsHandler.init(diceHandler);
 helpHandler.init(mongoose);
 
