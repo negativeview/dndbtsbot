@@ -22,6 +22,7 @@ ret.presence = function(user, userID, status, rawEvent) {
 
 			for (var i in ret.bot.servers) {
 				for (var m in ret.bot.servers[i].channels) {
+					console.log(m);
 					if (m.position == 0) {
 						channel = m.id;
 						break;
@@ -29,6 +30,7 @@ ret.presence = function(user, userID, status, rawEvent) {
 				}
 				break;
 			}
+			console.log(channel);
 			if (channel) {
 				ret.bot.sendMessage({
 					to: channel,
