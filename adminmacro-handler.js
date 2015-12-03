@@ -185,10 +185,7 @@ ret.attempted = function(pieces, message, rawEvent, bot, channelID, globalHandle
 
 	var serverID = findServerID(bot, channelID);
 	if (!serverID) {
-		bot.sendMessage({
-			to: username,
-			message: 'You must use this command from a channel so that I know what server to use.'
-		});
+		next(pieces, message, rawEvent, bot, channelID, globalHandler, null);
 		return;
 	}
 
