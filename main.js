@@ -1,15 +1,20 @@
+var adminmacroHandler = require('./adminmacro-handler.js');
 var diceHandler = require('./dice-handler.js');
 var echoHandler = require('./echo-handler.js');
 var helpHandler = require('./help-handler.js');
 var macroHandler = require('./macro-handler.js');
+var presenceHandler = require('./presence-handler.js');
 var rollstatsHandler = require('./roll-stats.js');
 var timeHandler = require('./time-handler.js');
 var bot = require('./authenticate.js');
 var mongoose = require('mongoose');
 
+adminmacroHandler.init(mongoose);
 macroHandler.init(mongoose);
 timeHandler.init(mongoose);
+presenceHandler.init(mongoose);
 rollstatsHandler.init(diceHandler);
+helpHandler.init(mongoose);
 
 var Macro = mongoose.model('Macro');
 
@@ -41,6 +46,8 @@ mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 	});
 
 	var handlers = {
+		'!adminsetmacro': adminmacroHandler.set,
+		'!adminremovemacro': adminmacroHandler.remove,
 		'!r': diceHandler,
 		'!roll': diceHandler,
 		'!rollstats': rollstatsHandler.roll,
@@ -50,7 +57,7 @@ mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 		'!viewmacro': macroHandler.view,
 		'!removemacro': macroHandler.remove,
 		'!echo': echoHandler,
-		'!help': helpHandler
+		'!help': helpHandler.run
 	}
 
 	var globalHandler = function(user, userID, channelID, message, rawEvent) {
@@ -58,23 +65,18 @@ mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 		
 		if (message[0] == '!') {
 			var pieces = message.split(" ");
+			console.log(pieces[0]);
 			if (pieces[0] in handlers) {
-				console.log(pieces[0]);
 				handlers[pieces[0]](pieces, message, rawEvent, bot, channelID, globalHandler);
 			} else {
-				if (user == '' && userID == '') {
-					return;
-				} else {
-					var successful = macroHandler.attempted(pieces, message, rawEvent, bot, channelID, globalHandler);
-					if (!successful) {
-						return;
-					}
-				}
+				adminmacroHandler.attempted(pieces, message, rawEvent, bot, channelID, globalHandler, macroHandler.attempted);
 			}
 		}
 	};
 
 	bot.on('message', globalHandler);
+
+	bot.on('presence', presenceHandler.presence);
 });
 
 function getRandomInt(min, max) {
