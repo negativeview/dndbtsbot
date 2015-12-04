@@ -43,9 +43,15 @@ function fancyFormatting(pruned, full, diceSize) {
 module.exports = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
 	var startIndex = 1;
 	simpleMode = false;
+	plainMode = false;
 	if (pieces[1] == 'simple') {
 		startIndex = 2;
 		simpleMode = true;
+	}
+	if (pieces[1] == 'plain') {
+		startIndex = 2;
+		simpleMode = true;
+		plainMode = true;
 	}
 	var rollString = '';
 	for (var i = startIndex; i < pieces.length; i++) {
@@ -70,20 +76,29 @@ module.exports = function(pieces, message, rawEvent, channelID, globalHandler, s
 					}
 					message += ' = `' + result.outcomes[i].total + '`' + "\n";
 				} else {
-					message += "`" + result.outcomes[i].total + "`";
+					if (plainMode) {
+						message += result.outcomes[i].total;
+					} else {
+						message += "`" + result.outcomes[i].total + "`";
+					}
 				}
 			}
 
 			stateHolder.simpleAddMessage(channelID, message);
 		} else {
 			if (!simpleMode) {
+				message += result.command + " = ";
 				message += fancyFormatting(result.outcomes[0].rolls, result.outcomes[0].original_rolls, result.parsed.faces)
 				if (result.parsed.modifier) {
 					message += ' + ' + result.parsed.modifier;
 				}
 				message += ' = `' + result.outcomes[0].total + '`';
 			} else {
-				message += "`" + result.outcomes[0].total + "`";
+				if (plainMode) {
+					message += result.outcomes[0].total;
+				} else {
+					message += "`" + result.outcomes[0].total + "`";
+				}
 			}
 			stateHolder.simpleAddMessage(channelID, message);
 		}

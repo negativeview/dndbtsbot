@@ -10,10 +10,19 @@ ret.init = function(diceHandler) {
 }
 
 ret.roll = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
-	var fakePieces = [
-		'!roll',
-		'(4d6(kh3))x6'
-	];
+	var fakePieces = [];
+	if (pieces.length > 1 && pieces[1].indexOf("simple") === 0) {
+		fakePieces = [
+			'!roll',
+			'simple',
+			'(4d6(kh3))x6'
+		];
+	} else {
+		fakePieces = [
+			'!roll',
+			'(4d6(kh3))x6'
+		];
+	}
 	ret.diceHandler(fakePieces, message, rawEvent, channelID, globalHandler, stateHolder, next);
 }
 

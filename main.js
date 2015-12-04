@@ -9,6 +9,7 @@ var rollstatsHandler = require('./roll-stats.js');
 var timeHandler = require('./time-handler.js');
 var bot = require('./authenticate.js');
 var async = require('async');
+var evaluateHandler = require('./evaluate-handler.js');
 
 var handlers = {
 	'!adminsetmacro': adminmacroHandler.set,
@@ -24,7 +25,8 @@ var handlers = {
 	'!echo': echoHandler.echo,
 	'!echon': echoHandler.echon,
 	'!pm': echoHandler.pm,
-	'!help': helpHandler.run
+	'!help': helpHandler.run,
+	'!evaluate': evaluateHandler.evaluate
 }
 
 var stateHolderClass = require('./state-holder.js');

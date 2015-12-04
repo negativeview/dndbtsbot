@@ -15,6 +15,14 @@ module.exports = function() {
 		}
 	};
 
+	ret.getMessage = function(to) {
+		return ret.messages[to].message;
+	}
+
+	ret.clearMessages = function(to) {
+		delete ret.messages[to];
+	}
+
 	ret.simpleAddMessage = function(to, message) {
 		if (!(to in ret.messages)) {
 			ret.messages[to] = {
