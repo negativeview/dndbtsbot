@@ -23,6 +23,11 @@ module.exports = function() {
 			};
 		}
 
+		if (ret.messages[to].message.length > 0) {
+			if (ret.messages[to].message[ret.messages[to].message.length-1] != "\n") {
+				ret.messages[to].message += " ";
+			}
+		}
 		ret.messages[to].message += message;
 	}
 
