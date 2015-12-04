@@ -13,6 +13,11 @@ ret.echo = function(pieces, message, rawEvent, channelID, globalHandler, stateHa
 	next();
 };
 
+ret.echon = function(pieces, message, rawEvent, channelID, globalHandler, stateHandler, next) {
+	stateHandler.simpleAddMessage(channelID, "\n");
+	next();
+};
+
 ret.pm = function(pieces, message, rawEvent, channelID, globalHandler, stateHandler, next) {
 	var message = '';
 

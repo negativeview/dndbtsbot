@@ -151,12 +151,12 @@ ret.remove = function(pieces, message, rawEvent, channelID, globalHandler, state
 	});	
 };
 
-ret.attempted = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next, nextnext) {
+ret.attempted = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next, finish) {
 	var username = rawEvent.d.author.id;
 
 	var serverID = findServerID(stateHolder, channelID);
 	if (!serverID) {
-		next(pieces, message, rawEvent, channelID, globalHandler, stateHolder, nextnext);
+		next(pieces, message, rawEvent, channelID, globalHandler, stateHolder, finish);
 		return;
 	}
 
@@ -168,17 +168,17 @@ ret.attempted = function(pieces, message, rawEvent, channelID, globalHandler, st
 	}).exec(function(err, res) {
 		if (err) {
 			stateHolder.simpleAddMessage(username, err);
-			next(pieces, message, rawEvent, channelID, globalHandler, stateHolder, nextnext);
+			next(pieces, message, rawEvent, channelID, globalHandler, stateHolder, finish);
 			return;
 		}
 
 		if (res.length) {
 			var result = res[0];
-			globalHandler('', '', channelID, result.macro, rawEvent, stateHolder, nextnext);
+			globalHandler('', '', channelID, result.macro, rawEvent, stateHolder, finish);
 			return;
 		}
 
-		next(pieces, message, rawEvent, channelID, globalHandler, stateHolder, nextnext);
+		next(pieces, message, rawEvent, channelID, globalHandler, stateHolder, finish);
 		return;
 	});
 };

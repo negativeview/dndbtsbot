@@ -41,8 +41,14 @@ function fancyFormatting(pruned, full, diceSize) {
 }
 
 module.exports = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
+	var startIndex = 1;
+	simpleMode = false;
+	if (pieces[1] == 'simple') {
+		startIndex = 2;
+		simpleMode = true;
+	}
 	var rollString = '';
-	for (var i = 1; i < pieces.length; i++) {
+	for (var i = startIndex; i < pieces.length; i++) {
 		rollString += pieces[i];
 	}
 
@@ -50,26 +56,35 @@ module.exports = function(pieces, message, rawEvent, channelID, globalHandler, s
 	try {
 		result = dice.execute(rollString);
 
-		var message = '@' + rawEvent.d.author.username + ' ' + rollString + "\n";
+		var message = '';
+		if (!simpleMode) rollString + " = ";
 
 		var total = 0;
 		if (result.outcomes.length > 1) {
 			for (var i = 0; i < result.outcomes.length; i++) {
 				total += result.outcomes[i].total;
-				message += fancyFormatting(result.outcomes[i].rolls, result.outcomes[i].original_rolls, result.parsed.faces);
-				if (result.parsed.modifier) {
-					message += ' + ' + result.parsed.modifier;
+				if (!simpleMode) {
+					message += fancyFormatting(result.outcomes[i].rolls, result.outcomes[i].original_rolls, result.parsed.faces);
+					if (result.parsed.modifier) {
+						message += ' + ' + result.parsed.modifier;
+					}
+					message += ' = `' + result.outcomes[i].total + '`' + "\n";
+				} else {
+					message += "`" + result.outcomes[i].total + "`";
 				}
-				message += ' = `' + result.outcomes[i].total + '`' + "\n";
 			}
 
 			stateHolder.simpleAddMessage(channelID, message);
 		} else {
-			message += fancyFormatting(result.outcomes[0].rolls, result.outcomes[0].original_rolls, result.parsed.faces)
-			if (result.parsed.modifier) {
-				message += ' + ' + result.parsed.modifier;
+			if (!simpleMode) {
+				message += fancyFormatting(result.outcomes[0].rolls, result.outcomes[0].original_rolls, result.parsed.faces)
+				if (result.parsed.modifier) {
+					message += ' + ' + result.parsed.modifier;
+				}
+				message += ' = `' + result.outcomes[0].total + '`';
+			} else {
+				message += "`" + result.outcomes[0].total + "`";
 			}
-			message += ' = `' + result.outcomes[0].total + '`';
 			stateHolder.simpleAddMessage(channelID, message);
 		}
 	} catch (e) {

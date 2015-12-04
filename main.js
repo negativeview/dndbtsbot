@@ -22,6 +22,7 @@ var handlers = {
 	'!viewmacro': macroHandler.view,
 	'!removemacro': macroHandler.remove,
 	'!echo': echoHandler.echo,
+	'!echon': echoHandler.echon,
 	'!pm': echoHandler.pm,
 	'!help': helpHandler.run
 }
@@ -29,10 +30,35 @@ var handlers = {
 var stateHolderClass = require('./state-holder.js');
 
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
+	if (user == bot.username || user == bot.id) return;
+
+	console.log('ghw:' + message);
 	var stateHolder = stateHolderClass();
 	
 	stateHolder.init(mongoose, bot);
+	globalHandlerMiddle(user, userID, channelID, message, rawEvent, stateHolder)
+}
 
+function globalHandlerMiddle(user, userID, channelID, message, rawEvent, stateHolder, callback) {
+	console.log('ghm:' + message);
+	/**
+	 * If our first command is setmacro or adminsetmacro, we need to treat things specially.
+	 * Instead of being able to process multiple commands in a message, we must gobble the whole
+	 * thing up.
+	 **/
+	if (
+		(message.indexOf("!setmacro") === 0) ||
+		(message.indexOf("!adminsetmacro") === 0)
+	) {
+		globalHandler(user, userID, channelID, message, rawEvent, stateHolder, function() {
+			stateHolder.doFinalOutput();
+		});
+		return;
+	}
+
+	/**
+	 * If it's not one of those special commands, split commands up and run them individually.
+	 **/
 	var splitMessages = message.split("\n");
 
 	var realMessages = [];
@@ -55,19 +81,31 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 		},
 		function() {
 			stateHolder.doFinalOutput();
+			if (callback) {
+				//callback();
+			}
 		}
 	);
 }
 
 function globalHandler(user, userID, channelID, message, rawEvent, stateHolder, next) {
-	if (user == bot.username || user == bot.id) return;
+	console.log('gh:' + message);
 
 	if (message[0] == '!') {
 		var pieces = message.split(" ");
 		if (pieces[0] in handlers) {
-			handlers[pieces[0]](pieces, message, rawEvent, channelID, globalHandler, stateHolder, next);
+			handlers[pieces[0]](pieces, message, rawEvent, channelID, globalHandlerMiddle, stateHolder, next);
 		} else {
-			adminmacroHandler.attempted(pieces, message, rawEvent, channelID, globalHandler, stateHolder, macroHandler.attempted, next);
+			adminmacroHandler.attempted(
+				pieces,
+				message,
+				rawEvent,
+				channelID,
+				globalHandlerMiddle,
+				stateHolder,
+				macroHandler.attempted,
+				next
+			);
 		}
 	}
 };

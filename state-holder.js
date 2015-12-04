@@ -23,9 +23,6 @@ module.exports = function() {
 			};
 		}
 
-		if (ret.messages[to].message != '') {
-			ret.messages[to].message += "\n";
-		}
 		ret.messages[to].message += message;
 	}
 
