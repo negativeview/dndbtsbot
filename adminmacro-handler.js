@@ -174,7 +174,7 @@ ret.attempted = function(pieces, message, rawEvent, channelID, globalHandler, st
 
 		if (res.length) {
 			var result = res[0];
-			globalHandler('', '', channelID, result.macro, rawEvent, stateHolder);
+			globalHandler('', '', channelID, result.macro, rawEvent, stateHolder, nextnext);
 			return;
 		}
 
