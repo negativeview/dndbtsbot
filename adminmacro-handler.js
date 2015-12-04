@@ -2,35 +2,6 @@ var ret = {
 	macroModel: null
 };
 
-function isAdmin(stateHolder, serverID, username) {
-	var isAdmin = false;
-	for (var i = 0; i < stateHolder.bot.servers[serverID].members[username].roles.length; i++) {
-		var roleID = stateHolder.bot.servers[serverID].members[username].roles[i];
-
-		var role = stateHolder.bot.servers[serverID].roles[roleID].name;
-
-		if (role.toLocaleLowerCase() == 'moderator') {
-			isAdmin = true;
-			break;
-		}
-	}
-	return isAdmin;
-}
-
-function findServerID(stateHolder, channelID) {
-	var serverID = null;
-	for (var i in stateHolder.bot.servers) {
-		for (var m in stateHolder.bot.servers[i].channels) {
-			if (stateHolder.bot.servers[i].channels[m].id == channelID) {
-				serverID = stateHolder.bot.servers[i].id;
-				break;
-			}
-		}
-		if (serverID) break;
-	}
-	return serverID;
-}
-
 ret.init = function(mongoose) {
 	var Schema = mongoose.Schema;
 	var AdminMacroSchema = new Schema({
@@ -46,13 +17,13 @@ ret.init = function(mongoose) {
 ret.set = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
 	var username = rawEvent.d.author.id;
 
-	var serverID = findServerID(stateHolder, channelID);
+	var serverID = stateHolder.findServerID(channelID);
 	if (!serverID) {
 		stateHolder.simpleAddMessage(username, 'You must use this command from a channel so that I know what server to use.');
 		return next();
 	}
 
-	var admin = isAdmin(stateHolder, serverID, username);
+	var admin = stateHolder.isAdmin(serverID, username);
 	if (!admin) {
 		stateHolder.simpleAddMessage(username, 'Only administrators can use this command.');
 		return next();
@@ -113,7 +84,7 @@ ret.set = function(pieces, message, rawEvent, channelID, globalHandler, stateHol
 ret.remove = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
 	var username = rawEvent.d.author.id;
 
-	var serverID = findServerID(stateHolder, channelID);
+	var serverID = stateHolder.findServerID(stateHolder, channelID);
 	if (!serverID) {
 		stateHolder.simpleAddMessage(username, 'You must use this command from a channel.');
 		return next();
@@ -154,7 +125,7 @@ ret.remove = function(pieces, message, rawEvent, channelID, globalHandler, state
 ret.attempted = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next, finish) {
 	var username = rawEvent.d.author.id;
 
-	var serverID = findServerID(stateHolder, channelID);
+	var serverID = stateHolder.findServerID(stateHolder, channelID);
 	if (!serverID) {
 		next(pieces, message, rawEvent, channelID, globalHandler, stateHolder, finish);
 		return;

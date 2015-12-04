@@ -9,6 +9,7 @@ var rollstatsHandler = require('./roll-stats.js');
 var timeHandler = require('./time-handler.js');
 var bot = require('./authenticate.js');
 var async = require('async');
+var varHandler = require('./var-handler.js');
 var evaluateHandler = require('./evaluate-handler.js');
 
 var handlers = {
@@ -25,6 +26,7 @@ var handlers = {
 	'!echo': echoHandler.echo,
 	'!echon': echoHandler.echon,
 	'!pm': echoHandler.pm,
+	'!var': varHandler.handle,
 	'!help': helpHandler.run,
 	'!evaluate': evaluateHandler.evaluate
 }
@@ -121,6 +123,7 @@ mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 	presenceHandler.init(mongoose, bot);
 	rollstatsHandler.init(diceHandler);
 	helpHandler.init(mongoose);
+	varHandler.init(mongoose);
 
 	var Macro = mongoose.model('Macro');
 

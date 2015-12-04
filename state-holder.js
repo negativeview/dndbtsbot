@@ -8,6 +8,35 @@ module.exports = function() {
 		ret.bot = bot;
 	}
 
+	ret.isAdmin = function(serverID, username) {
+		var isAdmin = false;
+		for (var i = 0; i < ret.bot.servers[serverID].members[username].roles.length; i++) {
+			var roleID = ret.bot.servers[serverID].members[username].roles[i];
+
+			var role = ret.bot.servers[serverID].roles[roleID].name;
+
+			if (role.toLocaleLowerCase() == 'moderator') {
+				isAdmin = true;
+				break;
+			}
+		}
+		return isAdmin;
+	}
+
+	ret.findServerID = function(channelID) {
+		var serverID = null;
+		for (var i in ret.bot.servers) {
+			for (var m in ret.bot.servers[i].channels) {
+				if (ret.bot.servers[i].channels[m].id == channelID) {
+					serverID = ret.bot.servers[i].id;
+					break;
+				}
+			}
+			if (serverID) break;
+		}
+		return serverID;
+	}
+
 	ret.doFinalOutput = function() {
 		for (var i in ret.messages) {
 			var outputType = ret.messages[i];
