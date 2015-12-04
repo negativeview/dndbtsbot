@@ -16,14 +16,11 @@ ret.init = function(mongoose) {
 	ret.macroModel = mongoose.model('Macro');
 };
 
-ret.set = function(pieces, message, rawEvent, bot, channelID, globalHandler) {
+ret.set = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
 	var username = rawEvent.d.author.id;
 	if (pieces.length < 3) {
-		bot.sendMessage({
-			to: channelID,
-			message: '@' + username + ' Invalid syntax.'
-		});
-		return;
+		stateHolder.simpleAddMessage(channelID, 'Invalid syntax.');
+		return next();
 	}
 	var macroName = pieces[1];
 	if (macroName[0] != '!') {
@@ -35,11 +32,8 @@ ret.set = function(pieces, message, rawEvent, bot, channelID, globalHandler) {
 		name: macroName
 	}).exec(function(err, res) {
 		if (err) {
-			bot.sendMessage({
-				to: username,
-				message: err
-			});
-			return false;	
+			stateHolder.simpleAddMessage(username, err);
+			return next();
 		}
 
 		if (res.length) {
@@ -66,34 +60,25 @@ ret.set = function(pieces, message, rawEvent, bot, channelID, globalHandler) {
 		);
 		newMacro.save(function(err) {
 			if (err) {
-				bot.sendMessage({
-					to: username,
-					message: 'Error saving macro: ' + err
-				});
-				return;
+				stateHolder.simpleAddMessage(username, 'Error saving macro: ' + err);
+				return next();
 			} else {
-				bot.sendMessage({
-					to: username,
-					message: 'Saved macro `' + macroName + '`'
-				});
-				return;				
+				stateHolder.simpleAddMessage(username, 'Saved macro `' + macroName + '`');
+				return next();
 			}
 		});
 	});
 };
 
-ret.view = function(pieces, message, rawEvent, bot, channelID, globalHandler) {
+ret.view = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
 	var username = rawEvent.d.author.id;
 
 	ret.macroModel.find({
 		user: username
 	}).exec(function(err, res) {
 		if (err) {
-			bot.sendMessage({
-				to: username,
-				message: err
-			});
-			return;	
+			stateHolder.simpleAddMessage(username, err);
+			return next();	
 		}
 
 		var answerMessage = '';
@@ -108,14 +93,12 @@ ret.view = function(pieces, message, rawEvent, bot, channelID, globalHandler) {
 			answerMessage = 'No macros defined.';
 		}
 
-		bot.sendMessage({
-			to: username,
-			message: answerMessage
-		});
+		stateHolder.simpleAddMessage(username, answerMessage);
+		return next();
 	});
 };
 
-ret.remove = function(pieces, message, rawEvent, bot, channelID, globalHandler) {
+ret.remove = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
 	var username = rawEvent.d.author.id;
 
 	var macroName = pieces[1];
@@ -128,11 +111,8 @@ ret.remove = function(pieces, message, rawEvent, bot, channelID, globalHandler) 
 		name: macroName
 	}).exec(function(err, res) {
 		if (err) {
-			bot.sendMessage({
-				to: username,
-				message: err
-			});
-			return false;	
+			stateHolder.simpleAddMessage(username, err);
+			return next();
 		}
 
 		if (res.length) {
@@ -140,16 +120,16 @@ ret.remove = function(pieces, message, rawEvent, bot, channelID, globalHandler) 
 				var result = res[i];
 				result.remove();
 			}
+			stateHolder.simpleAddMessage(username, 'Removed macro ' + result.name);
+			return next();
 		} else {
-			bot.sendMessage({
-				to: username,
-				message: "Could not find the macro to remove."
-			});
+			stateHolder.simpleAddMessage(username, 'Could not find the macro to remove.');
+			return next();
 		}
 	});	
 };
 
-ret.attempted = function(pieces, message, rawEvent, bot, channelID, globalHandler, next) {
+ret.attempted = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
 	var username = rawEvent.d.author.id;
 
 	ret.macroModel.find({
@@ -157,22 +137,19 @@ ret.attempted = function(pieces, message, rawEvent, bot, channelID, globalHandle
 		name: pieces[0]
 	}).exec(function(err, res) {
 		if (err) {
-			bot.sendMessage({
-				to: username,
-				message: err
-			});
-			next(pieces, message, rawEvent, bot, channelID, globalHandler, null);
-			return;
+			stateHolder.simpleAddMessage(username, err);
+			if (next)
+				return next();
 		}
 
 		if (res.length) {
 			var result = res[0];
-			globalHandler('', '', channelID, result.macro, rawEvent);
+			globalHandler('', '', channelID, result.macro, rawEvent, stateHolder);
 			return;
 		}
 
 		if (next)
-			next(pieces, message, rawEvent, bot, channelID, globalHandler, null);
+			next();
 		return;
 	});
 };

@@ -1,15 +1,13 @@
-var Dice = require('node-dice-js');
-
 var ret = {
 	macroModel: null
 };
 
-function isAdmin(bot, serverID, username) {
+function isAdmin(stateHolder, serverID, username) {
 	var isAdmin = false;
-	for (var i = 0; i < bot.servers[serverID].members[username].roles.length; i++) {
-		var roleID = bot.servers[serverID].members[username].roles[i];
+	for (var i = 0; i < stateHolder.bot.servers[serverID].members[username].roles.length; i++) {
+		var roleID = stateHolder.bot.servers[serverID].members[username].roles[i];
 
-		var role = bot.servers[serverID].roles[roleID].name;
+		var role = stateHolder.bot.servers[serverID].roles[roleID].name;
 
 		if (role.toLocaleLowerCase() == 'moderator') {
 			isAdmin = true;
@@ -19,12 +17,12 @@ function isAdmin(bot, serverID, username) {
 	return isAdmin;
 }
 
-function findServerID(bot, channelID) {
+function findServerID(stateHolder, channelID) {
 	var serverID = null;
-	for (var i in bot.servers) {
-		for (var m in bot.servers[i].channels) {
-			if (bot.servers[i].channels[m].id == channelID) {
-				serverID = bot.servers[i].id;
+	for (var i in stateHolder.bot.servers) {
+		for (var m in stateHolder.bot.servers[i].channels) {
+			if (stateHolder.bot.servers[i].channels[m].id == channelID) {
+				serverID = stateHolder.bot.servers[i].id;
 				break;
 			}
 		}
@@ -45,32 +43,24 @@ ret.init = function(mongoose) {
 	ret.macroModel = mongoose.model('AdminMacro');
 };
 
-ret.set = function(pieces, message, rawEvent, bot, channelID, globalHandler) {
+ret.set = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
 	var username = rawEvent.d.author.id;
 
-	var serverID = findServerID(bot, channelID);
+	var serverID = findServerID(stateHolder, channelID);
 	if (!serverID) {
-		bot.sendMessage({
-			to: username,
-			message: 'You must use this command from a channel so that I know what server to use.'
-		});
-		return;
+		stateHolder.simpleAddMessage(username, 'You must use this command from a channel so that I know what server to use.');
+		return next();
 	}
 
-	var admin = isAdmin(bot, serverID, username);
+	var admin = isAdmin(stateHolder, serverID, username);
 	if (!admin) {
-		bot.sendMessage({
-			to: username,
-			message: 'Only administrators can use this command.'
-		});
+		stateHolder.simpleAddMessage(username, 'Only administrators can use this command.');
+		return next();
 	}
 
 	if (pieces.length < 3) {
-		bot.sendMessage({
-			to: username,
-			message: 'Invalid syntax trying to set an admin command.'
-		});
-		return;
+		stateHolder.simpleAddMessage(username, 'Invalid syntax trying to set an admin command.');
+		return next();
 	}
 
 	var macroName = pieces[1];
@@ -82,11 +72,8 @@ ret.set = function(pieces, message, rawEvent, bot, channelID, globalHandler) {
 		name: macroName
 	}).exec(function(err, res) {
 		if (err) {
-			bot.sendMessage({
-				to: username,
-				message: err
-			});
-			return false;	
+			stateHolder.simpleAddMessage(username, err);
+			return next();
 		}
 
 		if (res.length) {
@@ -113,40 +100,29 @@ ret.set = function(pieces, message, rawEvent, bot, channelID, globalHandler) {
 		);
 		newMacro.save(function(err) {
 			if (err) {
-				bot.sendMessage({
-					to: username,
-					message: 'Error saving macro: ' + err
-				});
-				return;
+				stateHolder.simpleAddMessage(username, 'Error saving macro: ' + err);
+				return next();
 			} else {
-				bot.sendMessage({
-					to: username,
-					message: 'Saved macro `' + macroName + '`'
-				});
-				return;				
+				stateHolder.simpleAddMessage(username, 'Saved macro `' + macroName + '`');
+				return next();
 			}
 		});
 	});
 };
 
-ret.remove = function(pieces, message, rawEvent, bot, channelID, globalHandler) {
+ret.remove = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
 	var username = rawEvent.d.author.id;
 
-	var serverID = findServerID(bot, channelID);
+	var serverID = findServerID(stateHolder, channelID);
 	if (!serverID) {
-		bot.sendMessage({
-			to: username,
-			message: 'You must use this command from a channel so that I know what server to use.'
-		});
-		return;
+		stateHolder.simpleAddMessage(username, 'You must use this command from a channel.');
+		return next();
 	}
 
-	var admin = isAdmin(bot, serverID, username);
+	var admin = isAdmin(stateHolder, serverID, username);
 	if (!admin) {
-		bot.sendMessage({
-			to: username,
-			message: 'Only administrators can use this command.'
-		});
+		stateHolder.simpleAddMessage(username, 'Only administrators can use this command.');
+		return next();
 	}
 
 	var macroName = pieces[1];
@@ -159,11 +135,8 @@ ret.remove = function(pieces, message, rawEvent, bot, channelID, globalHandler) 
 		server: serverID,
 	}).exec(function(err, res) {
 		if (err) {
-			bot.sendMessage({
-				to: username,
-				message: err
-			});
-			return false;	
+			stateHolder.simpleAddMessage(username, err);
+			return next();
 		}
 
 		if (res.length) {
@@ -172,20 +145,18 @@ ret.remove = function(pieces, message, rawEvent, bot, channelID, globalHandler) 
 				result.remove();
 			}
 		} else {
-			bot.sendMessage({
-				to: username,
-				message: "Could not find the macro to remove."
-			});
+			stateHolder.simpleAddMessage(username, 'Could not find the macro to remove.');
+			return next();
 		}
 	});	
 };
 
-ret.attempted = function(pieces, message, rawEvent, bot, channelID, globalHandler, next) {
+ret.attempted = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next, nextnext) {
 	var username = rawEvent.d.author.id;
 
-	var serverID = findServerID(bot, channelID);
+	var serverID = findServerID(stateHolder, channelID);
 	if (!serverID) {
-		next(pieces, message, rawEvent, bot, channelID, globalHandler, null);
+		next(pieces, message, rawEvent, channelID, globalHandler, stateHolder, nextnext);
 		return;
 	}
 
@@ -196,22 +167,18 @@ ret.attempted = function(pieces, message, rawEvent, bot, channelID, globalHandle
 		server: serverID
 	}).exec(function(err, res) {
 		if (err) {
-			bot.sendMessage({
-				to: username,
-				message: err
-			});
-
-			next(pieces, message, rawEvent, bot, channelID, globalHandler, null);
+			stateHolder.simpleAddMessage(username, err);
+			next(pieces, message, rawEvent, channelID, globalHandler, stateHolder, nextnext);
 			return;
 		}
 
 		if (res.length) {
 			var result = res[0];
-			globalHandler('', '', channelID, result.macro, rawEvent);
+			globalHandler('', '', channelID, result.macro, rawEvent, stateHolder);
 			return;
 		}
 
-		next(pieces, message, rawEvent, bot, channelID, globalHandler, null);
+		next(pieces, message, rawEvent, channelID, globalHandler, stateHolder, nextnext);
 		return;
 	});
 };

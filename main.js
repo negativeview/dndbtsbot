@@ -1,3 +1,4 @@
+var mongoose = require('mongoose');
 var adminmacroHandler = require('./adminmacro-handler.js');
 var diceHandler = require('./dice-handler.js');
 var echoHandler = require('./echo-handler.js');
@@ -7,19 +8,60 @@ var presenceHandler = require('./presence-handler.js');
 var rollstatsHandler = require('./roll-stats.js');
 var timeHandler = require('./time-handler.js');
 var bot = require('./authenticate.js');
-var mongoose = require('mongoose');
 
-adminmacroHandler.init(mongoose);
-macroHandler.init(mongoose);
-timeHandler.init(mongoose);
-presenceHandler.init(mongoose, bot);
-rollstatsHandler.init(diceHandler);
-helpHandler.init(mongoose);
+var handlers = {
+	'!adminsetmacro': adminmacroHandler.set,
+	'!adminremovemacro': adminmacroHandler.remove,
+	'!r': diceHandler,
+	'!roll': diceHandler,
+	'!rollstats': rollstatsHandler.roll,
+	'!time': timeHandler.parse,
+	'!timezone': timeHandler.timezone,
+	'!setmacro': macroHandler.set,
+	'!viewmacro': macroHandler.view,
+	'!removemacro': macroHandler.remove,
+	'!echo': echoHandler.echo,
+	'!pm': echoHandler.pm,
+	'!help': helpHandler.run
+}
 
-var Macro = mongoose.model('Macro');
+var stateHolderClass = require('./state-holder.js');
+
+function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
+	var stateHolder = stateHolderClass();
+	
+	stateHolder.init(mongoose, bot);
+	globalHandler(user, userID, channelID, message, rawEvent, stateHolder);
+}
+
+function globalHandler(user, userID, channelID, message, rawEvent, stateHolder) {
+	if (user == bot.username || user == bot.id) return;
+
+	if (message[0] == '!') {
+		var pieces = message.split(" ");
+		if (pieces[0] in handlers) {
+			handlers[pieces[0]](pieces, message, rawEvent, channelID, globalHandler, stateHolder, function() {
+				stateHolder.doFinalOutput();
+			});
+		} else {
+			adminmacroHandler.attempted(pieces, message, rawEvent, channelID, globalHandler, stateHolder, macroHandler.attempted, function() {
+				stateHolder.doFinalOutput(rawEvent);
+			});
+		}
+	}
+};
 
 mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 	if (err) throw err;
+
+	adminmacroHandler.init(mongoose);
+	macroHandler.init(mongoose);
+	timeHandler.init(mongoose);
+	presenceHandler.init(mongoose, bot);
+	rollstatsHandler.init(diceHandler);
+	helpHandler.init(mongoose);
+
+	var Macro = mongoose.model('Macro');
 
 	var usedTimezones = [];
 
@@ -45,37 +87,7 @@ mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 		console.log(bot.username + " - (" + bot.id + ")");
 	});
 
-	var handlers = {
-		'!adminsetmacro': adminmacroHandler.set,
-		'!adminremovemacro': adminmacroHandler.remove,
-		'!r': diceHandler,
-		'!roll': diceHandler,
-		'!rollstats': rollstatsHandler.roll,
-		'!time': timeHandler.parse,
-		'!timezone': timeHandler.timezone,
-		'!setmacro': macroHandler.set,
-		'!viewmacro': macroHandler.view,
-		'!removemacro': macroHandler.remove,
-		'!echo': echoHandler.echo,
-		'!pm': echoHandler.pm,
-		'!help': helpHandler.run
-	}
-
-	var globalHandler = function(user, userID, channelID, message, rawEvent) {
-		if (user == bot.username || user == bot.id) return;
-		
-		if (message[0] == '!') {
-			var pieces = message.split(" ");
-			console.log(pieces[0]);
-			if (pieces[0] in handlers) {
-				handlers[pieces[0]](pieces, message, rawEvent, bot, channelID, globalHandler);
-			} else {
-				adminmacroHandler.attempted(pieces, message, rawEvent, bot, channelID, globalHandler, macroHandler.attempted);
-			}
-		}
-	};
-
-	bot.on('message', globalHandler);
+	bot.on('message', globalHandlerWrap);
 
 	bot.on('presence', presenceHandler.presence);
 });
