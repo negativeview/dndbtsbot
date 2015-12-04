@@ -11,6 +11,7 @@ var bot = require('./authenticate.js');
 var async = require('async');
 var varHandler = require('./var-handler.js');
 var evaluateHandler = require('./evaluate-handler.js');
+var gameHandler = require('./game-handler.js');
 
 var handlers = {
 	'!adminsetmacro': adminmacroHandler.set,
@@ -28,7 +29,10 @@ var handlers = {
 	'!pm': echoHandler.pm,
 	'!var': varHandler.handle,
 	'!help': helpHandler.run,
-	'!evaluate': evaluateHandler.evaluate
+	'!evaluate': evaluateHandler.evaluate,
+	'!role': gameHandler.setRole,
+	'!roles': gameHandler.viewRoles,
+	'!eachplayer': gameHandler.eachPlayer
 }
 
 var stateHolderClass = require('./state-holder.js');
@@ -36,7 +40,6 @@ var stateHolderClass = require('./state-holder.js');
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	if (user == bot.username || user == bot.id) return;
 
-	console.log('ghw:' + message);
 	var stateHolder = stateHolderClass();
 	
 	stateHolder.init(mongoose, bot);
@@ -44,7 +47,6 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 }
 
 function globalHandlerMiddle(user, userID, channelID, message, rawEvent, stateHolder, callback) {
-	console.log('ghm:' + message);
 	/**
 	 * If our first command is setmacro or adminsetmacro, we need to treat things specially.
 	 * Instead of being able to process multiple commands in a message, we must gobble the whole
@@ -93,11 +95,10 @@ function globalHandlerMiddle(user, userID, channelID, message, rawEvent, stateHo
 }
 
 function globalHandler(user, userID, channelID, message, rawEvent, stateHolder, next) {
-	console.log('gh:' + message);
-
 	if (message[0] == '!') {
 		var pieces = message.split(" ");
-		if (pieces[0] in handlers) {
+		var command = pieces[0];
+		if (command in handlers) {
 			handlers[pieces[0]](pieces, message, rawEvent, channelID, globalHandlerMiddle, stateHolder, next);
 		} else {
 			adminmacroHandler.attempted(
@@ -124,6 +125,7 @@ mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 	rollstatsHandler.init(diceHandler);
 	helpHandler.init(mongoose);
 	varHandler.init(mongoose);
+	gameHandler.init(mongoose);
 
 	var Macro = mongoose.model('Macro');
 

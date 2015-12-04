@@ -1,11 +1,32 @@
 module.exports = function() {
 	var ret = {
-		messages: {}
+		messages: {},
+		contextUser: null
 	};
 
 	ret.init = function(mongoose, bot) {
 		ret.mongoose = mongoose;
 		ret.bot = bot;
+	}
+
+	ret.memberNumberToName = function(serverID, number) {
+		if (number in ret.bot.servers[serverID].members) {
+			return ret.bot.servers[serverID].members[number].user.username;
+		}
+		return number;
+	}
+
+	ret.memberNameToNumber = function(serverID, username) {
+		for (var userID in ret.bot.servers[serverID].members) {
+			var user = ret.bot.servers[serverID].members[userID];
+			if (user.user.username == username) {
+				console.log(user.user.id);
+				return user.user.id;
+			}
+		}
+		console.log('Could not find ID for ' + username);
+		console.log(ret.bot.servers[serverID].members);
+		return username;
 	}
 
 	ret.isAdmin = function(serverID, username) {

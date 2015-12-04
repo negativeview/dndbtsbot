@@ -24,16 +24,23 @@ function varGet(pieces, username, channelID, stateHolder, next) {
 	var parameters = {};
 
 	var namespace = pieces[2];
+	var index = 4;
 	if (namespace == 'me') {
-		parameters.user = username;
+		parameters.user = stateHolder.contextUser ? stateHolder.contextUser : username;
+		parameters.name = pieces[3];
 	} else if (namespace == 'channel') {
 		parameters.channel = channelID;
+		parameters.name = pieces[3];
+	} else if (namespace == 'user') {
+		var serverID = stateHolder.findServerID(channelID);
+		parameters.user = stateHolder.memberNameToNumber(serverID, pieces[3]);
+		parameters.name = pieces[4];
+		index = 5;
 	}
-	parameters.name = pieces[3];
 
 	var value = '';
-	for (var i = 4; i < pieces.length; i++) {
-		if (i != 4) value += ' ';
+	for (var i = index; i < pieces.length; i++) {
+		if (i != index) value += ' ';
 		value += pieces[i];
 	}
 
@@ -63,16 +70,27 @@ function varSet(pieces, username, channelID, stateHolder, next) {
 	var parameters = {};
 
 	var namespace = pieces[2];
+	var index = 4;
 	if (namespace == 'me') {
 		parameters.user = username;
+		parameters.name = pieces[3];
 	} else if (namespace == 'channel') {
 		parameters.channel = channelID;
+		parameters.name = pieces[3];
+	} else if (namespace == 'user') {
+		var serverID = stateHolder.findServerID(channelID);
+		parameters.user = stateHolder.memberNameToNumber(serverID, pieces[3]);
+		parameters.name = pieces[4];
+		index = 5;
 	}
-	parameters.name = pieces[3];
+
+	if (parameters.name[0] == '_') {
+		stateHolder.simpleAddMessage(username, '**Note** that variables that start with a _ will likely have a special meaning in the future. If you are using this variable for an unofficial reason, be warned.');
+	}
 
 	var value = '';
-	for (var i = 4; i < pieces.length; i++) {
-		if (i != 4) value += ' ';
+	for (var i = index; i < pieces.length; i++) {
+		if (i != index) value += ' ';
 		value += pieces[i];
 	}
 
@@ -107,7 +125,7 @@ ret.handle = function(pieces, message, rawEvent, channelID, globalHandler, state
 	var username = rawEvent.d.author.id;
 
 	var allowedOperators = ['set', 'get', 'inc', 'del', 'dec'];
-	var allowedNamespaces = ['me', 'channel'];
+	var allowedNamespaces = ['me', 'channel', 'user'];
 
 	if (allowedOperators.indexOf(pieces[1]) == -1) {
 		stateHolder.simpleAddMessage(username, pieces[1] + ' is not a valid var operator.');
@@ -119,8 +137,8 @@ ret.handle = function(pieces, message, rawEvent, channelID, globalHandler, state
 		return next();
 	}
 
+	var serverID = stateHolder.findServerID(channelID);
 	if (pieces[2] == 'channel') {
-		var serverID = stateHolder.findServerID(channelID);
 		if (!serverID) {
 			stateHolder.simpleAddMessage(username, 'You must use this command from a channel so that I know what server to use.');
 			return next();
@@ -132,6 +150,16 @@ ret.handle = function(pieces, message, rawEvent, channelID, globalHandler, state
 				stateHolder.simpleAddMessage(username, 'Only administrators can use this command.');
 				return next();
 			}
+		}
+	}
+
+	if (pieces[2] == 'user') {
+		if (pieces[1] == 'set') {
+			var admin = stateHolder.isAdmin(serverID, username);
+			if (!admin) {
+				stateHolder.simpleAddMessage(username, 'Only administrators can use this command.');
+				return next();
+			}			
 		}
 	}
 

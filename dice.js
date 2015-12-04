@@ -188,6 +188,9 @@ Dice.prototype.parse = function parse(command) {
   parsed.keep = keep && keep[1] && parseInt(keep[1]) || null;
   parsed.keepType = 0;
 
+  var extra = command.match(/\/\/(.*)/i);
+  parsed.extra = extra && extra[1] || null;
+
   if (!keep) {
     keep = command.match(/\(kh(\d+)\)/i);
     parsed.keep = keep && keep[1] && parseInt(keep[1]) || null;

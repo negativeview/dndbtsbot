@@ -76,6 +76,9 @@ module.exports = function(pieces, message, rawEvent, channelID, globalHandler, s
 					}
 					message += ' = `' + result.outcomes[i].total + '`' + "\n";
 				} else {
+					if (message != '') {
+						message += ', ';
+					}
 					if (plainMode) {
 						message += result.outcomes[i].total;
 					} else {
@@ -100,6 +103,9 @@ module.exports = function(pieces, message, rawEvent, channelID, globalHandler, s
 					message += "`" + result.outcomes[0].total + "`";
 				}
 			}
+
+			if (result.parsed.extra)
+				message += ' ' + result.parsed.extra;
 			stateHolder.simpleAddMessage(channelID, message);
 		}
 	} catch (e) {
