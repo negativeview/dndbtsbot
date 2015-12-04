@@ -8,6 +8,7 @@ var presenceHandler = require('./presence-handler.js');
 var rollstatsHandler = require('./roll-stats.js');
 var timeHandler = require('./time-handler.js');
 var bot = require('./authenticate.js');
+var async = require('async');
 
 var handlers = {
 	'!adminsetmacro': adminmacroHandler.set,
@@ -31,22 +32,42 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	var stateHolder = stateHolderClass();
 	
 	stateHolder.init(mongoose, bot);
-	globalHandler(user, userID, channelID, message, rawEvent, stateHolder);
+
+	var splitMessages = message.split("\n");
+
+	var realMessages = [];
+
+	var currentMessage = splitMessages[0];
+	for (var i = 1; i < splitMessages.length; i++) {
+		if (splitMessages[i][0] != '!') {
+			currentMessage += "\n" + splitMessages[i]
+		} else {
+			realMessages.push(currentMessage);
+			currentMessage = splitMessages[i];
+		}
+	}
+	realMessages.push(currentMessage);
+
+	async.eachSeries(
+		realMessages,
+		function(item, callback) {
+			globalHandler(user, userID, channelID, item, rawEvent, stateHolder, callback);
+		},
+		function() {
+			stateHolder.doFinalOutput();
+		}
+	);
 }
 
-function globalHandler(user, userID, channelID, message, rawEvent, stateHolder) {
+function globalHandler(user, userID, channelID, message, rawEvent, stateHolder, next) {
 	if (user == bot.username || user == bot.id) return;
 
 	if (message[0] == '!') {
 		var pieces = message.split(" ");
 		if (pieces[0] in handlers) {
-			handlers[pieces[0]](pieces, message, rawEvent, channelID, globalHandler, stateHolder, function() {
-				stateHolder.doFinalOutput();
-			});
+			handlers[pieces[0]](pieces, message, rawEvent, channelID, globalHandler, stateHolder, next);
 		} else {
-			adminmacroHandler.attempted(pieces, message, rawEvent, channelID, globalHandler, stateHolder, macroHandler.attempted, function() {
-				stateHolder.doFinalOutput(rawEvent);
-			});
+			adminmacroHandler.attempted(pieces, message, rawEvent, channelID, globalHandler, stateHolder, macroHandler.attempted, next);
 		}
 	}
 };
