@@ -127,15 +127,11 @@ ret.attempted = function(pieces, message, rawEvent, channelID, globalHandler, st
 
 	var serverID = stateHolder.findServerID(stateHolder, channelID);
 	if (!serverID) {
-		console.log('no server:' + channelID);
-		console.log(stateHolder);
 		next(pieces, message, rawEvent, channelID, globalHandler, stateHolder, finish);
 		return;
 	}
 
 	if (!serverID) return;
-
-	console.log('adminmacro:' + pieces[0]);
 
 	ret.macroModel.find({
 		name: pieces[0],
@@ -149,12 +145,9 @@ ret.attempted = function(pieces, message, rawEvent, channelID, globalHandler, st
 		}
 
 		if (res.length) {
-			console.log('found');
 			var result = res[0];
 			globalHandler('', '', channelID, result.macro, rawEvent, stateHolder, finish);
 			return;
-		} else {
-			console.log('not found');
 		}
 
 		return next(pieces, message, rawEvent, channelID, globalHandler, stateHolder, finish);

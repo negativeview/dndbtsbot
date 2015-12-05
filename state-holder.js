@@ -45,9 +45,12 @@ module.exports = function() {
 	}
 
 	ret.findServerID = function(channelID) {
+		console.log('Looking for server for ' + channelID);
 		var serverID = null;
 		for (var i in ret.bot.servers) {
+			console.log('key: ' + i);
 			for (var m in ret.bot.servers[i].channels) {
+				console.log(ret.bot.servers[i]);
 				if (ret.bot.servers[i].channels[m].id == channelID) {
 					serverID = ret.bot.servers[i].id;
 					break;
