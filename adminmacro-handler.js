@@ -84,7 +84,7 @@ ret.set = function(pieces, message, rawEvent, channelID, globalHandler, stateHol
 ret.remove = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
 	var username = rawEvent.d.author.id;
 
-	var serverID = stateHolder.findServerID(stateHolder, channelID);
+	var serverID = stateHolder.findServerID(channelID);
 	if (!serverID) {
 		stateHolder.simpleAddMessage(username, 'You must use this command from a channel.');
 		return next();
@@ -125,7 +125,7 @@ ret.remove = function(pieces, message, rawEvent, channelID, globalHandler, state
 ret.attempted = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next, finish) {
 	var username = rawEvent.d.author.id;
 
-	var serverID = stateHolder.findServerID(stateHolder, channelID);
+	var serverID = stateHolder.findServerID(channelID);
 	if (!serverID) {
 		next(pieces, message, rawEvent, channelID, globalHandler, stateHolder, finish);
 		return;
