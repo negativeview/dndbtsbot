@@ -5,7 +5,6 @@ var ret = {
 };
 
 ret.init = function(mongoose) {
-	console.log('here?');
 	var Schema = mongoose.Schema;
 	var RoomRoleSchema = new Schema({
 		roleName: String,

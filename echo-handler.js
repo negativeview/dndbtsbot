@@ -19,13 +19,14 @@ ret.echon = function(pieces, message, rawEvent, channelID, globalHandler, stateH
 };
 
 ret.pm = function(pieces, message, rawEvent, channelID, globalHandler, stateHandler, next) {
+	var username = rawEvent.d.author.id;
 	var message = '';
 
 	for (var i = 1; i < pieces.length; i++) {
 		message += pieces[i] + ' ';
 	}
 
-	stateHandler.simpleAddMessage(channelID, message);
+	stateHandler.simpleAddMessage(username, message);
 	next();
 };
 
