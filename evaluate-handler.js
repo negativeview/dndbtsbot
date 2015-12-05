@@ -3,7 +3,6 @@ var ret = {
 };
 
 ret.evaluate = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
-	console.log('in evaluate: ' + globalHandler.getMessage(channelID))
 	var commandToRun = '';
 	if (stateHolder.overrideEvaluationMessage) {
 		commandToRun = stateHolder.overrideEvaluationMessage;
