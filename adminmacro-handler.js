@@ -127,7 +127,8 @@ ret.attempted = function(pieces, message, rawEvent, channelID, globalHandler, st
 
 	var serverID = stateHolder.findServerID(stateHolder, channelID);
 	if (!serverID) {
-		console.log('no server');
+		console.log('no server:' + channelID);
+		console.log(stateHolder);
 		next(pieces, message, rawEvent, channelID, globalHandler, stateHolder, finish);
 		return;
 	}
