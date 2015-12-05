@@ -26,7 +26,13 @@ function varGet(pieces, username, channelID, stateHolder, next) {
 	var namespace = pieces[2];
 	var index = 4;
 	if (namespace == 'me') {
-		parameters.user = stateHolder.contextUser ? stateHolder.contextUser : username;
+		if (stateHolder.contextUser) {
+			console.log('a');
+			parameters.user = stateHolder.contextUser;
+		} else {
+			console.log('b');
+			parameters.user = username;
+		}
 		parameters.name = pieces[3];
 	} else if (namespace == 'channel') {
 		parameters.channel = channelID;

@@ -133,24 +133,29 @@ ret.attempted = function(pieces, message, rawEvent, channelID, globalHandler, st
 
 	if (!serverID) return;
 
+	console.log('adminmacro:' + pieces[0]);
+
 	ret.macroModel.find({
 		name: pieces[0],
 		server: serverID
 	}).exec(function(err, res) {
 		if (err) {
+			console.log(err);
 			stateHolder.simpleAddMessage(username, err);
 			next(pieces, message, rawEvent, channelID, globalHandler, stateHolder, finish);
 			return;
 		}
 
 		if (res.length) {
+			console.log('found');
 			var result = res[0];
 			globalHandler('', '', channelID, result.macro, rawEvent, stateHolder, finish);
 			return;
+		} else {
+			console.log('not found');
 		}
 
-		next(pieces, message, rawEvent, channelID, globalHandler, stateHolder, finish);
-		return;
+		return next(pieces, message, rawEvent, channelID, globalHandler, stateHolder, finish);
 	});
 };
 

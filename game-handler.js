@@ -36,6 +36,7 @@ ret.eachPlayer = function(pieces, message, rawEvent, channelID, globalHandler, s
 			function(item, callback) {
 				if (item.roleName == 'player') {
 					stateHolder.contextUser = item.user;
+					console.log(stateHolder.contextUser);
 					globalHandler('', '', channelID, commandToRun, rawEvent, stateHolder, callback);
 				} else {
 					console.log(item);
