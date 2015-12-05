@@ -49,8 +49,8 @@ module.exports = function() {
 		var serverID = null;
 		for (var i in ret.bot.servers) {
 			console.log('key: ' + i);
+			console.log(ret.bot.servers[i].channels);
 			for (var m in ret.bot.servers[i].channels) {
-				console.log(ret.bot.servers[i].channels);
 				if (ret.bot.servers[i].channels[m].id == channelID) {
 					serverID = ret.bot.servers[i].id;
 					break;
