@@ -25,8 +25,18 @@ function create(mongoose, bot, stateHolder) {
 		r2.statements.push(statement);
 	};
 
+	r2.setNext = function(next) {
+		r2.next = next;
+	};
+
 	r2.execute = function() {
-		if (r2.lineNumber == r2.statements.length) return r2.stateHolder.doFinalOutput();
+		if (r2.lineNumber == r2.statements.length) {
+			if (r2.next) {
+				return r2.next();
+			} else {
+				return r2.stateHolder.doFinalOutput();
+			}
+		}
 
 		var statement = r2.statements[r2.lineNumber];
 
