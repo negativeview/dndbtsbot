@@ -58,7 +58,6 @@ function create(mongoose, bot, stateHolder) {
 			async.eachSeries(pieces, function(iterator, callback) {
 				if (iterator[0] == ':' && iterator[1] == ':') {
 					var variableName = iterator.slice(2);
-					console.log('variable name:' + variableName);
 
 					r2.handlers.execute(
 						'!var',
@@ -70,8 +69,6 @@ function create(mongoose, bot, stateHolder) {
 						],
 						fakeStateHolder,
 						function() {
-							console.log('got here:');
-							console.log(fakeStateHolder);
 							newPieces.push(fakeStateHolder.result);
 							callback();
 						}

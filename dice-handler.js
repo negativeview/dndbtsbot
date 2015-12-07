@@ -41,29 +41,13 @@ function fancyFormatting(pruned, full, diceSize) {
 }
 
 module.exports = function(pieces, stateHolder, next) {
-	var startIndex = 1;
-	simpleMode = false;
-	plainMode = false;
-	if (pieces[1] == 'simple') {
-		startIndex = 2;
-		simpleMode = true;
-	}
-	if (pieces[1] == 'plain') {
-		startIndex = 2;
-		simpleMode = true;
-		plainMode = true;
-	}
 	var rollString = '';
-	for (var i = startIndex; i < pieces.length; i++) {
+	for (var i = 1; i < pieces.length; i++) {
 		rollString += pieces[i];
 	}
 
 	var dice = new Dice();
 	dice.execute(rollString, function(result) {
-		var message = '';
-		if (!simpleMode) rollString + " = ";
-
-		var total = 0;
 		stateHolder.simpleAddMessage(stateHolder.channelID, result.output);
 
 		next();

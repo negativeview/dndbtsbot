@@ -308,8 +308,8 @@ Dice.prototype.execute = function execute(command, callback) {
               }
             }
             data.output += ' = `' + result + '`';
-            return cb(data);
           }
+          return cb(data);
         });
       });
     });
