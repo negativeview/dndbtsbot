@@ -59,59 +59,13 @@ module.exports = function(pieces, stateHolder, next) {
 	}
 
 	var dice = new Dice();
-	try {
-		result = dice.execute(rollString);
-
+	dice.execute(rollString, function(result) {
 		var message = '';
 		if (!simpleMode) rollString + " = ";
 
 		var total = 0;
-		if (result.outcomes.length > 1) {
-			for (var i = 0; i < result.outcomes.length; i++) {
-				total += result.outcomes[i].total;
-				if (!simpleMode) {
-					message += fancyFormatting(result.outcomes[i].rolls, result.outcomes[i].original_rolls, result.parsed.faces);
-					if (result.parsed.modifier) {
-						message += ' + ' + result.parsed.modifier;
-					}
-					message += ' = `' + result.outcomes[i].total + '`' + "\n";
-				} else {
-					if (message != '') {
-						message += ', ';
-					}
-					if (plainMode) {
-						message += result.outcomes[i].total;
-					} else {
-						message += "`" + result.outcomes[i].total + "`";
-					}
-				}
-			}
+		stateHolder.simpleAddMessage(stateHolder.channelID, result.output);
 
-			stateHolder.simpleAddMessage(stateHolder.channelID, message);
-		} else {
-			if (!simpleMode) {
-				message += result.command + " = ";
-				message += fancyFormatting(result.outcomes[0].rolls, result.outcomes[0].original_rolls, result.parsed.faces)
-				if (result.parsed.modifier) {
-					message += ' + ' + result.parsed.modifier;
-				}
-				message += ' = `' + result.outcomes[0].total + '`';
-			} else {
-				if (plainMode) {
-					message += result.outcomes[0].total;
-				} else {
-					message += "`" + result.outcomes[0].total + "`";
-				}
-			}
-
-			if (result.parsed.extra)
-				message += ' ' + result.parsed.extra;
-			stateHolder.simpleAddMessage(stateHolder.channelID, message);
-		}
-	} catch (e) {
-		var message = '`' + e.message + '`';
-		stateHolder.simpleAddMessage(stateHolder.channelID, message);
-	}
-
-	next();
+		next();
+	});
 };

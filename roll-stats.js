@@ -10,20 +10,12 @@ ret.init = function(diceHandler) {
 }
 
 ret.roll = function(pieces, stateHolder, next) {
-	var fakePieces = [];
-	if (pieces.length > 1 && pieces[1].indexOf("simple") === 0) {
-		fakePieces = [
-			'!roll',
-			'simple',
-			'(4d6(kh3))x6'
-		];
-	} else {
-		fakePieces = [
-			'!roll',
-			'(4d6(kh3))x6'
-		];
+	for (var i = 0; i < 6; i++) {
+		stateHolder.block.addStatement('!roll 4d6kh3');
+		if (i != 5)
+			stateHolder.block.addStatement('!echon');
 	}
-	ret.diceHandler(fakePieces, stateHolder, next);
+	return next();
 }
 
 module.exports = ret;

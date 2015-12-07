@@ -1,16 +1,10 @@
 var _ = require('lodash');
+var lexer = require('lex');
 
 function Dice(options) {
   var self = this;
   var defaults = {
     command: 'd20',
-    throttles: {
-      times: 100,
-      repeat: 100,
-      faces: 100,
-      multiplier: 100,
-      modifier: 100
-    }
   };
 
   self.options = _.assign(defaults, options);
@@ -20,21 +14,157 @@ function Dice(options) {
     parsed: null,
     outcomes: [],
   };
+}
 
-};
+function doDiceRolling(tokens, self, cb) {
+  // Handle the actual rolling.
+  for (var i = 0; i < tokens.length; i++) {
+    var token = tokens[i];
+    switch (token.type) {
+      case 'die':
+        var parsed = self.parse(token.lexeme);
+        if (token.keep) {
+          parsed.keep = token.keep;
+        }
+        if (token.advantage) {
+          parsed.highest = true;
+        }
+        if (token.disadvantage) {
+          parsed.lowest = true;
+        }
 
-// validates that any value provided is less than our throttle value
-Dice.prototype.throttle = function throttle() {
-  var self = this;
-  var parsed = self.data.parsed;
-  var throttles = self.options.throttles;
-
-  _.forOwn(parsed, function(value, key) {
-    if (value && typeof value === 'number' && _.has(throttles, key) && value > throttles[key]) {
-      throw new Error(key + ' (' + value + ') exceeds the limit of ' + throttles[key] + ' that has been imposed');
+        tokens[i].results = [];
+        tokens[i].parsed = parsed;
+        for (var p = 0; p < parsed.times; p++) {
+          tokens[i].results.push(self.roll(parsed.faces));
+        }
+        tokens[i].results.sort(function(a, b) {
+          return a - b;
+        });
+        break;
     }
-  });
+  }
 
+  cb(tokens);
+}
+
+function createNumberEquivalents(tokens, cb) {
+  // Modifiers to those rolls.
+  for (var i = 0; i < tokens.length; i++) {
+    var token = tokens[i];
+    switch (token.type) {
+      case 'number':
+        token.number = token.lexeme;
+        break;
+      case 'die':
+        if (token.advantage) {
+          tokens[i].number = token.results[token.results.length-1];
+          tokens[i].kept = [tokens[i].number];
+          tokens[i].dropped = [];
+          for (var p = 0; p < token.results.length; p++) {
+            if (p != token.results.length - 1) {
+              tokens[i].dropped.push(token.results[p]);
+            }
+          }
+        } else if (token.disadvantage) {
+          tokens[i].number = token.results[0];          
+          tokens[i].kept = [token.results[0]];
+          tokens[i].dropped = [];
+          for (var p = 1; p < token.results.length; p++) {
+            tokens[i].dropped.push(token.results[p]);
+          }
+        } else if (token.keep) {
+          tokens[i].number = 0;
+          tokens[i].kept = [];
+          tokens[i].dropped = [];
+
+          for (var p = 0; p < token.results.length - token.keep; p++) {
+            tokens[i].dropped.push(token.results[p]);
+          }
+          for (var p = token.results.length - token.keep; p < token.results.length; p++) {
+            tokens[i].number += token.results[p];
+            tokens[i].kept.push(token.results[p]);
+          }
+        } else {
+          tokens[i].number = 0;
+          for (var p = 0; p < token.results.length; p++) {
+            tokens[i].number += token.results[p];
+          }
+        }
+        break;
+    }
+  }
+
+  cb(tokens);
+}
+
+function doMath(tokens, cb) {
+  var result = parseInt(tokens[0].number);
+  for (var i = 1; i < tokens.length; i++) {
+    var token = tokens[i];
+    switch (token.type) {
+      case '+':
+        result += parseInt(tokens[i+1].number);
+        i++;
+        break;
+      case '-':
+        result -= parseInt(tokens[i+1].number);
+        i++;
+        break;
+    }
+  }
+
+  cb(result);
+}
+
+function applyModifiers(tokens, cb) {
+  // Put modifiers to a die roll into the actual die token.
+  var lastDie = -1;
+  for (var i = 0; i < tokens.length; i++) {
+    var token = tokens[i];
+    switch (token.type) {
+      case 'die':
+        lastDie = i;
+        break;
+      case 'advantage':
+        if (lastDie == -1) {
+          throw 'Cannot set advantage without a die roll.';
+        }
+        tokens[lastDie].advantage = true;
+        break;
+      case 'disadvantage':
+        if (lastDie == -1) {
+          throw 'Cannot set disadvantage without a die roll.';
+        }
+        tokens[lastDie].disadvantage = true;
+        break;
+      case 'keep-high':
+        if (lastDie == -1) {
+          throw 'Cannot set keep-high without a die roll.';
+        }
+
+        var matches = token.lexeme.match(/kh(\d+)/);
+        tokens[lastDie].keep = matches[1];
+        break;
+    }
+  }
+
+  // Copy tokens that are still relevant.
+  var newTokens = [];
+  for (var i = 0; i < tokens.length; i++) {
+    var token = tokens[i];
+    switch (token.type) {
+      case 'number':
+      case 'die':
+      case '+':
+      case '-':
+      case 'variable':
+        newTokens.push(token);
+        break;
+    }
+  }
+
+  return cb(newTokens);
 }
 
 // rolls the die and returns the outcome
@@ -48,79 +178,142 @@ Dice.prototype.roll = function roll(faces) {
 }
 
 // execute command
-Dice.prototype.execute = function execute(command) {
-  var self = this;
-  var data = self.data;
+Dice.prototype.execute = function execute(command, callback) {
+  var lex = new lexer();
 
-  if (typeof command === 'undefined' || (typeof command === 'string' && !command.trim().length)) {
-    command = self.options.command;
+  var tokens = [];
+  var isSimple = false;
+  var isPlain = false;
+
+  lex.addRule(/(\d+)d(\d+)/, function(lexeme) {
+    tokens.push({
+      type: 'die',
+      lexeme: lexeme
+    });
+  });
+  lex.addRule(/\<([^\>]+)\>/, function(lexeme) {
+    tokens.push({
+      type: 'variable',
+      lexeme: lexeme
+    });
+  });
+  lex.addRule(/\-H/, function(lexeme) {
+    tokens.push({
+      type: 'advantage',
+      lexeme: lexeme
+    });
+  });
+  lex.addRule(/simple/, function(lexeme) {
+    isSimple = true;
+  });
+  lex.addRule(/plain/, function(lexeme) {
+    isPlain = true;
+  });
+  lex.addRule(/kh(\d+)/, function(lexeme) {
+    tokens.push({
+      type: 'keep-high',
+      lexeme: lexeme
+    });
+  });
+  lex.addRule(/[\(\)]/, function(lexeme) {
+  });
+  lex.addRule(/\-L/, function(lexeme) {
+    tokens.push({
+      type: 'disadvantage',
+      lexeme: lexeme
+    });
+  });
+  lex.addRule(/\+/, function(lexeme) {
+    tokens.push({
+      type: '+',
+      lexeme: lexeme
+    });
+  });
+  lex.addRule(/\-/, function(lexeme) {
+    tokens.push({
+      type: '-',
+      lexeme: lexeme
+    });
+  });
+  lex.addRule(/(\d+)/, function(lexeme) {
+    tokens.push({
+      type: 'number',
+      lexeme: lexeme
+    });
+  });
+  lex.setInput(command);
+
+  try {
+    lex.lex();
+  } catch (e) {
+    return {
+      command: command,
+      output: command + '::' + e
+    };
   }
 
-  var parsed = self.parse(command);
+  var self = this;
+  var cb = callback;
 
-  data.parsed = parsed;
-  data.command = command;
+  applyModifiers(tokens, function(tokens) {
+    doDiceRolling(tokens, self, function(tokens) {
+      createNumberEquivalents(tokens, function(tokens) {
+        doMath(tokens, function(result) {
+          var data = {
+            command: command,
+            output: ''
+          };
 
-  // throttle values provided
-  self.throttle();
+          if (isPlain) {
+            data.output = result;
+          } else if (isSimple) {
+            data.output = '`' + result + '`';
+          } else {
+            for (var i = 0; i < tokens.length; i++) {
+              if (data.output != '')
+                data.output += ' ';
+              data.output += tokens[i].lexeme;
 
-  _.times(data.parsed.repeat, function(n) {
-    var outcome = {
-      rolls: [],
-      total: 0
-    };
+              if (tokens[i].results) {
+                data.output += ' (';
+                if (tokens[i].kept) {
+                  data.output += '~~';
+                  data.output += tokens[i].dropped.join(', ');
+                  data.output += '~~';
+                  data.output += ', ';
 
-    // make the rolls
-    _.times(data.parsed.times, function(n) {
-      var rolled = self.roll(data.parsed.faces);
-      outcome.rolls.push(rolled);
+                  for (var p = 0; p < tokens[i].kept.length; p++) {
+                    if (p != 0)
+                      data.output += ', ';
+                    var value = tokens[i].kept[p];
+                    if (value == 1 || value == tokens[i].parsed.faces) {
+                      data.output += '**' + value + '**';
+                    } else {
+                      data.output += value;
+                    }
+                  }
+                } else {
+                  for (var p = 0; p < tokens[i].results.length; p++) {
+                    if (p != 0)
+                      data.output += ', ';
+                    var value = tokens[i].results[p];
+                    if (value == 1 || value == tokens[i].parsed.faces) {
+                      data.output += '**' + value + '**';
+                    } else {
+                      data.output += value;
+                    }
+                  }
+                }
+                data.output += ')';
+              }
+            }
+            data.output += ' = `' + result + '`';
+            return cb(data);
+          }
+        });
+      });
     });
-
-    // do we need to keep a certain number of the rolls?
-    if (parsed.keep) {
-      outcome.original_rolls = outcome.rolls;
-      switch (parsed.keepType) {
-        case 0:
-          outcome.rolls = _.sample(outcome.original_rolls, parsed.keep);
-          break;
-        case 1:
-          outcome.rolls = outcome.original_rolls.sort(function(a, b) { return b - a; }).slice(0, parsed.keep);
-          break;
-      }
-    }
-
-    // do we need to keep the highest or lowest roll?
-    if (parsed.highest) {
-      var max = _.max(outcome.rolls);
-      outcome.original_rolls = outcome.original_rolls || outcome.rolls;
-      outcome.rolls = [ max ];
-    } else if (parsed.lowest) {
-      var min = _.min(outcome.rolls);
-      outcome.original_rolls = outcome.original_rolls || outcome.rolls;
-      outcome.rolls = [ min ];
-    }
-
-    // determine the total of the rolls without the modifier
-    outcome.total = _.reduce(outcome.rolls, function(sum, roll) {
-      return sum + roll;
-    });
-
-    // apply the multiplier
-    if (parsed.multiplier > 1) {
-      outcome.total *= parsed.multiplier;
-    }
-
-    outcome.total += parsed.modifier;
-
-    data.outcomes.push(outcome);
   });
-
-  var total = _.chain(data.outcomes).pluck('total')
-    .reduce(function(sum, total) {
-      return sum + total;
-    }).value();
-
-  return data;
 }
 
 // parses a command given in dice notation
@@ -130,6 +323,8 @@ Dice.prototype.parse = function parse(command) {
   if (typeof command !== 'string') {
     throw new Error('Parameter `command` must be a string, not undefined');
   }
+
+  var pieces = command.split(/[-+\*]/);
 
   // determine number of dice to roll
   var times = command.match(/(\d+)d/i);

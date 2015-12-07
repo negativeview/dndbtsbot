@@ -1,4 +1,5 @@
-var stateHolderClass = require('./state-holder.js');	
+var stateHolderClass = require('./state-holder.js');
+var async = require('async');
 
 var ret = {};
 
@@ -47,17 +48,51 @@ function create(mongoose, bot, stateHolder) {
 	r2.executeSingle = function(message, stateHolder, next) {
 		if (message[0] == '!') {
 			var pieces = message.split(" ");
-			var command = pieces[0];
-			if (r2.handlers.findCommand(command)) {
-				r2.handlers.execute(
-					command,
-					pieces,
-					stateHolder,
-					next
-				);
-			} else {
-				r2.handlers.macro(command, pieces, stateHolder, next);
-			}
+
+			var fakeStateHolder = Object.create(stateHolder);
+			fakeStateHolder.simpleAddMessage = function(to, message) {
+				fakeStateHolder.result = message;
+			};
+
+			var newPieces = [];
+			async.eachSeries(pieces, function(iterator, callback) {
+				if (iterator[0] == ':' && iterator[1] == ':') {
+					var variableName = iterator.slice(2);
+					console.log('variable name:' + variableName);
+
+					r2.handlers.execute(
+						'!var',
+						[
+							'!var',
+							'get',
+							'me',
+							variableName
+						],
+						fakeStateHolder,
+						function() {
+							console.log('got here:');
+							console.log(fakeStateHolder);
+							newPieces.push(fakeStateHolder.result);
+							callback();
+						}
+					)
+				} else {
+					newPieces.push(iterator);
+					callback();
+				}
+			}, function() {
+				var command = newPieces[0];
+				if (r2.handlers.findCommand(command)) {
+					r2.handlers.execute(
+						command,
+						newPieces,
+						stateHolder,
+						next
+					);
+				} else {
+					r2.handlers.macro(command, newPieces, stateHolder, next);
+				}
+			});
 		}
 	};
 
