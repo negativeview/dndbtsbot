@@ -16,41 +16,7 @@ ret.init = function(mongoose) {
 	ret.roomRoleModel = mongoose.model('RoomRole');
 };
 
-ret.eachPlayer = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
-	var parameters = {
-		channel: channelID
-	};
-
-	ret.roomRoleModel.find(parameters).exec(function(err, res) {
-		if (err) {
-			console.log(err);
-			return next();
-		}
-
-		var commandToRun = stateHolder.getMessage(channelID);
-		stateHolder.overrideEvaluationMessage = commandToRun;
-		stateHolder.clearMessages(channelID);
-		async.eachSeries(
-			res,
-			function(item, callback) {
-				if (item.roleName == 'player') {
-					stateHolder.contextUser = item.user;
-					console.log(stateHolder.contextUser);
-					globalHandler('', '', channelID, commandToRun, rawEvent, stateHolder, callback);
-				} else {
-					console.log(item);
-				}
-			},
-			function() {
-				return next();
-			}
-		);
-	});	
-};
-
-ret.viewRoles = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
-	var username = rawEvent.d.author.id;
-
+ret.viewRoles = function(pieces, stateHolder, next) {
 	var parameters = {
 		channel: channelID
 	};
@@ -67,31 +33,29 @@ ret.viewRoles = function(pieces, message, rawEvent, channelID, globalHandler, st
 				message += "\n";
 			}
 
-			message += stateHolder.memberNumberToName(stateHolder.findServerID(channelID), res[i].user) + ': ' + res[i].roleName;
+			message += stateHolder.memberNumberToName(stateHolder.findServerID(stateHolder.channelID), res[i].user) + ': ' + res[i].roleName;
 		}
 
-		stateHolder.simpleAddMessage(username, message);
+		stateHolder.simpleAddMessage(stateHolder.username, message);
 		return next();
 	});
 };
 
-ret.setRole = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
-	var username = rawEvent.d.author.id;
-
+ret.setRole = function(pieces, stateHolder, next) {
 	if (pieces.length < 2) {
-		stateHolder.simpleAddMessage(username, 'Invalid syntax.');
+		stateHolder.simpleAddMessage(stateHolder.username, 'Invalid syntax.');
 		return next();
 	}
 
 	var knownRoles = ['dm', 'player'];
 
 	if (knownRoles.indexOf(pieces[1]) == -1) {
-		stateHolder.simpleAddMessage(username, 'Warning: I have no idea what that role means.');
+		stateHolder.simpleAddMessage(stateHolder.username, 'Warning: I have no idea what that role means.');
 	}
 
 	var parameters = {
-		channel: channelID,
-		user: username
+		channel: stateHolder.channelID,
+		user: stateHolder.username
 	};
 
 	ret.roomRoleModel.find(parameters).exec(function(err, res) {
@@ -113,7 +77,7 @@ ret.setRole = function(pieces, message, rawEvent, channelID, globalHandler, stat
 				return next();
 			}
 
-			stateHolder.simpleAddMessage(username, 'Set your role.');
+			stateHolder.simpleAddMessage(stateHolder.username, 'Set your role.');
 			return next();
 		});
 	});

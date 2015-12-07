@@ -2,15 +2,28 @@ var ret = {
 
 };
 
-ret.evaluate = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
+ret.evaluate = function(pieces, stateHolder, next) {
 	var commandToRun = '';
 	if (stateHolder.overrideEvaluationMessage) {
 		commandToRun = stateHolder.overrideEvaluationMessage;
 	} else {
-		commandToRun = stateHolder.getMessage(channelID);
-		stateHolder.clearMessages(channelID);
+		commandToRun = stateHolder.getMessage(stateHolder.channelID);
+		stateHolder.clearMessages(stateHolder.channelID);
 	}
-	globalHandler('', '', channelID, commandToRun, rawEvent, stateHolder, next);
+
+	var splitMessages = commandToRun.split("\n");
+	
+	var currentMessage = splitMessages[0];
+	for (var i = 1; i < splitMessages.length; i++) {
+		if (splitMessages[i][0] != '!') {
+			currentMessage += "\n" + splitMessages[i]
+		} else {
+			stateHolder.block.addStatement(currentMessage);
+			currentMessage = splitMessages[i];
+		}
+	}
+	stateHolder.block.addStatement(currentMessage);
+	return next();
 }
 
 module.exports = ret;
