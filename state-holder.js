@@ -1,12 +1,15 @@
-module.exports = function() {
+module.exports = function(user, userID, channelID, rawEvent) {
 	var ret = {
 		messages: {},
-		contextUser: null
+		contextUser: null,
+		channelID: channelID,
+		username: rawEvent.d.author.id
 	};
 
-	ret.init = function(mongoose, bot) {
+	ret.init = function(mongoose, bot, block) {
 		ret.mongoose = mongoose;
 		ret.bot = bot;
+		ret.block = block;
 	}
 
 	ret.memberNumberToName = function(serverID, number) {
@@ -20,12 +23,9 @@ module.exports = function() {
 		for (var userID in ret.bot.servers[serverID].members) {
 			var user = ret.bot.servers[serverID].members[userID];
 			if (user.user.username == username) {
-				console.log(user.user.id);
 				return user.user.id;
 			}
 		}
-		console.log('Could not find ID for ' + username);
-		console.log(ret.bot.servers[serverID].members);
 		return username;
 	}
 

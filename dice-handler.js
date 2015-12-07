@@ -40,7 +40,7 @@ function fancyFormatting(pruned, full, diceSize) {
 	return result;
 }
 
-module.exports = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
+module.exports = function(pieces, stateHolder, next) {
 	var startIndex = 1;
 	simpleMode = false;
 	plainMode = false;
@@ -87,7 +87,7 @@ module.exports = function(pieces, message, rawEvent, channelID, globalHandler, s
 				}
 			}
 
-			stateHolder.simpleAddMessage(channelID, message);
+			stateHolder.simpleAddMessage(stateHolder.channelID, message);
 		} else {
 			if (!simpleMode) {
 				message += result.command + " = ";
@@ -106,11 +106,11 @@ module.exports = function(pieces, message, rawEvent, channelID, globalHandler, s
 
 			if (result.parsed.extra)
 				message += ' ' + result.parsed.extra;
-			stateHolder.simpleAddMessage(channelID, message);
+			stateHolder.simpleAddMessage(stateHolder.channelID, message);
 		}
 	} catch (e) {
 		var message = '`' + e.message + '`';
-		stateHolder.simpleAddMessage(channelID, message);
+		stateHolder.simpleAddMessage(stateHolder.channelID, message);
 	}
 
 	next();

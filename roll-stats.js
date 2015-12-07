@@ -9,7 +9,7 @@ ret.init = function(diceHandler) {
 	ret.diceHandler = diceHandler;
 }
 
-ret.roll = function(pieces, message, rawEvent, channelID, globalHandler, stateHolder, next) {
+ret.roll = function(pieces, stateHolder, next) {
 	var fakePieces = [];
 	if (pieces.length > 1 && pieces[1].indexOf("simple") === 0) {
 		fakePieces = [
@@ -23,7 +23,7 @@ ret.roll = function(pieces, message, rawEvent, channelID, globalHandler, stateHo
 			'(4d6(kh3))x6'
 		];
 	}
-	ret.diceHandler(fakePieces, message, rawEvent, channelID, globalHandler, stateHolder, next);
+	ret.diceHandler(fakePieces, stateHolder, next);
 }
 
 module.exports = ret;

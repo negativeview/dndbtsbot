@@ -1,64 +1,31 @@
 var mongoose = require('mongoose');
-var adminmacroHandler = require('./adminmacro-handler.js');
-var diceHandler = require('./dice-handler.js');
-var echoHandler = require('./echo-handler.js');
-var helpHandler = require('./help-handler.js');
-var macroHandler = require('./macro-handler.js');
-var presenceHandler = require('./presence-handler.js');
-var rollstatsHandler = require('./roll-stats.js');
-var timeHandler = require('./time-handler.js');
 var bot = require('./authenticate.js');
 var async = require('async');
-var varHandler = require('./var-handler.js');
-var evaluateHandler = require('./evaluate-handler.js');
-var gameHandler = require('./game-handler.js');
-
-var handlers = {
-	'!adminsetmacro': adminmacroHandler.set,
-	'!adminremovemacro': adminmacroHandler.remove,
-	'!r': diceHandler,
-	'!roll': diceHandler,
-	'!rollstats': rollstatsHandler.roll,
-	'!time': timeHandler.parse,
-	'!timezone': timeHandler.timezone,
-	'!setmacro': macroHandler.set,
-	'!viewmacro': macroHandler.view,
-	'!removemacro': macroHandler.remove,
-	'!echo': echoHandler.echo,
-	'!echon': echoHandler.echon,
-	'!pm': echoHandler.pm,
-	'!var': varHandler.handle,
-	'!help': helpHandler.run,
-	'!evaluate': evaluateHandler.evaluate,
-	'!role': gameHandler.setRole,
-	'!roles': gameHandler.viewRoles,
-	'!eachplayer': gameHandler.eachPlayer
-}
-
-var stateHolderClass = require('./state-holder.js');
+var handlers = require('./handler-registry.js');
+var block = require('./execution-block.js');
+var stateHolderClass = require('./state-holder.js');	
 
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
-	if (user == bot.username || user == bot.id) return;
-
-	var stateHolder = stateHolderClass();
+	//if (user == bot.username || user == bot.id) return;
 	
-	stateHolder.init(mongoose, bot);
-	globalHandlerMiddle(user, userID, channelID, message, rawEvent, stateHolder)
+	var stateHolder = stateHolderClass(user, userID, channelID, rawEvent);
+	var b = block.create(mongoose, bot, stateHolder);
+	b.setHandlers(handlers);
+
+	globalHandlerMiddle(message, b)
 }
 
-function globalHandlerMiddle(user, userID, channelID, message, rawEvent, stateHolder, callback) {
+function globalHandlerMiddle(message, block) {
 	/**
 	 * If our first command is setmacro or adminsetmacro, we need to treat things specially.
 	 * Instead of being able to process multiple commands in a message, we must gobble the whole
 	 * thing up.
 	 **/
 	if (
-		(message.indexOf("!setmacro") === 0) ||
-		(message.indexOf("!adminsetmacro") === 0)
+		(message.indexOf("!macro") === 0)
 	) {
-		globalHandler(user, userID, channelID, message, rawEvent, stateHolder, function() {
-			stateHolder.doFinalOutput();
-		});
+		block.addStatement(message);
+		block.execute();
 		return;
 	}
 
@@ -66,96 +33,32 @@ function globalHandlerMiddle(user, userID, channelID, message, rawEvent, stateHo
 	 * If it's not one of those special commands, split commands up and run them individually.
 	 **/
 	var splitMessages = message.split("\n");
-
-	var realMessages = [];
-
 	var currentMessage = splitMessages[0];
 	for (var i = 1; i < splitMessages.length; i++) {
 		if (splitMessages[i][0] != '!') {
 			currentMessage += "\n" + splitMessages[i]
 		} else {
-			realMessages.push(currentMessage);
+			block.addStatement(currentMessage);
 			currentMessage = splitMessages[i];
 		}
 	}
-	realMessages.push(currentMessage);
+	block.addStatement(currentMessage);
 
-	async.eachSeries(
-		realMessages,
-		function(item, callback) {
-			globalHandler(user, userID, channelID, item, rawEvent, stateHolder, callback);
-		},
-		function() {
-			stateHolder.doFinalOutput();
-			if (callback) {
-				//callback();
-			}
-		}
-	);
+	block.execute();
 }
-
-function globalHandler(user, userID, channelID, message, rawEvent, stateHolder, next) {
-	if (message[0] == '!') {
-		var pieces = message.split(" ");
-		var command = pieces[0];
-		if (command in handlers) {
-			handlers[pieces[0]](pieces, message, rawEvent, channelID, globalHandlerMiddle, stateHolder, next);
-		} else {
-			adminmacroHandler.attempted(
-				pieces,
-				message,
-				rawEvent,
-				channelID,
-				globalHandlerMiddle,
-				stateHolder,
-				macroHandler.attempted,
-				next
-			);
-		}
-	}
-};
 
 mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 	if (err) throw err;
 
-	adminmacroHandler.init(mongoose);
-	macroHandler.init(mongoose);
-	timeHandler.init(mongoose);
-	presenceHandler.init(mongoose, bot);
-	rollstatsHandler.init(diceHandler);
-	helpHandler.init(mongoose);
-	varHandler.init(mongoose);
-	gameHandler.init(mongoose);
+	handlers.init(mongoose, bot);
 
 	var Macro = mongoose.model('Macro');
-
-	var usedTimezones = [];
-
-	for (i = -14; i < 0; i++) {
-		usedTimezones[usedTimezones.length] = {
-			code: 'Etc/GMT' + i,
-			name: 'GMT+' + (-1 * i)
-		};
-	}
-	usedTimezones[usedTimezones.length] = {
-		code: 'Etc/GMT+0',
-		name: 'GMT'
-	};
-
-	for (i = 1; i <= 12; i++) {
-		usedTimezones[usedTimezones.length] = {
-			code: 'Etc/GMT+' + i,
-			name: 'GMT-' + i
-		};
-	}
 
 	bot.on('ready', function() {
 		console.log(bot.username + " - (" + bot.id + ")");
 	});
 
 	bot.on('message', globalHandlerWrap);
-
-	bot.on('presence', presenceHandler.presence);
 });
 
 function getRandomInt(min, max) {
