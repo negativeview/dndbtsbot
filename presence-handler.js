@@ -20,20 +20,13 @@ ret.presence = function(user, userID, status, rawEvent) {
 			console.log('Attempting to send a greeting message.');
 			var channel = null;
 
-			console.log('welcome:');
-			console.log(rawEvent);
-			return;
-
-			for (var i in ret.bot.servers) {
-				for (var m in ret.bot.servers[i].channels) {
-					if (ret.bot.servers[i].channels[m].position == 0) {
-						channel = ret.bot.servers[i].channels[m].id;
-						break;
-					}
+			var serverID = rawEvent.d.guild_id;
+			for (var m in ret.bot.servers[serverID].channels) {
+				if (ret.bot.servers[serverID].channels[m].position == 0) {
+					channel = ret.bot.servers[serverID].channels[m].id;
+					break;
 				}
-				break;
 			}
-			console.log(channel);
 			if (channel) {
 				ret.bot.sendMessage({
 					to: channel,
