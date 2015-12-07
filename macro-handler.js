@@ -159,7 +159,7 @@ ret.handle = function(pieces, stateHolder, next) {
 	}
 
 	if (isAdmin) {
-		var serverID = stateHolder.findServerID(channelID);
+		var serverID = stateHolder.findServerID(stateHolder.channelID);
 		if (!serverID) {
 			stateHolder.simpleAddMessage(stateHolder.username, 'You must use this command from a channel so that I know what server to use.');
 			return next();

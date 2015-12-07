@@ -6,7 +6,7 @@ var block = require('./execution-block.js');
 var stateHolderClass = require('./state-holder.js');	
 
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
-	//if (user == bot.username || user == bot.id) return;
+	if (user == bot.username || user == bot.id) return;
 	
 	var stateHolder = stateHolderClass(user, userID, channelID, rawEvent);
 	var b = block.create(mongoose, bot, stateHolder);

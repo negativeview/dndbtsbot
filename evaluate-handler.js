@@ -10,7 +10,19 @@ ret.evaluate = function(pieces, stateHolder, next) {
 		commandToRun = stateHolder.getMessage(stateHolder.channelID);
 		stateHolder.clearMessages(stateHolder.channelID);
 	}
-	stateHolder.block.addStatement(commandToRun);
+
+	var splitMessages = commandToRun.split("\n");
+	
+	var currentMessage = splitMessages[0];
+	for (var i = 1; i < splitMessages.length; i++) {
+		if (splitMessages[i][0] != '!') {
+			currentMessage += "\n" + splitMessages[i]
+		} else {
+			stateHolder.block.addStatement(currentMessage);
+			currentMessage = splitMessages[i];
+		}
+	}
+	stateHolder.block.addStatement(currentMessage);
 	return next();
 }
 
