@@ -19,8 +19,6 @@ function Dice(options) {
     command: null,
     parsed: null,
     outcomes: [],
-    text: [],
-    verbose: []
   };
 
 };
@@ -67,8 +65,6 @@ Dice.prototype.execute = function execute(command) {
   self.throttle();
 
   _.times(data.parsed.repeat, function(n) {
-    var text = [];
-    var verbose = [];
     var outcome = {
       rolls: [],
       total: 0
@@ -78,7 +74,6 @@ Dice.prototype.execute = function execute(command) {
     _.times(data.parsed.times, function(n) {
       var rolled = self.roll(data.parsed.faces);
       outcome.rolls.push(rolled);
-      verbose.push('Roll #' + (n+1) + ': ' + rolled);
     });
 
     // do we need to keep a certain number of the rolls?
@@ -92,7 +87,6 @@ Dice.prototype.execute = function execute(command) {
           outcome.rolls = outcome.original_rolls.sort(function(a, b) { return b - a; }).slice(0, parsed.keep);
           break;
       }
-      verbose.push('Keeping ' + parsed.keep + ' of ' + parsed.times + ' rolls: ' + outcome.rolls.toString());
     }
 
     // do we need to keep the highest or lowest roll?
@@ -100,69 +94,31 @@ Dice.prototype.execute = function execute(command) {
       var max = _.max(outcome.rolls);
       outcome.original_rolls = outcome.original_rolls || outcome.rolls;
       outcome.rolls = [ max ];
-      verbose.push('Selecting the highest roll: ' + max);
     } else if (parsed.lowest) {
       var min = _.min(outcome.rolls);
       outcome.original_rolls = outcome.original_rolls || outcome.rolls;
       outcome.rolls = [ min ];
-      verbose.push('Selecting the lowest roll: ' + min);
     }
 
     // determine the total of the rolls without the modifier
     outcome.total = _.reduce(outcome.rolls, function(sum, roll) {
       return sum + roll;
     });
-    if (parsed.times > 1) {
-      verbose.push('Adding up all the rolls: ' + outcome.rolls.join(' + ') + ' = ' + outcome.total);
-    }
-    text.push('[ ' + outcome.rolls.join(' + ') +' ]');
 
     // apply the multiplier
     if (parsed.multiplier > 1) {
-      text.push('x ' + parsed.multiplier);
-      verbose.push('Applying the multiplier: ' + outcome.total + ' x ' + parsed.multiplier + ' = ' + (outcome.total * parsed.multiplier));
       outcome.total *= parsed.multiplier;
     }
 
-    // add the modifier
-    if (parsed.modifier > 0) {
-      text.push('+ ' + parsed.modifier);
-      verbose.push('Adding the modifier: ' + outcome.total + ' + ' + parsed.modifier + ' = ' + (outcome.total + parsed.modifier));
-    } else {
-      text.push('- ' + Math.abs(parsed.modifier));
-      verbose.push('Adding the modifier: ' + outcome.total + ' - ' + Math.abs(parsed.modifier) + ' = ' + (outcome.total + parsed.modifier));
-    }
     outcome.total += parsed.modifier;
 
-    verbose.push('The total of outcome #' + (n+1) + ' is ' + outcome.total);
-
     data.outcomes.push(outcome);
-
-    if (text.length) {
-      data.text.push(text);
-    }
-    data.verbose.push(verbose);
-
   });
 
   var total = _.chain(data.outcomes).pluck('total')
     .reduce(function(sum, total) {
       return sum + total;
     }).value();
-
-  data.verbose = _.flatten(data.verbose);
-  data.verbose.push('The results of ' + data.command + ' is ' + total);
-  if (data.text.length > 1) {
-    data.text = _.map(data.text, function(value, outcome) {
-      return '(' + value.join(' ') + ')';
-    }).join(' + ');
-    data.text += ' = ' + total;
-  } if (data.text.length === 0) {
-    data.text = total;
-  } else {
-    data.text = _.flatten(data.text).join(' ') + ' = ' + total;
-  }
-  data.text = 'The result of ' + data.command + ' is ' + data.text;
 
   return data;
 }
