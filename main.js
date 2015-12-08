@@ -7,12 +7,16 @@ var stateHolderClass = require('./state-holder.js');
 
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	if (user == bot.username || user == bot.id) return;
+
+	if (message[0] != '!') return;
 	
 	var stateHolder = stateHolderClass(user, userID, channelID, rawEvent);
 	var b = block.create(mongoose, bot, stateHolder);
 	b.setHandlers(handlers);
 
-	globalHandlerMiddle(message, b)
+	globalHandlerMiddle(message, b);
+
+	//bot.deleteMessage({channel: rawEvent.d.channel_id, messageID: rawEvent.d.id});
 }
 
 function globalHandlerMiddle(message, block) {

@@ -65,6 +65,19 @@ module.exports = function(user, userID, channelID, rawEvent) {
 	ret.doFinalOutput = function() {
 		for (var i in ret.messages) {
 			var outputType = ret.messages[i];
+
+			var channelID = ret.channelID;
+			if (channelID) {
+				var serverID = ret.findServerID(channelID);
+				if (serverID) {
+					outputType.message = ret.memberNumberToName(serverID, ret.username) + ': ' + outputType.message;
+				} else {
+					console.log('no server id');
+				}
+			} else {
+				console.log('no channel id');
+				console.log(outputType);
+			}
 			ret.bot.sendMessage(outputType);
 		}
 	};

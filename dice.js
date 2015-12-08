@@ -185,7 +185,19 @@ Dice.prototype.execute = function execute(command, callback) {
   var isSimple = false;
   var isPlain = false;
 
-  lex.addRule(/(\d+)d(\d+)/, function(lexeme) {
+  lex.addRule(/\+\-/, function (lexeme) {
+    tokens.push({
+      type: '-',
+      lexeme: '-'
+    });
+  });
+  lex.addRule(/\-/, function(lexeme) {
+    tokens.push({
+      type: '-',
+      lexeme: lexeme
+    });
+  });
+  lex.addRule(/-?(\d+)d(\d+)/, function(lexeme) {
     tokens.push({
       type: 'die',
       lexeme: lexeme
@@ -226,12 +238,6 @@ Dice.prototype.execute = function execute(command, callback) {
   lex.addRule(/\+/, function(lexeme) {
     tokens.push({
       type: '+',
-      lexeme: lexeme
-    });
-  });
-  lex.addRule(/\-/, function(lexeme) {
-    tokens.push({
-      type: '-',
       lexeme: lexeme
     });
   });
