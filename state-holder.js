@@ -31,11 +31,15 @@ module.exports = function(user, userID, channelID, rawEvent) {
 
 	ret.isAdmin = function(serverID, username) {
 		var isAdmin = false;
-		for (var i = 0; i < ret.bot.servers[serverID].members[username].roles.length; i++) {
-			var roleID = ret.bot.servers[serverID].members[username].roles[i];
+		var theUser = ret.bot.servers[serverID].members[username];
+		if (!theUser) {
+			console.log(username + ' not found as a username.');
+			return false;
+		}
 
+		for (var i = 0; i < theUser.roles.length; i++) {
+			var roleID = theUser.roles[i];
 			var role = ret.bot.servers[serverID].roles[roleID].name;
-
 			if (role.toLocaleLowerCase() == 'moderator') {
 				isAdmin = true;
 				break;
