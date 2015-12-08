@@ -99,6 +99,8 @@ function createNumberEquivalents(tokens, cb) {
 }
 
 function doMath(tokens, cb) {
+  if (tokens.length == 0) return cb(0);
+
   var result = parseInt(tokens[0].number);
   for (var i = 1; i < tokens.length; i++) {
     var token = tokens[i];
