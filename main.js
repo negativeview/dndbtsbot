@@ -16,7 +16,7 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 
 	globalHandlerMiddle(message, b);
 
-	//bot.deleteMessage({channel: rawEvent.d.channel_id, messageID: rawEvent.d.id});
+	bot.deleteMessage({channel: rawEvent.d.channel_id, messageID: rawEvent.d.id});
 }
 
 function globalHandlerMiddle(message, block) {
