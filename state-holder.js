@@ -49,16 +49,7 @@ module.exports = function(user, userID, channelID, rawEvent) {
 	}
 
 	ret.findServerID = function(channelID) {
-		var serverID = null;
-		for (var i in ret.bot.servers) {
-			for (var m in ret.bot.servers[i].channels) {
-				if (ret.bot.servers[i].channels[m].id == channelID) {
-					serverID = ret.bot.servers[i].id;
-					break;
-				}
-			}
-			if (serverID) break;
-		}
+		var serverID = ret.bot.serverFromChannel(channelID);
 		return serverID;
 	}
 

@@ -15,6 +15,9 @@ ret.init = function(mongoose) {
 	ret.varModel = mongoose.model('Var');
 };
 
+/**
+ * TODO: `var get me` to list all variables.
+ **/
 function varGet(pieces, stateHolder, next) {
 	if (pieces.length < 4) {
 		stateHolder.simpleAddMessage(stateHolder.username, 'Not enough parameters to var get.');
