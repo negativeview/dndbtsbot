@@ -13,16 +13,20 @@ module.exports = function(user, userID, channelID, rawEvent) {
 	}
 
 	ret.memberNumberToName = function(serverID, number) {
+		console.log('member number to name: ' + serverID + ' ' + number);
 		if (number in ret.bot.servers[serverID].members) {
+			console.log("\t" + ret.bot.servers[serverID].members[number].user.username);
 			return ret.bot.servers[serverID].members[number].user.username;
 		}
 		return number;
 	}
 
 	ret.memberNameToNumber = function(serverID, username) {
+		console.log('member name to number: ' + serverID + ' ' + username);
 		for (var userID in ret.bot.servers[serverID].members) {
 			var user = ret.bot.servers[serverID].members[userID];
 			if (user.user.username == username) {
+				console.log("\t" + user.user.id);
 				return user.user.id;
 			}
 		}
@@ -49,7 +53,9 @@ module.exports = function(user, userID, channelID, rawEvent) {
 	}
 
 	ret.findServerID = function(channelID) {
+		console.log('findServerID: ' + channelID);
 		var serverID = ret.bot.serverFromChannel(channelID);
+		console.log("\t" + serverID);
 		return serverID;
 	}
 
