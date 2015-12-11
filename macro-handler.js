@@ -1,5 +1,3 @@
-var Dice = require('node-dice-js');
-
 var ret = {
 	macroModel: null
 };
