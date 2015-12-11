@@ -106,11 +106,11 @@ function doMath(tokens, cb) {
     var token = tokens[i];
     switch (token.type) {
       case '+':
-        result += parseInt(tokens[i+1].number);
+        result += tokens.length >= i > parseInt(tokens[i+1].number) : 0;
         i++;
         break;
       case '-':
-        result -= parseInt(tokens[i+1].number);
+        result -= tokens.length >= i > parseInt(tokens[i+1].number) : 0;
         i++;
         break;
     }
