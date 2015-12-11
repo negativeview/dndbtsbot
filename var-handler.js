@@ -150,7 +150,7 @@ ret.handle = function(pieces, stateHolder, next) {
 		}
 
 		if (pieces[1] != 'get') {
-			var admin = stateHolder.isAdmin(stateHolder.serverID, username);
+			var admin = stateHolder.isAdmin(stateHolder.serverID, stateHolder.username);
 			if (!admin) {
 				stateHolder.simpleAddMessage(stateHolder.username, 'Only administrators can use this command.');
 				return next();
@@ -160,7 +160,7 @@ ret.handle = function(pieces, stateHolder, next) {
 
 	if (pieces[2] == 'user') {
 		if (pieces[1] == 'set') {
-			var admin = stateHolder.isAdmin(stateHolder.serverID, username);
+			var admin = stateHolder.isAdmin(stateHolder.serverID, stateHolder.username);
 			if (!admin) {
 				stateHolder.simpleAddMessage(stateHolder.username, 'Only administrators can use this command.');
 				return next();
