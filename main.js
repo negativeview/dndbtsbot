@@ -73,7 +73,6 @@ mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 			case 'GUILD_ROLE_CREATE':
 			case 'GUILD_ROLE_UPDATE':
 			case 'GUILD_MEMBER_UPDATE':
-				console.log(rawEvent);
 				break;
 		}
 	});

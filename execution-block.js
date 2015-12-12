@@ -22,6 +22,16 @@ function create(mongoose, bot, stateHolder) {
 		return b;
 	}
 
+	r2.insertStatements = function(statements) {
+		var argumentList = [
+			r2.lineNumber,
+			0
+		];
+
+		argumentList = argumentList.concat(statements);
+		r2.statements.splice.apply(r2.statements, argumentList);
+	};
+
 	r2.addStatement = function(statement) {
 		r2.statements.push(statement);
 	};
@@ -56,7 +66,24 @@ function create(mongoose, bot, stateHolder) {
 
 			var newPieces = [];
 			async.eachSeries(pieces, function(iterator, callback) {
-				if (iterator[0] == ':' && iterator[1] == ':') {
+				if (iterator[0] == '/' && iterator[1] == '/') {
+					var variableName = iterator.slice(2);
+
+					r2.handlers.execute(
+						'!var',
+						[
+							'!var',
+							'get',
+							'channel',
+							variableName
+						],
+						fakeStateHolder,
+						function() {
+							newPieces.push(fakeStateHolder.result);
+							callback();
+						}
+					)					
+				} else if (iterator[0] == ':' && iterator[1] == ':') {
 					var variableName = iterator.slice(2);
 
 					r2.handlers.execute(

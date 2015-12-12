@@ -203,17 +203,20 @@ ret.attempted = function(pieces, stateHolder, next) {
 		if (res.length) {
 			command = res[0].macro;
 
+			var commands = [];
+
 			var splitMessages = command.split("\n");
 			var currentMessage = splitMessages[0];
 			for (var i = 1; i < splitMessages.length; i++) {
 				if (splitMessages[i][0] != '!') {
 					currentMessage += "\n" + splitMessages[i]
 				} else {
-					stateHolder.block.addStatement(currentMessage);
+					commands.push(currentMessage);
 					currentMessage = splitMessages[i];
 				}
 			}
-			stateHolder.block.addStatement(currentMessage);
+			commands.push(currentMessage);
+			stateHolder.block.insertStatements(commands);
 			return next();
 		} else {
 			var parameters = {
@@ -228,6 +231,7 @@ ret.attempted = function(pieces, stateHolder, next) {
 				}
 
 				if (res.length) {
+					var commands = [];
 					command = res[0].macro;
 					var splitMessages = command.split("\n");
 					var currentMessage = splitMessages[0];
@@ -235,11 +239,12 @@ ret.attempted = function(pieces, stateHolder, next) {
 						if (splitMessages[i][0] != '!') {
 							currentMessage += "\n" + splitMessages[i]
 						} else {
-							stateHolder.block.addStatement(currentMessage);
+							commands.push(currentMessage);
 							currentMessage = splitMessages[i];
 						}
 					}
-					stateHolder.block.addStatement(currentMessage);
+					commands.push(currentMessage);
+					stateHolder.block.insertStatements(commands);
 					return next();
 				} else {
 					return next();
