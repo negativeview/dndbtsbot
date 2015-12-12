@@ -244,6 +244,13 @@ ret.attempted = function(pieces, stateHolder, next) {
 						}
 					}
 					commands.push(currentMessage);
+
+					for (var i = 0; i < commands.length; i++) {
+						commands[i] = commands[i].replace(/\[(\d+)\]/, function(match, p1, offset, string) {
+							return pieces[p1];
+						});
+					}
+
 					stateHolder.block.insertStatements(commands);
 					return next();
 				} else {
