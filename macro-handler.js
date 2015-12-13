@@ -246,7 +246,7 @@ ret.attempted = function(pieces, stateHolder, next) {
 					commands.push(currentMessage);
 
 					for (var i = 0; i < commands.length; i++) {
-						commands[i] = commands[i].replace(/\[(\d+)\]/, function(match, p1, offset, string) {
+						commands[i] = commands[i].replace(/\[(\d+)\]/g, function(match, p1, offset, string) {
 							return pieces[p1];
 						});
 					}

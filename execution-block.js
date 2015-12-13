@@ -56,6 +56,11 @@ function create(mongoose, bot, stateHolder) {
 	};
 
 	r2.executeSingle = function(message, stateHolder, next) {
+		console.log('pre:' + message);
+		message = message.replace(/:: +/g, function(match, offset, string) {
+			return '::';
+		});
+		console.log('post:' + message);
 		if (message[0] == '!') {
 			var pieces = message.split(" ");
 
@@ -83,7 +88,7 @@ function create(mongoose, bot, stateHolder) {
 							callback();
 						}
 					)					
-				} else if (iterator[0] == ':' && iterator[1] == ':') {
+				} else if (iterator[0] == ':' && iterator[1] == ':' && iterator.length > 2 && iterator[2] != "\n") {
 					var variableName = iterator.slice(2);
 
 					r2.handlers.execute(

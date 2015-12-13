@@ -73,7 +73,10 @@ module.exports = function(user, userID, channelID, rawEvent) {
 	};
 
 	ret.getMessage = function(to) {
-		return ret.messages[to].message;
+		var message = ret.messages[to];
+		if (message)
+			return message.message;
+		return '';
 	}
 
 	ret.clearMessages = function(to) {

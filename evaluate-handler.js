@@ -14,15 +14,22 @@ ret.evaluate = function(pieces, stateHolder, next) {
 	var splitMessages = commandToRun.split("\n");
 	
 	var currentMessage = splitMessages[0];
+
+	var statements = [];
+
 	for (var i = 1; i < splitMessages.length; i++) {
 		if (splitMessages[i][0] != '!') {
 			currentMessage += "\n" + splitMessages[i]
 		} else {
-			stateHolder.block.addStatement(currentMessage);
+			statements.push(currentMessage);
 			currentMessage = splitMessages[i];
 		}
 	}
-	stateHolder.block.addStatement(currentMessage);
+
+	statements.push(currentMessage);
+
+	stateHolder.block.insertStatements(statements);
+
 	return next();
 }
 
