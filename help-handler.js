@@ -34,11 +34,11 @@ ret.run = function(pieces, stateHolder, next) {
 		"Variables\n" +
 		"\t`var set me strength 3` - Sets a variable on yourself that can be used for other things.\n" +
 		"\t`var get me strength` - Echos a variable you have set previously.\n" +
-		"Roles\n" +
-		"\t`!role <player|dm>` - Sets your role in this particular channel.\n" +
-		"\t`!each <player>` - Loops for each player in this room.\n" +
-		"Evaluation\n" +
-		"\t`!evaluate` Evaluates everything that would be printed as if it was itself a command.\n\n" +
+		"Tables\n" +
+		"\t`!table create me <tablename>` - Create a table.\n" +
+		"\t`!table set me <tablename> <key> <value>` - Set a value in a table.\n" +
+		"\t`!table get me <tablename> <key>` - Get a value from a table.\n" +
+		"\t`!table random me <tablename>` - Get a random value from a table.\n" +
 		"**Note** that multiple commands can be put into a single message. This is how you do crazy stuff.\n\n" +
 		"Source code can be found at https://github.com/negativeview/dndbtsbot";
 

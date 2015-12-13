@@ -8,6 +8,7 @@ var varHandler = require('./var-handler.js');
 var evaluateHandler = require('./evaluate-handler.js');
 var gameHandler = require('./game-handler.js');
 var eachHandler = require('./each-handler.js');
+var tableHandler = require('./table-handler.js');
 
 var handlers = {
 	'!r': diceHandler,
@@ -20,12 +21,7 @@ var handlers = {
 	'!macro': macroHandler.handle,
 	'!var': varHandler.handle,
 	'!evaluate': evaluateHandler.evaluate,
-
-	'!each': eachHandler.each,
-	'!setuser': eachHandler.nop,
-
-	'!role': gameHandler.setRole,
-	'!roles': gameHandler.viewRoles,
+	'!table': tableHandler.handle
 }
 
 var ret = {};
@@ -36,6 +32,7 @@ ret.init = function(mongoose, bot) {
 	helpHandler.init(mongoose);
 	varHandler.init(mongoose);
 	gameHandler.init(mongoose);
+	tableHandler.init(mongoose);
 }
 
 ret.findCommand = function(command) {

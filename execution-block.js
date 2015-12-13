@@ -74,37 +74,81 @@ function create(mongoose, bot, stateHolder) {
 				if (iterator[0] == '/' && iterator[1] == '/') {
 					var variableName = iterator.slice(2);
 
-					r2.handlers.execute(
-						'!var',
-						[
+					var matches = variableName.match(/([^\[]+)\[([^\]]+)\]/);
+					if (matches) {
+						var tableName = matches[1];
+						var key = matches[2];
+
+						r2.handlers.execute(
+							'!table',
+							[
+								'!table',
+								'get',
+								'channel',
+								tableName,
+								key
+							],
+							fakeStateHolder,
+							function() {
+								newPieces.push(fakeStateHolder.result);
+								callback();
+							}
+						);
+					} else {
+						r2.handlers.execute(
 							'!var',
-							'get',
-							'channel',
-							variableName
-						],
-						fakeStateHolder,
-						function() {
-							newPieces.push(fakeStateHolder.result);
-							callback();
-						}
-					)					
+							[
+								'!var',
+								'get',
+								'channel',
+								variableName
+							],
+							fakeStateHolder,
+							function() {
+								newPieces.push(fakeStateHolder.result);
+								callback();
+							}
+						);
+					}			
 				} else if (iterator[0] == ':' && iterator[1] == ':' && iterator.length > 2 && iterator[2] != "\n") {
 					var variableName = iterator.slice(2);
 
-					r2.handlers.execute(
-						'!var',
-						[
+					var matches = variableName.match(/([^\[]+)\[([^\]]+)\]/);
+					if (matches) {
+						var tableName = matches[1];
+						var key = matches[2];
+
+						r2.handlers.execute(
+							'!table',
+							[
+								'!table',
+								'get',
+								'me',
+								tableName,
+								key
+							],
+							fakeStateHolder,
+							function() {
+								newPieces.push(fakeStateHolder.result);
+								callback();
+							}
+						);
+					} else {
+						r2.handlers.execute(
 							'!var',
-							'get',
-							'me',
-							variableName
-						],
-						fakeStateHolder,
-						function() {
-							newPieces.push(fakeStateHolder.result);
-							callback();
-						}
-					)
+							[
+								'!var',
+								'get',
+								'me',
+								variableName
+							],
+							fakeStateHolder,
+							function() {
+								newPieces.push(fakeStateHolder.result);
+								callback();
+							}
+						);
+					}
 				} else {
 					newPieces.push(iterator);
 					callback();
