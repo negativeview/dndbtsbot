@@ -252,8 +252,11 @@ function handleSingleCommand(command, state, callback) {
 		}
 	};
 
-	console.log('Got to end without fulfilling entire contract:');
-	console.log(command);
+	ret.stateHolder.simpleAddMessage(ret.stateHolder.username, 'Got to end of command without being able to process it completely. Here\'s what\'s left:');
+	for (var i = 0; i < command.length; i++) {
+		ret.stateHolder.simpleAddMessage(ret.stateHolder.username, "\n");
+		ret.stateHolder.simpleAddMessage(ret.stateHolder.username, command[i].type + ': ' + command[i].toString());
+	}
 
 	return callback(command);
 }
