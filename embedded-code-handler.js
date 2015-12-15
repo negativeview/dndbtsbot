@@ -335,8 +335,6 @@ function handleSingleCommand(stateHolder, command, state, callback) {
 				handleSingleCommand(stateHolder, newCommand, state, callback);
 			});
 			return;
-		} else {
-			console.log("Not: " + pattern.name);
 		}
 	};
 
