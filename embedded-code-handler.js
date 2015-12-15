@@ -126,7 +126,12 @@ var ret = {
 				);
 			},
 			work: function(stateHolder, index, command, state, cb) {
-				ret.stateHolder.simpleAddMessage(ret.stateHolder.channelID, command[1].rawValue);
+				ret.stateHolder.simpleAddMessage(
+					ret.stateHolder.channelID,
+					command[1].type == 'VARIABLE' ?
+						state.variables[command[1].rawValue] :
+						command[1].rawValue
+				);
 				return cb([]);
 			}
 		},
@@ -194,14 +199,40 @@ var ret = {
 				);
 			}
 		},
+		{ name: 'Squash parens',
+			matches: function(command) {
+				var res = doesMatch(
+					command,
+					[
+						['LEFT_PAREN'],
+						['CHANNEL_VARIABLE', 'VARIABLE', 'QUOTED_STRING', 'NUMBER'],
+						['RIGHT_PAREN']
+					]
+				);
+				return res;
+			},
+			work: function(stateHolder, index, command, state, cb) {
+				var tmpCommand = [];
+				for (var i = 0; i < index; i++) {
+					tmpCommand.push(command[i]);
+				}
+
+				tmpCommand.push(command[index + 1]);
+				
+				for (var i = index + 3; i < command.length; i++) {
+					tmpCommand.push(command[i]);
+				}
+				return cb(tmpCommand);
+			}
+		},
 		{ name: 'String plus variable',
 			matches: function(command) {
 				return doesMatch(
 					command,
 					[
-						['VARIABLE', 'QUOTED_STRING'],
+						['VARIABLE', 'QUOTED_STRING', 'NUMBER'],
 						['PLUS'],
-						['QUOTED_STRING', 'VARIABLE']
+						['QUOTED_STRING', 'VARIABLE', 'NUMBER']
 					]
 				);
 			},
@@ -293,14 +324,19 @@ ret.setHandlers = function(handlers) {
 function handleSingleCommand(stateHolder, command, state, callback) {
 	if (command.length == 0) return callback(command);
 
+	console.log(command);
+
 	for (var i = 0; i < ret.patterns.length; i++) {
 		var pattern = ret.patterns[i];
 		var found = pattern.matches(command);
 		if (found !== false) {
 			pattern.work(stateHolder, found, command, state, function(newCommand) {
+				console.log(pattern.name);
 				handleSingleCommand(stateHolder, newCommand, state, callback);
 			});
 			return;
+		} else {
+			console.log("Not: " + pattern.name);
 		}
 	};
 
