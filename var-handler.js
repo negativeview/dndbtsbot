@@ -103,7 +103,6 @@ function varGet(pieces, stateHolder, next) {
 				stateHolder.simpleAddMessage(stateHolder.channelID, res[0].value);
 			} else {
 				stateHolder.simpleAddMessage(stateHolder.username, 'No such variable ' + parameters.name + '.');
-				console.log(parameters);
 			}
 			next();
 		}

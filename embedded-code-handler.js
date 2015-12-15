@@ -7,25 +7,77 @@ function filterInt(value) {
   return NaN;
 }
 
+function doesMatch(command, matchDefinition) {
+	for (var i = 0; i <= command.length - matchDefinition.length; i++) {
+		var found = true;
+
+		for (var m = 0; m < matchDefinition.length; m++) {
+			if (matchDefinition[m].indexOf(command[i + m].type) == -1) {
+				found = false;
+				break;
+			} 
+		}
+
+		if (found) return i;
+	}
+
+	return false;
+}
+
 var ret = {
 	patterns: [
+		{ name: 'Channel variable',
+			matches: function(command) {
+				return doesMatch(
+					command,
+					[
+						['CHANNEL_VARIABLE']
+					]
+				);
+			},
+			work: function(stateHolder, index, command, state, cb) {
+				var tmpCommand = [];
+				for (var i = 0; i < index; i++) {
+					tmpCommand.push(command[i]);
+				}
+
+				var internalCommand = [
+					'!var',
+					'get',
+					'channel',
+					command[index].rawValue.substring(1)
+				];
+				ret.handlers.execute(
+					'!var',
+					internalCommand,
+					ret.fakeStateHolder,
+					function() {
+						tmpCommand.push({
+							type: 'QUOTED_STRING',
+							rawValue: ret.fakeStateHolder.result
+						});
+
+						for (var i = index + 1; i < command.length; i++) {
+							tmpCommand.push(command[i]);
+						}
+						return cb(tmpCommand);
+					}
+				);
+			}
+		},
 		{ name: 'Table lookup',
 			matches: function(command) {
-				for (var i = 0; i < command.length - 3; i++) {
-					var token = command[i];
-					if (token.type == 'VARIABLE') {
-						if (command[i + 1].type == 'LEFT_BRACKET') {
-							if (command[i + 2].type == 'QUOTED_STRING' || command[i + 2].type == 'NUMBER' || command[i + 2].type == 'VARIABLE') {
-								if (command[i + 3].type == 'RIGHT_BRACKET') {
-									return i;
-								}
-							}
-						}
-					}
-				}
-				return false;				
+				return doesMatch(
+					command,
+					[
+						['VARIABLE'],
+						['LEFT_BRACKET'],
+						['QUOTED_STRING', 'NUMBER', 'VARIABLE'],
+						['RIGHT_BRACKET']
+					]
+				);
 			},
-			work: function(index, command, state, cb) {
+			work: function(stateHolder, index, command, state, cb) {
 				var tmpCommand = [];
 				for (var i = 0; i < index; i++) {
 					tmpCommand.push(command[i]);
@@ -64,40 +116,48 @@ var ret = {
 		},
 		{ name: 'Echo something',
 			matches: function(command) {
-				for (var i = 0; i < command.length - 2; i++) {
-					var token = command[i];
-					if (token.type == 'ECHO') {
-						if (command[i + 1].type == 'QUOTED_STRING' || command[i + 1].type == 'VARIABLE' || command[i + 1].type == 'NUMBER') {
-							if (command[i + 2].type == 'SEMICOLON') {
-								return i;
-							}
-						}
-					}
-				}
-				return false;
+				return doesMatch(
+					command,
+					[
+						['ECHO'],
+						['QUOTED_STRING', 'VARIABLE', 'NUMBER'],
+						['SEMICOLON']
+					]
+				);
 			},
-			work: function(index, command, state, cb) {
+			work: function(stateHolder, index, command, state, cb) {
 				ret.stateHolder.simpleAddMessage(ret.stateHolder.channelID, command[1].rawValue);
+				return cb([]);
+			}
+		},
+		{ name: 'Ignore something',
+			matches: function(command) {
+				return doesMatch(
+					command,
+					[
+						['IGNORE'],
+						['QUOTED_STRING', 'VARIABLE', 'NUMBER'],
+						['SEMICOLON']
+					]
+				);
+			},
+			work: function(stateHolder, index, command, state, cb) {
 				return cb([]);
 			}
 		},
 		{ name: 'Function execution',
 			matches: function(command) {
-				for (var i = 0; i < command.length - 4; i++) {
-					var token = command[i];
-					if (token.type == 'FUNCTION') {
-						if (command[i + 1].type == 'LEFT_PAREN') {
-							if (command[i + 2].type == 'QUOTED_STRING' || command[i + 2].type == 'VARIABLE') {
-								if (command[i + 3].type == 'RIGHT_PAREN') {
-									return i;
-								}
-							}
-						}
-					}
-				}
-				return false;
+				return doesMatch(
+					command,
+					[
+						['FUNCTION'],
+						['LEFT_PAREN'],
+						['QUOTED_STRING', 'VARIABLE'],
+						['RIGHT_PAREN']
+					]
+				);
 			},
-			work: function(index, command, state, cb) {
+			work: function(stateHolder, index, command, state, cb) {
 				var commandName = command[index].rawValue;
 				var argument = command[index + 2].type == 'VARIABLE' ? state.variables[command[index + 2].rawValue] : command[index + 2].rawValue;
 
@@ -136,19 +196,16 @@ var ret = {
 		},
 		{ name: 'String plus variable',
 			matches: function(command) {
-				for (var i = 0; i < command.length - 3; i++) {
-					var token = command[i];
-					if (token.type == 'VARIABLE' || token.type == 'QUOTED_STRING') {
-						if (command[i + 1].type == 'PLUS') {
-							if (command[i + 2].type == 'QUOTED_STRING' || command[i + 2].type == 'VARIABLE') {
-								return i;
-							}
-						}
-					}
-				}
-				return false;
+				return doesMatch(
+					command,
+					[
+						['VARIABLE', 'QUOTED_STRING'],
+						['PLUS'],
+						['QUOTED_STRING', 'VARIABLE']
+					]
+				);
 			},
-			work: function(index, command, state, cb) {
+			work: function(stateHolder, index, command, state, cb) {
 				var val1 = command[index].rawValue;
 				var val2 = command[index + 2].rawValue;
 
@@ -194,7 +251,7 @@ var ret = {
 
 				return offset;
 			},
-			work: function(index, command, state, cb) {
+			work: function(stateHolder, index, command, state, cb) {
 				state.variables[command[index + 0].rawValue] = command[index + 2].rawValue;
 
 				return cb([]);
@@ -202,19 +259,16 @@ var ret = {
 		},
 		{ name: 'Macro arguments',
 			matches: function(command) {
-				for (var i = 0; i < command.length - 2; i++) {
-					var token = command[i];
-					if (token.type == 'LEFT_CURLY') {
-						if (command[i + 1].type == 'NUMBER' || command[i + 1].type == 'STRING') {
-							if (command[i + 2].type == 'RIGHT_CURLY') {
-								return i;
-							}
-						}
-					}
-				}
-				return false;
+				return doesMatch(
+					command,
+					[
+						['LEFT_CURLY'],
+						['NUMBER', 'STRING'],
+						['RIGHT_CURLY']
+					]
+				);
 			},
-			work: function(index, command, state, cb) {
+			work: function(stateHolder, index, command, state, cb) {
 				var tmpCommand = [];
 				for (var i = 0; i < index; i++) {
 					tmpCommand.push(command[i]);
@@ -236,17 +290,15 @@ ret.setHandlers = function(handlers) {
 	ret.handlers = handlers;
 };
 
-function handleSingleCommand(command, state, callback) {
+function handleSingleCommand(stateHolder, command, state, callback) {
 	if (command.length == 0) return callback(command);
-
-	console.log(command);
 
 	for (var i = 0; i < ret.patterns.length; i++) {
 		var pattern = ret.patterns[i];
 		var found = pattern.matches(command);
 		if (found !== false) {
-			pattern.work(found, command, state, function(newCommand) {
-				handleSingleCommand(newCommand, state, callback);
+			pattern.work(stateHolder, found, command, state, function(newCommand) {
+				handleSingleCommand(stateHolder, newCommand, state, callback);
 			});
 			return;
 		}
@@ -255,7 +307,7 @@ function handleSingleCommand(command, state, callback) {
 	ret.stateHolder.simpleAddMessage(ret.stateHolder.username, 'Got to end of command without being able to process it completely. Here\'s what\'s left:');
 	for (var i = 0; i < command.length; i++) {
 		ret.stateHolder.simpleAddMessage(ret.stateHolder.username, "\n");
-		ret.stateHolder.simpleAddMessage(ret.stateHolder.username, command[i].type + ': ' + command[i].toString());
+		ret.stateHolder.simpleAddMessage(ret.stateHolder.username, command[i].type + ': ' + command[i].rawValue);
 	}
 
 	return callback(command);
@@ -334,10 +386,17 @@ function executeCommands(commands, state, next) {
 					};
 					workingCommand.push(token);
 				} else {
-					token = {
-						rawValue: token.rawValue,
-						type: 'VARIABLE'
-					};
+					if (token.rawValue[0] == '#') {
+						token = {
+							rawValue: token.rawValue,
+							type: 'CHANNEL_VARIABLE'
+						};
+					} else {
+						token = {
+							rawValue: token.rawValue,
+							type: 'VARIABLE'
+						};
+					}
 					workingCommand.push(token);
 				}
 			} else {
@@ -351,7 +410,11 @@ function executeCommands(commands, state, next) {
 	async.eachSeries(
 		commands,
 		function(iterator, callback) {
-			handleSingleCommand(iterator, state, function(result) {
+			var temporaryStateHolder = ret.stateHolder.clone();
+			temporaryStateHolder.isTemporary = true;
+
+			handleSingleCommand(temporaryStateHolder, iterator, state, function(result) {
+				temporaryStateHolder.clearMessages(ret.stateHolder.channelID);
 				callback();
 			});
 		},
@@ -394,10 +457,32 @@ ret.handle = function(pieces, stateHolder, next) {
 			type: 'WHITESPACE'
 		});
 	});
+	lex.addRule(/username/gm, function(lexeme) {
+		tokens.push({
+			rawValue: stateHolder.actualUsername,
+			type: 'QUOTED_STRING'
+		});
+	});
 	lex.addRule(/echo/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
 			type: 'ECHO'
+		});
+	});
+	lex.addRule(/ignore/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'IGNORE'
+		});
+	});
+	lex.addRule(/var\(/gm, function(lexeme) {
+		tokens.push({
+			rawValue: 'var',
+			type: 'FUNCTION'
+		});
+		tokens.push({
+			rawValue: '(',
+			type: 'LEFT_PAREN'
 		});
 	});
 	lex.addRule(/var/gm, function(lexeme) {
@@ -468,12 +553,6 @@ ret.handle = function(pieces, stateHolder, next) {
 			type: 'RIGHT_CURLY'
 		});
 	});
-	lex.addRule(/[a-z]+/i, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'STRING'
-		});
-	});
 	lex.addRule(/'/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
@@ -499,6 +578,12 @@ ret.handle = function(pieces, stateHolder, next) {
 			type: 'DOUBLECOLON'
 		});
 	});
+	lex.addRule(/[^ '"\[\(\)\t\n;]+/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'STRING'
+		});
+	});
 
 	lex.setInput(command);
 
@@ -506,8 +591,6 @@ ret.handle = function(pieces, stateHolder, next) {
 		lex.lex();
 
 		executeCommands(commands, state, function() {
-			console.log('got to end:');
-			console.log(state);
 			next();
 		});
 	} catch (e) {

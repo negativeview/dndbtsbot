@@ -6,7 +6,8 @@ ret.init = function(mongoose) {
 	var TableSchema = new Schema({
 		name: String,
 		user: String,
-		channel: String
+		channel: String,
+		publicEdit: Boolean
 	});
 	mongoose.model('Table', TableSchema);
 
@@ -170,8 +171,6 @@ ret.get = function(pieces, stateHolder, next) {
 	var name = pieces[3];
 	var key = pieces[4];
 
-	console.log(pieces);
-
 	var parameters = {
 		name: name,
 	};
@@ -264,6 +263,22 @@ ret.set = function(pieces, stateHolder, next) {
 
 			var table = results[0];
 
+			if (!(table.publicEdit)) {
+				var serverID = stateHolder.findServerID(stateHolder.channelID);
+				if (pieces[2] == 'channel') {
+					if (!serverID) {
+						stateHolder.simpleAddMessage(stateHolder.username, 'You must use this command from a channel so that I know what server to use.');
+						return next();
+					}
+
+					var admin = stateHolder.isAdmin(serverID, stateHolder.username);
+					if (!admin) {
+						stateHolder.simpleAddMessage(stateHolder.username, 'You cannot edit this table.');
+						return next();
+					}
+				}
+			}
+
 			var rowParameters = {
 				table: table._id,
 				key: key
@@ -297,12 +312,135 @@ ret.set = function(pieces, stateHolder, next) {
 	);
 };
 
-ret.create = function(pieces, stateHolder, next) {
+ret.del = function(pieces, stateHolder, next) {
+	if (pieces.length == 5) {
+		return ret.delKey(pieces, stateHolder, next);
+	} else {
+		return ret.delTable(pieces, stateHolder, next);
+	}
+};
+
+ret.delKey = function(pieces, stateHolder, next) {
+	var name = pieces[3];
+	var key = pieces[4];
+
+	var parameters = {
+		name: name,
+	};
+
+	if (pieces[2] == 'me') {
+		parameters.user = stateHolder.username;
+	} else if (pieces[2] == 'channel') {
+		parameters.channel = stateHolder.channelID
+	} else {
+		stateHolder.simpleAddMessage(stateHolder.username, 'Invalid namespace: ' + pieces[2]);
+		return next();
+	}
+
+	ret.tableModel.find(parameters).exec(
+		function(err, results) {
+			if (err) {
+				stateHolder.simpleAddMessage(stateHolder.username, err);
+				return next();
+			}
+
+			if (!results.length) {
+				stateHolder.simpleAddMessage(stateHolder.username, 'No such table.');
+				return next();
+			}
+
+			var table = results[0];
+
+			var rowParameters = {
+				table: table._id,
+				key: key
+			};
+
+			ret.tableRowModel.find(rowParameters).exec(
+				function(err, results) {
+					if (err) {
+						stateHolder.simpleAddMessage(stateHolder.username, err);
+						return next();						
+					}
+
+					for (var i = 0; i < results.length; i++) {
+						results[i].remove();
+					}
+
+					stateHolder.simpleAddMessage(stateHolder.username, 'Deleted.');
+					return next();
+				}
+			);
+		}
+	);
+};
+
+ret.delTable = function(pieces, stateHolder, next) {
 	var name = pieces[3];
 
 	var parameters = {
 		name: name,
 	};
+
+	if (pieces[2] == 'me') {
+		parameters.user = stateHolder.username;
+	} else if (pieces[2] == 'channel') {
+		parameters.channel = stateHolder.channelID
+	} else {
+		stateHolder.simpleAddMessage(stateHolder.username, 'Invalid namespace: ' + pieces[2]);
+		return next();
+	}
+
+	ret.tableModel.find(parameters).exec(
+		function(err, results) {
+			if (err) {
+				stateHolder.simpleAddMessage(stateHolder.username, err);
+				return next();
+			}
+
+			if (!results.length) {
+				stateHolder.simpleAddMessage(stateHolder.username, 'No such table.');
+				return next();
+			}
+
+			var table = results[0];
+
+			var rowParameters = {
+				table: table._id,
+			};
+
+			ret.tableRowModel.find(rowParameters).exec(
+				function(err, results) {
+					if (err) {
+						stateHolder.simpleAddMessage(stateHolder.username, err);
+						return next();						
+					}
+
+					for (var i = 0; i < results.length; i++) {
+						results[i].remove();
+					}
+
+					table.remove();
+
+					stateHolder.simpleAddMessage(stateHolder.username, 'Deleted.');
+					return next();
+				}
+			);
+		}
+	);
+};
+
+ret.create = function(pieces, stateHolder, next) {
+	var name = pieces[3];
+
+	var parameters = {
+		name: name,
+		publicEdit: false
+	};
+
+	for (var i = 4; i < pieces.length; i++) {
+		parameters[pieces[i]] = true;
+	}
 
 	if (pieces[2] == 'me') {
 		parameters.user = stateHolder.username;
@@ -351,7 +489,7 @@ ret.handle = function(pieces, stateHolder, next) {
 			return next();
 		}
 
-		if (pieces[1] != 'get') {
+		if (pieces[1] != 'get' && pieces[1] != 'set') {
 			var admin = stateHolder.isAdmin(serverID, stateHolder.username);
 			if (!admin) {
 				stateHolder.simpleAddMessage(stateHolder.username, 'Only administrators can use this command.');
@@ -361,8 +499,14 @@ ret.handle = function(pieces, stateHolder, next) {
 	}
 
 	switch (pieces[1]) {
+		case 'delete':
+			if (pieces.length != 4 && pieces.length != 5) {
+				stateHolder.simpleAddMessage(stateHolder.username, 'Wrong number of arguments to delete a table.');
+				return next();				
+			}
+			return ret.del(pieces, stateHolder, next);
 		case 'create':
-			if (pieces.length != 4) {
+			if (pieces.length != 4 && pieces.length != 5) {
 				stateHolder.simpleAddMessage(stateHolder.username, 'Wrong number of arguments to create a table.');
 				return next();
 			}

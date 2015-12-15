@@ -3,13 +3,20 @@ module.exports = function(user, userID, channelID, rawEvent) {
 		messages: {},
 		contextUser: null,
 		channelID: channelID,
-		username: rawEvent.d.author.id
+		username: rawEvent.d.author.id,
+		actualUsername: user
 	};
 
 	ret.init = function(mongoose, bot, block) {
 		ret.mongoose = mongoose;
 		ret.bot = bot;
 		ret.block = block;
+	}
+
+	ret.clone = function() {
+		var ret2 = module.exports(user, userID, channelID, rawEvent);
+		ret2.init(ret.mongoose, ret.bot, ret.block);
+		return ret2;
 	}
 
 	ret.memberNumberToName = function(serverID, number) {
