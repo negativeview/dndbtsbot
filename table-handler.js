@@ -170,6 +170,8 @@ ret.get = function(pieces, stateHolder, next) {
 	var name = pieces[3];
 	var key = pieces[4];
 
+	console.log(pieces);
+
 	var parameters = {
 		name: name,
 	};

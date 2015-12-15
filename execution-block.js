@@ -56,11 +56,9 @@ function create(mongoose, bot, stateHolder) {
 	};
 
 	r2.executeSingle = function(message, stateHolder, next) {
-		console.log('pre:' + message);
 		message = message.replace(/:: +/g, function(match, offset, string) {
 			return '::';
 		});
-		console.log('post:' + message);
 		if (message[0] == '!') {
 			var pieces = message.split(" ");
 

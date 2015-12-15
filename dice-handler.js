@@ -41,6 +41,8 @@ function fancyFormatting(pruned, full, diceSize) {
 }
 
 module.exports = function(pieces, stateHolder, next) {
+	console.log(pieces);
+	
 	var rollString = '';
 	for (var i = 1; i < pieces.length; i++) {
 		rollString += pieces[i];
