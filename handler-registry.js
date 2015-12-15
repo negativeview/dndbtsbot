@@ -10,6 +10,7 @@ var gameHandler = require('./game-handler.js');
 var eachHandler = require('./each-handler.js');
 var tableHandler = require('./table-handler.js');
 var embeddedCodeHandler = require('./embedded-code-handler.js');
+var characterHandler = require('./character-handler.js');
 
 var handlers = {
 	'!r': diceHandler,
@@ -23,7 +24,9 @@ var handlers = {
 	'!var': varHandler.handle,
 	'!evaluate': evaluateHandler.evaluate,
 	'!table': tableHandler.handle,
-	'!!': embeddedCodeHandler.handle
+	'!!': embeddedCodeHandler.handle,
+	'!character': characterHandler.handle,
+	'!attack': characterHandler.attack
 }
 
 var ret = {};
@@ -36,6 +39,7 @@ ret.init = function(mongoose, bot) {
 	gameHandler.init(mongoose);
 	tableHandler.init(mongoose);
 	embeddedCodeHandler.setHandlers(ret);
+	characterHandler.init(mongoose, diceHandler);
 }
 
 ret.findCommand = function(command) {

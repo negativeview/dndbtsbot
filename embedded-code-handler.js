@@ -47,6 +47,7 @@ var ret = {
 					'channel',
 					command[index].rawValue.substring(1)
 				];
+				ret.fakeStateHolder.clearMessages();
 				ret.handlers.execute(
 					'!var',
 					internalCommand,
@@ -96,6 +97,7 @@ var ret = {
 					key
 				];
 
+				ret.fakeStateHolder.clearMessages();
 				ret.handlers.execute(
 					'!table',
 					internalCommand,
@@ -180,6 +182,7 @@ var ret = {
 					internalCommand.push(arguments[i]);
 				}
 
+				ret.fakeStateHolder.clearMessages();
 				ret.handlers.execute(
 					'!' + commandName,
 					internalCommand,
@@ -331,7 +334,6 @@ function handleSingleCommand(stateHolder, command, state, callback) {
 		var found = pattern.matches(command);
 		if (found !== false) {
 			pattern.work(stateHolder, found, command, state, function(newCommand) {
-				console.log(pattern.name);
 				handleSingleCommand(stateHolder, newCommand, state, callback);
 			});
 			return;
@@ -464,7 +466,7 @@ ret.handle = function(pieces, stateHolder, next) {
 	ret.stateHolder = stateHolder;
 	ret.fakeStateHolder = Object.create(stateHolder);
 	ret.fakeStateHolder.simpleAddMessage = function(to, message) {
-		ret.fakeStateHolder.result = message;
+		ret.fakeStateHolder.result += message;
 	};
 
 	var state = {
@@ -624,10 +626,19 @@ ret.handle = function(pieces, stateHolder, next) {
 	try {
 		lex.lex();
 
+		if (tokens.length) {
+			tokens.push({
+				rawValue: ';',
+				type: 'SEMICOLON'
+			});
+			commands.push(tokens);
+		}
+
 		executeCommands(commands, state, function() {
 			next();
 		});
 	} catch (e) {
+		console.log(e);
 		return next();
 	}
 }

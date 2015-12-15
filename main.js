@@ -64,6 +64,7 @@ mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 
 	bot.on('disconnected', function() {
 		console.log('disconnected...');
+		bot.connect();
 	});
 
 	bot.on('debug', function(rawEvent) {

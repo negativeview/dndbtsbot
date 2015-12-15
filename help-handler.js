@@ -39,6 +39,15 @@ ret.run = function(pieces, stateHolder, next) {
 		"\t`!table set me <tablename> <key> <value>` - Set a value in a table.\n" +
 		"\t`!table get me <tablename> <key>` - Get a value from a table.\n" +
 		"\t`!table random me <tablename>` - Get a random value from a table.\n" +
+		"Characters\n" +
+		"\t`!character create <name>` - Create a character.\n" +
+		"\t`!character view <name>` - View character.\n" +
+		"\t`!character current <name>` - Set a certain character as your active character.\n" +
+		"\t`!character set <key> <value>` - Sets a value on your current character.\n" +
+		"\t`!character delete <name>` - Deletes a character.\n" +
+		"\t`!character weapon create <ability score> <damage die size> <damage type> <name>` - Create a weapon for your current character.\n" +
+		"\t\t`!character weapon create strength 4 piercing Dagger` - Creates a strength-based dagger.\n" +
+		"\t`!character weapon drop <name>` - Completely drops a weapon from your active character.\n" +
 		"**Note** that multiple commands can be put into a single message. This is how you do crazy stuff.\n\n" +
 		"Source code can be found at https://github.com/negativeview/dndbtsbot";
 
