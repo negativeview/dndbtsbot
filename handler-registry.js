@@ -42,6 +42,10 @@ ret.init = function(mongoose, bot) {
 	characterHandler.init(mongoose, ret);
 }
 
+ret.addHandler = function(command, handler) {
+	handlers[command] = handler;
+};
+
 ret.findCommand = function(command) {
 	if (command[0] != '!') {
 		command = '!' + command;

@@ -77,6 +77,45 @@ function getActiveCharacter(stateHolder, fail, pass) {
 	);
 }
 
+function handleSkillRoll(pieces, stateHolder, next) {
+	var skill = pieces[0].replace(/^!/, '');
+	if (!(skills[skill])) {
+		stateHolder.simpleAddMessage(stateHolder.username, 'No such skill.');
+		return next();
+	}
+
+	getActiveCharacter(stateHolder, next, function(activeCharacter) {
+		stateHolder.simpleAddMessage(stateHolder.channelID, "```" + activeCharacter.name + " Rolling " + skill + "```");
+
+		var roll = '1d20';
+		if (pieces.length > 1 && pieces[1] == 'advantage') {
+			roll = '2d20kh1';
+		} else if (pieces.length > 1 && pieces[1] == 'disadvantage') {
+			roll = '2d20-L';
+		}
+		roll +=  '+' + activeCharacter[skills[skill]];
+		
+		var fakeStateHolder = Object.create(stateHolder);
+		fakeStateHolder.simpleAddMessage = function(to, message) {
+			fakeStateHolder.result = message;
+		};
+
+		ret.handlers.execute(
+			'!roll',
+			[
+				'!roll',
+				roll
+			],
+			fakeStateHolder,
+			function() {
+				var skillResult = fakeStateHolder.result;
+				stateHolder.simpleAddMessage(stateHolder.channelID, skillResult);
+				return next();
+			}
+		);
+	});
+}
+
 ret.init = function(mongoose, handlers) {
 	var Schema = mongoose.Schema;
 	var CharacterSchema = new Schema({
@@ -110,6 +149,12 @@ ret.init = function(mongoose, handlers) {
 
 	ret.characterModel = mongoose.model('Character');
 	ret.handlers = handlers;
+	
+	var skillKeys = Object.keys(skills).sort();
+	for (var i = 0; i < skillKeys.length; i++) {
+		handlers.addHandler('!' + skillKeys[i], handleSkillRoll);
+	}
+
 };
 
 function doHelpText(pieces, stateHolder, next) {
@@ -354,7 +399,7 @@ function doSet(pieces, stateHolder, next) {
 			}
 
 			activeCharacter.save(function(err) {
-				console.log(err);
+				if (err) console.log(err);
 				return next();
 			});
 			return;
