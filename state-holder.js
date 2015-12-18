@@ -90,6 +90,17 @@ module.exports = function(user, userID, channelID, rawEvent) {
 		delete ret.messages[to];
 	}
 
+	ret.squashAddMessage = function(to, message) {
+		if (!(to in ret.messages)) {
+			ret.messages[to] = {
+				to: to,
+				message: ''
+			};
+		}
+
+		ret.messages[to].message += message;
+	}
+
 	ret.simpleAddMessage = function(to, message) {
 		if (!(to in ret.messages)) {
 			ret.messages[to] = {

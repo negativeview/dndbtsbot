@@ -465,9 +465,13 @@ ret.handle = function(pieces, stateHolder, next) {
 
 	ret.stateHolder = stateHolder;
 	ret.fakeStateHolder = Object.create(stateHolder);
+	ret.fakeStateHolder.result = '';
 	ret.fakeStateHolder.simpleAddMessage = function(to, message) {
 		ret.fakeStateHolder.result += message;
 	};
+
+	console.log(stateHolder);
+	console.log(pieces);
 
 	var state = {
 		variables: {},

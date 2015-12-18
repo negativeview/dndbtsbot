@@ -15,6 +15,27 @@ var keys = [
 	'isCurrent'
 ];
 
+var skills = {
+	'acrobatics': 'dexterity',
+	'animalhandling': 'wisdom',
+	'arcana': 'intelligence',
+	'athletics': 'strength',
+	'deception': 'charisma',
+	'history': 'intelligence',
+	'insight': 'wisdom',
+	'intimidation': 'charisma',
+	'investigation': 'intelligence',
+	'medicine': 'wisdom',
+	'nature': 'intelligence',
+	'perception': 'wisdom',
+	'performance': 'charisma',
+	'persuasion': 'charisma',
+	'religion': 'intelligence',
+	'sleightofhand': 'dexterity',
+	'stealth': 'dexterity',
+	'survival': 'wisdom'
+};
+
 var weaponKeys = [
 	'name',
 	'abilityScore',
@@ -25,6 +46,29 @@ var weaponKeys = [
 
 var ret = {
 };
+
+function getActiveCharacter(stateHolder, fail, pass) {
+	var parameters = {
+		user: stateHolder.username,
+		isCurrent: true
+	};
+
+	ret.characterModel.find(parameters).exec(
+		function(err, res) {
+			if (err) {
+				stateHolder.simpleAddMessage(stateHolder.username, err);
+				return fail();
+			}
+
+			if (res.length == 0) {
+				stateHolder.simpleAddMessage(stateHolder.username, 'No current character set.');
+				return fail();
+			}
+
+			return pass(res[0]);
+		}
+	);
+}
 
 ret.init = function(mongoose) {
 	var Schema = mongoose.Schema;
@@ -51,7 +95,8 @@ ret.init = function(mongoose) {
 				damageType: String,
 				isCurrent: Boolean
 			}
-		]
+		],
+		proficiencies: [String]
 	});
 	mongoose.model('Character', CharacterSchema);
 
@@ -92,53 +137,58 @@ function doWeaponCreate(pieces, stateHolder, next) {
 		return next();
 	}
 
-	var parameters = {
-		user: stateHolder.username,
-		isCurrent: true
-	};
+	getActiveCharacter(stateHolder, next, function(activeCharacter) {
+		var abilityScore = pieces[3];
+		var damageDie = pieces[4];
+		var damageType = pieces[5];
 
-	ret.characterModel.find(parameters).exec(
-		function(err, res) {
-			if (err) {
-				stateHolder.simpleAddMessage(stateHolder.username, err);
-				return next();
-			}
-
-			if (res.length == 0) {
-				stateHolder.simpleAddMessage(stateHolder.username, 'No current character set.');
-				return next();
-			}
-
-			var abilityScore = pieces[3];
-			var damageDie = pieces[4];
-			var damageType = pieces[5];
-
-			var weaponName = '';
-			for (var i = 6; i < pieces.length; i++) {
-				if (weaponName != '') weaponName += ' ';
-				weaponName += pieces[i];
-			}
-
-			res[0].weapons.push(
-				{
-					name: weaponName,
-					abilityScore: abilityScore,
-					damageDie: damageDie,
-					damageType: damageType
-				}
-			);
-			res[0].markModified('weapons');
-			res[0].save(function(err) {
-				stateHolder.simpleAddMessage(stateHolder.username, 'Saved.');
-				return next();
-			});
+		var weaponName = '';
+		for (var i = 6; i < pieces.length; i++) {
+			if (weaponName != '') weaponName += ' ';
+			weaponName += pieces[i];
 		}
-	);
+
+		activeCharacter.weapons.push(
+			{
+				name: weaponName,
+				abilityScore: abilityScore,
+				damageDie: damageDie,
+				damageType: damageType
+			}
+		);
+		activeCharacter.markModified('weapons');
+		activeCharacter.save(function(err) {
+			stateHolder.simpleAddMessage(stateHolder.username, 'Saved.');
+			return next();
+		});
+	});
 }
 
 function doWeaponDrop(pieces, stateHolder, next) {
-	console.log(pieces);
-	return next();
+	if (pieces.length < 4) {
+		stateHolder.simpleAddMessage(stateHolder.username, 'Wrong number of paramters to drop a weapon.');
+		return next();
+	}
+
+	var finalParam = '';
+	for (var i = 3; i < pieces.length; i++) {
+		if (i != 3) finalParam = finalParam + ' ';
+		finalParam = finalParam + pieces[i];
+	}
+
+	getActiveCharacter(stateHolder, next, function(activeCharacter) {
+		for (var i = 0; i < activeCharacter.weapons.length; i++) {
+			if (activeCharacter.weapons[i].name == finalParam) {
+				activeCharacter.weapons.splice(i, 1);
+				return activeCharacter.save(function(err) {
+					if (err) { console.log(err); }
+
+					stateHolder.simpleAddMessage(stateHolder.username, 'Dropped weapon ' + finalParam + ' from character ' + activeCharacter.name);
+					return next();
+				});
+			}
+		}
+	});
 }
 
 function doWeapon(pieces, stateHolder, next) {
@@ -159,149 +209,108 @@ function doWeapon(pieces, stateHolder, next) {
 }
 
 ret.attack = function(pieces, stateHolder, next) {
-	var parameters = {
-		user: stateHolder.username,
-		isCurrent: true
-	};
+	getActiveCharacter(stateHolder, next, function(activeCharacter) {
+		for (var i = 0; i < activeCharacter.weapons.length; i++) {
+			if (activeCharacter.weapons[i].isCurrent) {
+				var weapon = activeCharacter.weapons[i];
 
-	ret.characterModel.find(parameters).exec(
-		function(err, res) {
-			if (err) {
-				stateHolder.simpleAddMessage(stateHolder.username, err);
-				return next();
-			}
+				stateHolder.simpleAddMessage(stateHolder.channelID, "```" + activeCharacter.name + " Attacking With " + weapon.name + "```");
 
-			if (res.length == 0) {
-				stateHolder.simpleAddMessage(stateHolder.username, 'No current character set.');
-				return next();
-			}
-
-			var character = res[0];
-
-			for (var i = 0; i < character.weapons.length; i++) {
-				if (character.weapons[i].isCurrent) {
-					var weapon = character.weapons[i];
-
-					stateHolder.simpleAddMessage(stateHolder.channelID, "```" + character.name + " Attacking With " + weapon.name + "```");
-
-					var min = 1;
-					var max = 20;
-					var toHit = Math.floor(Math.random() * (max - min + 1)) + min;
-					var modifier = Math.floor((character[weapon.abilityScore] - 10) / 2);
-					if (toHit == 1) {
-						toHit = "**Critical Miss**";
-					} else if (toHit == 20) {
-						toHit = "**Critical**";
-					} else {
-						toHit = toHit + " + " + modifier + " = **" + (toHit + modifier) + "**";
-					}
-
-					max = weapon.damageDie;
-					var damage = Math.floor(Math.random() * (max - min + 1)) + min;
-					damage = damage + " + " + modifier + " = **" + (damage + modifier) + "**";
-
-					stateHolder.simpleAddMessage(stateHolder.channelID, "\nTo Hit: " + toHit + "\n");
-					stateHolder.simpleAddMessage(stateHolder.channelID, "Damage: " + damage + "\n");
-					stateHolder.simpleAddMessage(stateHolder.channelID, "Type: " + weapon.damageType + "\n");
-
-					return next();
+				var min = 1;
+				var max = 20;
+				var toHit = Math.floor(Math.random() * (max - min + 1)) + min;
+				var modifier = Math.floor((activeCharacter[weapon.abilityScore] - 10) / 2);
+				var diceToRoll = 1;
+				if (toHit == 1) {
+					toHit = "**Critical Miss**";
+					diceToRoll = 2;
+				} else if (toHit == 20) {
+					toHit = "**Critical**";
+				} else {
+					toHit = toHit + " + " + modifier + " + " + activeCharacter.proficiencyBonus + " = **" + (toHit + modifier + activeCharacter.proficiencyBonus) + "**";
 				}
-			}
 
-			stateHolder.simpleAddMessage(stateHolder.username, "No active weapon.");
-			return next();
+				max = weapon.damageDie;
+				var damage = Math.floor(Math.random() * (max - min + 1)) + min;
+				var damageStr = damage + " + ";
+				if (diceToRoll == 2) {
+					damage = Math.floor(Math.random() * (max - min + 1)) + min;
+					damageStr += damage + " + ";
+				}
+				damageStr += modifier + " = **" + (damage + modifier) + "**";
+
+				stateHolder.simpleAddMessage(stateHolder.channelID, "\nTo Hit: " + toHit + "\n");
+				stateHolder.simpleAddMessage(stateHolder.channelID, "Damage: " + damageStr + "\n");
+				stateHolder.simpleAddMessage(stateHolder.channelID, "Type: " + weapon.damageType + "\n");
+
+				return next();
+			}
 		}
-	);
+		stateHolder.simpleAddMessage(stateHolder.username, "No active weapon.");
+		return next();
+	});
 };
 
 function doSet(pieces, stateHolder, next) {
-	if (pieces.length != 4) {
+	if (pieces.length < 4) {
 		stateHolder.simpleAddMessage(stateHolder.username, 'Wrong number of paramters to character set.');
 		return next();
 	}
 
-	var parameters = {
-		user: stateHolder.username,
-		isCurrent: true
-	};
+	var finalParam = '';
+	for (var i = 3; i < pieces.length; i++) {
+		if (i != 3) finalParam = finalParam + ' ';
+		finalParam = finalParam + pieces[i];
+	}
 
-	ret.characterModel.find(parameters).exec(
-		function(err, res) {
-			if (err) {
-				stateHolder.simpleAddMessage(stateHolder.username, err);
-				return next();
-			}
+	getActiveCharacter(stateHolder, next, function(activeCharacter) {
+		var key = pieces[2];
+		var value = finalParam;
 
-			if (res.length == 0) {
-				stateHolder.simpleAddMessage(stateHolder.username, 'No current character set.');
-				return next();
-			}
+		if (key == 'weapon') {
+			var foundIt = false;
 
-			var key = pieces[2];
-			var value = pieces[3];
-
-			if (key == 'weapon') {
-				var foundIt = false;
-
-				for (var i = 0; i < res[0].weapons.length; i++) {
-					if (res[0].weapons[i].name == value) {
-						res[0].weapons[i].isCurrent = true;
-						foundIt = true;
-					} else {
-						res[0].weapons[i].isCurrent = false;
-					}
+			for (var i = 0; i < res[0].weapons.length; i++) {
+				if (activeCharacter.weapons[i].name == value) {
+					activeCharacter.weapons[i].isCurrent = true;
+					foundIt = true;
+				} else {
+					activeCharacter.weapons[i].isCurrent = false;
 				}
-
-				res[0].save(function(err) {
-					console.log(err);
-					return next();
-				});
-				return;
 			}
 
-			if (keys.indexOf(key) == -1) {
-				stateHolder.simpleAddMessage(stateHolder.username, 'Not a character variable.');
+			activeCharacter.save(function(err) {
+				console.log(err);
 				return next();
-			}
+			});
+			return;
+		}
 
-			if (key == 'isCurrent') {
-				stateHolder.simpleAddMessage(stateHolder.username, 'Cannot set isCurrent that way.');
-				return next();
-			}
-
-			res[0][key] = value;
-			res[0].save();
-
-			stateHolder.simpleAddMessage(stateHolder.username, 'Set ' + key);
-
+		if (keys.indexOf(key) == -1) {
+			stateHolder.simpleAddMessage(stateHolder.username, 'Not a character variable.');
 			return next();
 		}
-	);
+
+		if (key == 'isCurrent') {
+			stateHolder.simpleAddMessage(stateHolder.username, 'Cannot set isCurrent that way.');
+			return next();
+		}
+
+		activeCharacter[key] = value;
+		activeCharacter.save();
+
+		stateHolder.simpleAddMessage(stateHolder.username, 'Set ' + key);
+
+		return next();
+	});
 }
 
 function doCurrent(pieces, stateHolder, next) {
 	if (pieces.length == 2) {
-		var parameters = {
-			user: stateHolder.username,
-			isCurrent: true
-		};
-
-		ret.characterModel.find(parameters).exec(
-			function(err, res) {
-				if (err) {
-					stateHolder.simpleAddMessage(stateHolder.username, err);
-					return next();
-				}
-
-				if (res.length == 0) {
-					stateHolder.simpleAddMessage(stateHolder.username, 'No current character.');
-					return next();
-				}
-
-				stateHolder.simpleAddMessage(stateHolder.username, res[0].name);
-				return next();
-			}
-		);
+		getActiveCharacter(stateHolder, next, function(activeCharacter) {
+			stateHolder.simpleAddMessage(stateHolder.username, res[0].name);
+			return next();
+		});
 		return;
 	}
 
@@ -395,6 +404,25 @@ function doView(pieces, stateHolder, next) {
 					}
 				}
 			}
+			stateHolder.simpleAddMessage(stateHolder.username, "\n```Skills```");
+			var skillKeys = Object.keys(skills).sort();
+			for (var i = 0; i < skillKeys.length; i++) {
+				if (i != 0) {
+					stateHolder.simpleAddMessage(stateHolder.username, "\n");
+				}
+				var skillValue = Math.floor((character[skills[skillKeys[i]]] - 10) / 2);
+				if (character.proficiencies.indexOf(skillKeys[i]) !== -1) {
+					skillValue += character.proficiencyBonus;
+				}
+				stateHolder.squashAddMessage(stateHolder.username, "__" + skillKeys[i] + "__: " + skillValue);
+			}
+
+			stateHolder.simpleAddMessage(stateHolder.username, "\n\n```Proficiencies```");
+			if (character.proficiencies.length == 0) {
+				stateHolder.simpleAddMessage(stateHolder.username, "\nSadly, none.");
+			} else {
+				stateHolder.squashAddMessage(stateHolder.username, character.proficiencies.join(', ') + "\n");
+			}
 
 			return next();
 		}
@@ -434,6 +462,35 @@ function doCreate(pieces, stateHolder, next) {
 			return next();
 		}
 	);
+}
+
+function doProficiency(pieces, stateHolder, next) {
+	if (pieces.length != 4) {
+		stateHolder.simpleAddMessage(stateHolder.username, 'Usage: !character proficiency <skill/save> <on/off>');
+		return next();		
+	}
+
+	getActiveCharacter(stateHolder, next, function(activeCharacter) {
+		if (pieces[3] == 'off') {
+			var indexOf = activeCharacter.proficiencies.indexOf(pieces[2]);
+			if (indexOf != -1) {
+				activeCharacter.proficiencies.splice(indexOf, 1);
+				activeCharacter.save(function(err) {
+					if (err) console.log(err);
+					return next();
+				});
+			}
+		} else if (pieces[3] == 'on') {
+			var indexOf = activeCharacter.proficiencies.indexOf(pieces[2]);
+			if (indexOf == -1) {
+				activeCharacter.proficiencies.push(pieces[2]);
+				activeCharacter.save(function(err) {
+					if (err) console.log(err);
+					return next();
+				});
+			}
+		}
+	});
 }
 
 function doCreate(pieces, stateHolder, next) {
@@ -480,6 +537,8 @@ ret.handle = function(pieces, stateHolder, next) {
 	}
 
 	switch (pieces[1]) {
+		case 'proficiency':
+			return doProficiency(pieces, stateHolder, next);
 		case 'weapon':
 			return doWeapon(pieces, stateHolder, next);
 		case 'current':
@@ -492,6 +551,9 @@ ret.handle = function(pieces, stateHolder, next) {
 			return doView(pieces, stateHolder, next);
 		case 'set':
 			return doSet(pieces, stateHolder, next);
+		default:
+			stateHolder.simpleAddMessage(stateHolder.username, 'No such character command: ' + pieces[1]);
+			return next();
 	}
 };
 

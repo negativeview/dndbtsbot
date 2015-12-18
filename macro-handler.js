@@ -190,7 +190,8 @@ ret.handle = function(pieces, stateHolder, next) {
 };
 
 ret.attempted = function(pieces, stateHolder, next) {
-	stateHolder.originalArgs = pieces;
+	if (!stateHolder.originalArgs)
+		stateHolder.originalArgs = pieces;
 	
 	ret.adminMacroModel.find({
 		name: pieces[0],

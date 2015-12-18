@@ -9,27 +9,30 @@ ret.init = function(mongoose) {
 
 ret.run = function(pieces, stateHolder, next) {
 	var message =
-		"Commands:\n\n" +
-		"Dice:\n" +
-		"\t`!r 2d20` - roll two 20-sided dice.\n" +
-		"\t`!r 2d20-H` - roll a d20 with DND 5e 'advantage'\n" +
-		"\t`!r 2d20-L` - roll a d20 with DND 5e 'disadvantage'\n" +
-		"\t`!r 1d20+6` - roll a d20 and add 6\n" +
-		"\t`!r 2d20-H+6` - roll a d20 with advantage and adding 6\n" +
-		"\t`!r (4d6(kh3))` - roll 4 d6 and keep the highest 3\n" +
-		"\t`!r simple 2d20` - Suppress the math used to get to the result.\n" +
-		"\t`!r plain 2d20` - Show only the result with no styling.\n" +
-		"\t`!rollstats` - rolls 4 d6, keeping the highest 3 and does this six times.\n" +
-		"Characters\n" +
-		"\t`!character create <name>` - Create a character.\n" +
-		"\t`!character view <name>` - View character.\n" +
-		"\t`!character current <name>` - Set a certain character as your active character.\n" +
-		"\t`!character set <key> <value>` - Sets a value on your current character.\n" +
-		"\t`!character delete <name>` - Deletes a character.\n" +
-		"\t`!character weapon create <ability score> <damage die size> <damage type> <name>` - Create a weapon for your current character.\n" +
-		"\t\t`!character weapon create strength 4 piercing Dagger` - Creates a strength-based dagger.\n" +
-		"\t`!character weapon drop <name>` - Completely drops a weapon from your active character.\n" +
-		"\n\n`!help advanced` gets help for more advanced options.\n" +
+		"``` Dice ```" +
+		"!r 2d20 - roll two 20-sided dice.\n" +
+		"!r 2d20-H - roll a d20 with DND 5e 'advantage'\n" +
+		"!r 2d20-L - roll a d20 with DND 5e 'disadvantage'\n" +
+		"!r 1d20+6 - roll a d20 and add 6\n" +
+		"!r 2d20-H+6 - roll a d20 with advantage and adding 6\n" +
+		"!r (4d6(kh3)) - roll 4 d6 and keep the highest 3\n" +
+		"!r simple 2d20 - Suppress the math used to get to the result.\n" +
+		"!r plain 2d20 - Show only the result with no styling.\n" +
+		"!rollstats - rolls 4 d6, keeping the highest 3 and does this six times.\n\n" +
+		"```Characters```" +
+		"!character create <name> - Create a character.\n" +
+		"!character view <name> - View character.\n" +
+		"!character current <name> - Set a certain character as your active character.\n" +
+		"!character set weapon <weapon name> - Sets the active weapon for a character.\n" +
+		"!character set <key> <value> - Sets a value on your current character.\n" +
+		"!character delete <name> - Deletes a character.\n" +
+		"!character weapon create <ability score> <damage die size> <damage type> <name> - Create a weapon for your current character.\n" +
+		"\t!character weapon create strength 4 piercing Dagger - Creates a strength-based dagger.\n" +
+		"!character weapon drop <name> - Completely drops a weapon from your active character.\n" +
+		"!character proficiency <skill/save> <on/off> - Toggles proficiency in a thing.\n" +
+		"!attack - Attacks with your active weapon.\n" +
+
+		"\n`!help advanced` gets help for more advanced options.\n" +
 		"Source code can be found at https://github.com/negativeview/dndbtsbot";
 
 	if (pieces[1] == 'advanced') {
