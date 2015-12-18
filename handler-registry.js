@@ -26,7 +26,8 @@ var handlers = {
 	'!table': tableHandler.handle,
 	'!!': embeddedCodeHandler.handle,
 	'!character': characterHandler.handle,
-	'!attack': characterHandler.attack
+	'!attack': characterHandler.attack,
+	'!dm': varHandler.dm
 }
 
 var ret = {};

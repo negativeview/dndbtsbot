@@ -6,6 +6,10 @@ function filterInt(value) {
   return NaN;
 }
 
+function scoreToModifier(score) {
+	return Math.floor((score - 10) / 2)
+}
+
 var keys = [
 	'name',
 	'strength',
@@ -93,7 +97,11 @@ function handleSkillRoll(pieces, stateHolder, next) {
 		} else if (pieces.length > 1 && pieces[1] == 'disadvantage') {
 			roll = '2d20-L';
 		}
-		roll +=  '+' + activeCharacter[skills[skill]];
+		roll +=  '+' + scoreToModifier(activeCharacter[skills[skill]]);
+		var skillKeys = Object.keys(skills).sort();
+		if (activeCharacter.proficiencies.indexOf(skill) !== -1) {
+			roll += '+' + activeCharacter.proficiencyBonus;
+		}
 		
 		var fakeStateHolder = Object.create(stateHolder);
 		fakeStateHolder.simpleAddMessage = function(to, message) {
@@ -320,7 +328,7 @@ ret.attack = function(pieces, stateHolder, next) {
 				var min = 1;
 				var max = 20;
 				var toHit = Math.floor(Math.random() * (max - min + 1)) + min;
-				var modifier = Math.floor((activeCharacter[weapon.abilityScore] - 10) / 2);
+				var modifier = scoreToModifier(activeCharacter[weapon.abilityScore]);
 				var isCrit = false;
 				if (toHit == 1) {
 					toHit = "**Critical Miss**";
@@ -482,6 +490,35 @@ function doView(pieces, stateHolder, next) {
 
 	var characterName = pieces[2];
 
+	var fakeStateHolder = Object.create(stateHolder);
+	fakeStateHolder.simpleAddMessage = function(to, message) {
+		fakeStateHolder.result = message;
+	};
+
+/*
+	ret.handlers.execute(
+		'!var',
+		[
+			'!var',
+			'get',
+			'channel',
+			'_dm'
+		],
+		fakeStateHolder,
+		function() {
+			var dmResult = fakeStateHolder.result;
+			if (dmResult == stateHolder.username) {
+
+
+			}
+
+
+
+
+
+
+
+	ret.handlers.*/
 	var parameters = {
 		user: stateHolder.username,
 		name: characterName
@@ -529,7 +566,7 @@ function doView(pieces, stateHolder, next) {
 				if (i != 0) {
 					stateHolder.simpleAddMessage(stateHolder.username, "\n");
 				}
-				var skillValue = Math.floor((character[skills[skillKeys[i]]] - 10) / 2);
+				var skillValue = scoreToModifier(character[skills[skillKeys[i]]]);
 				if (character.proficiencies.indexOf(skillKeys[i]) !== -1) {
 					skillValue += character.proficiencyBonus;
 				}

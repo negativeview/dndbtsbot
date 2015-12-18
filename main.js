@@ -66,15 +66,6 @@ mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 		console.log('disconnected...');
 		bot.connect();
 	});
-
-	bot.on('debug', function(rawEvent) {
-		switch (rawEvent.t) {
-			case 'GUILD_ROLE_CREATE':
-			case 'GUILD_ROLE_UPDATE':
-			case 'GUILD_MEMBER_UPDATE':
-				break;
-		}
-	});
 });
 
 function getRandomInt(min, max) {

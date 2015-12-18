@@ -167,7 +167,7 @@ function varSet(pieces, stateHolder, next) {
 		index = 5;
 	}
 
-	if (parameters.name[0] == '_') {
+	if (parameters.name[0] == '_' && !stateHolder.officialVar) {
 		stateHolder.simpleAddMessage(stateHolder.username, '**Note** that variables that start with a _ will likely have a special meaning in the future. If you are using this variable for an unofficial reason, be warned.');
 	}
 
@@ -203,6 +203,11 @@ function varSet(pieces, stateHolder, next) {
 		}
 	);
 }
+
+ret.dm = function(pieces, stateHolder, next) {
+	stateHolder.officialVar = true;
+	ret.handle(['!var', 'set', 'channel', '_dm', stateHolder.username], stateHolder, next);
+};
 
 ret.handle = function(pieces, stateHolder, next) {
 	var allowedOperators = ['set', 'get', 'inc', 'del', 'dec'];
