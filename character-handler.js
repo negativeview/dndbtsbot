@@ -495,7 +495,6 @@ function doView(pieces, stateHolder, next) {
 		fakeStateHolder.result = message;
 	};
 
-/*
 	ret.handlers.execute(
 		'!var',
 		[
@@ -507,80 +506,75 @@ function doView(pieces, stateHolder, next) {
 		fakeStateHolder,
 		function() {
 			var dmResult = fakeStateHolder.result;
+
+			var parameters = {
+				name: characterName
+			};
+
 			if (dmResult == stateHolder.username) {
-
-
-			}
-
-
-
-
-
-
-
-	ret.handlers.*/
-	var parameters = {
-		user: stateHolder.username,
-		name: characterName
-	};
-
-	ret.characterModel.find(parameters).exec(
-		function(err, res) {
-			if (err) {
-				stateHolder.simpleAddMessage(stateHolder.username, err);
-				return next();
-			}
-
-			if (res.length == 0) {
-				stateHolder.simpleAddMessage(stateHolder.username, 'No such character.');
-				return next();
-			}
-
-			var character = res[0];
-
-			stateHolder.simpleAddMessage(stateHolder.username, "```Basic Stats```\n");
-			for (var i = 0; i < keys.length; i++) {
-				var key = keys[i];
-
-				stateHolder.simpleAddMessage(stateHolder.username, "__" + key + "__ -- " + character[key] + "\n");
-			}
-			stateHolder.simpleAddMessage(stateHolder.username, "\n```Weapons```");
-			if (character.weapons.length == 0) {
-				stateHolder.simpleAddMessage(stateHolder.username, "\nSadly, none.");
 			} else {
-				for (var i = 0; i < character.weapons.length; i++) {
-					var name = character.weapons[i].name;
-					if (!name) name = "Weapon";
+				parameters.user = stateHolder.username;
+			}
 
-					stateHolder.simpleAddMessage(stateHolder.username, "\n**" + name + "**\n");
-					for (var m = 0; m < weaponKeys.length; m++) {
-						if (weaponKeys[m] != "name") {
-							stateHolder.simpleAddMessage(stateHolder.username, "__" + weaponKeys[m] + "__: " + character.weapons[i][weaponKeys[m]] + "\n");
+			ret.characterModel.find(parameters).exec(
+				function(err, res) {
+					if (err) {
+						stateHolder.simpleAddMessage(stateHolder.username, err);
+						return next();
+					}
+
+					if (res.length == 0) {
+						stateHolder.simpleAddMessage(stateHolder.username, 'No such character.');
+						return next();
+					}
+
+					var character = res[0];
+
+					stateHolder.simpleAddMessage(stateHolder.username, "```Basic Stats```\n");
+					for (var i = 0; i < keys.length; i++) {
+						var key = keys[i];
+
+						stateHolder.simpleAddMessage(stateHolder.username, "__" + key + "__ -- " + character[key] + "\n");
+					}
+					stateHolder.simpleAddMessage(stateHolder.username, "\n```Weapons```");
+					if (character.weapons.length == 0) {
+						stateHolder.simpleAddMessage(stateHolder.username, "\nSadly, none.");
+					} else {
+						for (var i = 0; i < character.weapons.length; i++) {
+							var name = character.weapons[i].name;
+							if (!name) name = "Weapon";
+
+							stateHolder.simpleAddMessage(stateHolder.username, "\n**" + name + "**\n");
+							for (var m = 0; m < weaponKeys.length; m++) {
+								if (weaponKeys[m] != "name") {
+									stateHolder.simpleAddMessage(stateHolder.username, "__" + weaponKeys[m] + "__: " + character.weapons[i][weaponKeys[m]] + "\n");
+								}
+							}
 						}
 					}
-				}
-			}
-			stateHolder.simpleAddMessage(stateHolder.username, "\n```Skills```");
-			var skillKeys = Object.keys(skills).sort();
-			for (var i = 0; i < skillKeys.length; i++) {
-				if (i != 0) {
-					stateHolder.simpleAddMessage(stateHolder.username, "\n");
-				}
-				var skillValue = scoreToModifier(character[skills[skillKeys[i]]]);
-				if (character.proficiencies.indexOf(skillKeys[i]) !== -1) {
-					skillValue += character.proficiencyBonus;
-				}
-				stateHolder.squashAddMessage(stateHolder.username, "__" + skillKeys[i] + "__: " + skillValue);
-			}
+					stateHolder.simpleAddMessage(stateHolder.username, "\n```Skills```");
+					var skillKeys = Object.keys(skills).sort();
+					for (var i = 0; i < skillKeys.length; i++) {
+						if (i != 0) {
+							stateHolder.simpleAddMessage(stateHolder.username, "\n");
+						}
+						var skillValue = scoreToModifier(character[skills[skillKeys[i]]]);
+						if (character.proficiencies.indexOf(skillKeys[i]) !== -1) {
+							skillValue += character.proficiencyBonus;
+						}
+						stateHolder.squashAddMessage(stateHolder.username, "__" + skillKeys[i] + "__: " + skillValue);
+					}
 
-			stateHolder.simpleAddMessage(stateHolder.username, "\n\n```Proficiencies```");
-			if (character.proficiencies.length == 0) {
-				stateHolder.simpleAddMessage(stateHolder.username, "\nSadly, none.");
-			} else {
-				stateHolder.squashAddMessage(stateHolder.username, character.proficiencies.join(', ') + "\n");
-			}
+					stateHolder.simpleAddMessage(stateHolder.username, "\n\n```Proficiencies```");
+					if (character.proficiencies.length == 0) {
+						stateHolder.simpleAddMessage(stateHolder.username, "\nSadly, none.");
+					} else {
+						stateHolder.squashAddMessage(stateHolder.username, character.proficiencies.join(', ') + "\n");
+					}
 
-			return next();
+					return next();
+				}
+			);
 		}
 	);
 }
