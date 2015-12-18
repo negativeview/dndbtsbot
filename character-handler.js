@@ -21,6 +21,15 @@ var keys = [
 	'isCurrent'
 ];
 
+var weaponKeys = [
+	'name',
+	'abilityScore',
+	'damageType',
+	'critRoll',
+	'normalRoll',
+	'isCurrent'
+];
+
 var skills = {
 	'acrobatics': 'dexterity',
 	'animalhandling': 'wisdom',
@@ -41,14 +50,6 @@ var skills = {
 	'stealth': 'dexterity',
 	'survival': 'wisdom'
 };
-
-var weaponKeys = [
-	'name',
-	'abilityScore',
-	'damageDie',
-	'damageType',
-	'isCurrent'
-];
 
 var ret = {
 };
@@ -76,7 +77,7 @@ function getActiveCharacter(stateHolder, fail, pass) {
 	);
 }
 
-ret.init = function(mongoose) {
+ret.init = function(mongoose, handlers) {
 	var Schema = mongoose.Schema;
 	var CharacterSchema = new Schema({
 		user: String,
@@ -97,9 +98,10 @@ ret.init = function(mongoose) {
 			{
 				name: String,
 				abilityScore: String,
-				damageDie: Number,
 				damageType: String,
-				isCurrent: Boolean
+				isCurrent: Boolean,
+				critRoll: String,
+				normalRoll: String
 			}
 		],
 		proficiencies: [String]
@@ -107,6 +109,7 @@ ret.init = function(mongoose) {
 	mongoose.model('Character', CharacterSchema);
 
 	ret.characterModel = mongoose.model('Character');
+	ret.handlers = handlers;
 };
 
 function doHelpText(pieces, stateHolder, next) {
@@ -138,28 +141,29 @@ function doListCharacters(pieces, stateHolder, next) {
 }
 
 function doWeaponCreate(pieces, stateHolder, next) {
-	if (pieces.length < 7) {
+	if (pieces.length < 4) {
 		stateHolder.simpleAddMessage(stateHolder.username, 'Wrong number of paramters to create a character weapon.');
 		return next();
 	}
 
 	getActiveCharacter(stateHolder, next, function(activeCharacter) {
-		var abilityScore = pieces[3];
-		var damageDie = pieces[4];
-		var damageType = pieces[5];
+		var weaponNae = pieces[3];
 
 		var weaponName = '';
-		for (var i = 6; i < pieces.length; i++) {
+		for (var i = 3; i < pieces.length; i++) {
 			if (weaponName != '') weaponName += ' ';
 			weaponName += pieces[i];
 		}
+
+		var isCurrent = (activeCharacter.weapons.length == 0);
 
 		activeCharacter.weapons.push(
 			{
 				name: weaponName,
 				abilityScore: abilityScore,
 				damageDie: damageDie,
-				damageType: damageType
+				damageType: damageType,
+				isCurrent: isCurrent
 			}
 		);
 		activeCharacter.markModified('weapons');
@@ -168,6 +172,51 @@ function doWeaponCreate(pieces, stateHolder, next) {
 			return next();
 		});
 	});
+}
+
+function doWeaponSet(pieces, stateHolder, next) {
+	var finalParam = '';
+	for (var i = 4; i < pieces.length; i++) {
+		if (i != 4) finalParam = finalParam + ' ';
+		finalParam = finalParam + pieces[i];
+	}
+	var key = pieces[3];
+	var value = finalParam;
+
+	getActiveCharacter(stateHolder, next, function(activeCharacter) {
+		for (var i = 0; i < activeCharacter.weapons.length; i++) {
+			if (activeCharacter.weapons[i].isCurrent) {
+				var weapon = activeCharacter.weapons[i];
+
+				if (weaponKeys.indexOf(key) == -1) {
+					stateHolder.simpleAddMessage(stateHolder.username, 'Not a weapon variable.');
+					return next();
+				}
+
+				if (key == 'isCurrent') {
+					stateHolder.simpleAddMessage(stateHolder.username, 'Cannot set isCurrent that way.');
+					return next();
+				}
+
+				activeCharacter.weapons[i][key] = value;
+				activeCharacter.save(function(err) {
+					if (err) {
+						stateHolder.simpleAddMessage(stateHolder.username, err);
+						console.log(err);
+					} else {
+						stateHolder.simpleAddMessage(stateHolder.username, 'Saved weapon variable.');
+					}
+
+					return next();
+				});
+
+				return;
+			}
+		}
+
+		stateHolder.simpleAddMessage(stateHolder.username, 'Must have an active weapon on an active character to use weapon set command.');
+		return next();
+	});	
 }
 
 function doWeaponDrop(pieces, stateHolder, next) {
@@ -208,6 +257,8 @@ function doWeapon(pieces, stateHolder, next) {
 			return doWeaponCreate(pieces, stateHolder, next);
 		case 'drop':
 			return doWeaponDrop(pieces, stateHolder, next);
+		case 'set':
+			return doWeaponSet(pieces, stateHolder, next);
 		default:
 			stateHolder.simpleAddMessage(stateHolder.username, 'Invalid key: ' + pieces[2]);
 			return next();
@@ -226,10 +277,10 @@ ret.attack = function(pieces, stateHolder, next) {
 				var max = 20;
 				var toHit = Math.floor(Math.random() * (max - min + 1)) + min;
 				var modifier = Math.floor((activeCharacter[weapon.abilityScore] - 10) / 2);
-				var diceToRoll = 1;
+				var isCrit = false;
 				if (toHit == 1) {
 					toHit = "**Critical Miss**";
-					diceToRoll = 2;
+					isCrit = true;
 				} else if (toHit == 20) {
 					toHit = "**Critical**";
 				} else {
@@ -238,29 +289,36 @@ ret.attack = function(pieces, stateHolder, next) {
 
 				max = weapon.damageDie;
 
-				var dieRoll = '';
-				if (!isNaN(filterInt(max))) {
-					dieRoll = '1d' + max;
+				var diceToRoll = '';
+				if (isCrit) {
+					diceToRoll = weapon.critRoll || '2d' + weapon.damageDie;
 				} else {
-					if (diceToRoll == 1) {
-						dieRoll = max;
-					} else {
+					diceToRoll = weapon.normalRoll || '1d' + weapon.damageDie;
+				}
+
+				var fakeStateHolder = Object.create(stateHolder);
+				fakeStateHolder.simpleAddMessage = function(to, message) {
+					fakeStateHolder.result = message;
+				};
+
+				ret.handlers.execute(
+					'!roll',
+					[
+						'!roll',
+						diceToRoll
+					],
+					fakeStateHolder,
+					function() {
+						var damageResult = fakeStateHolder.result;
+
+						stateHolder.simpleAddMessage(stateHolder.channelID, "\nTo Hit: " + toHit + "\n");
+						stateHolder.simpleAddMessage(stateHolder.channelID, "Damage: " + damageResult + "\n");
+						stateHolder.simpleAddMessage(stateHolder.channelID, "Type: " + weapon.damageType + "\n");
+
+						return next();
 					}
-				}
-
-				var damage = Math.floor(Math.random() * (max - min + 1)) + min;
-				var damageStr = damage + " + ";
-				if (diceToRoll == 2) {
-					damage = Math.floor(Math.random() * (max - min + 1)) + min;
-					damageStr += damage + " + ";
-				}
-				damageStr += modifier + " = **" + (damage + modifier) + "**";
-
-				stateHolder.simpleAddMessage(stateHolder.channelID, "\nTo Hit: " + toHit + "\n");
-				stateHolder.simpleAddMessage(stateHolder.channelID, "Damage: " + damageStr + "\n");
-				stateHolder.simpleAddMessage(stateHolder.channelID, "Type: " + weapon.damageType + "\n");
-
-				return next();
+				);
+				return;
 			}
 		}
 		stateHolder.simpleAddMessage(stateHolder.username, "No active weapon.");

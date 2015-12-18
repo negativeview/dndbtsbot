@@ -39,7 +39,7 @@ ret.init = function(mongoose, bot) {
 	gameHandler.init(mongoose);
 	tableHandler.init(mongoose);
 	embeddedCodeHandler.setHandlers(ret);
-	characterHandler.init(mongoose, diceHandler);
+	characterHandler.init(mongoose, ret);
 }
 
 ret.findCommand = function(command) {

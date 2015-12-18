@@ -26,8 +26,9 @@ ret.run = function(pieces, stateHolder, next) {
 		"!character set weapon <weapon name> - Sets the active weapon for a character.\n" +
 		"!character set <key> <value> - Sets a value on your current character.\n" +
 		"!character delete <name> - Deletes a character.\n" +
-		"!character weapon create <ability score> <damage die size> <damage type> <name> - Create a weapon for your current character.\n" +
-		"\t!character weapon create strength 4 piercing Dagger - Creates a strength-based dagger.\n" +
+		"!character weapon create <name> - Create a weapon for your current character.\n" +
+		"!character weapon set <key> <value> - Sets a parameter on your active weapon.\n" +
+		"\t!character weapon set normalRoll 1d8+3 - Sets the roll for damage from your weapon.\n" +
 		"!character weapon drop <name> - Completely drops a weapon from your active character.\n" +
 		"!character proficiency <skill/save> <on/off> - Toggles proficiency in a thing.\n" +
 		"!attack - Attacks with your active weapon.\n" +
