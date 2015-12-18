@@ -147,8 +147,6 @@ function doWeaponCreate(pieces, stateHolder, next) {
 	}
 
 	getActiveCharacter(stateHolder, next, function(activeCharacter) {
-		var weaponNae = pieces[3];
-
 		var weaponName = '';
 		for (var i = 3; i < pieces.length; i++) {
 			if (weaponName != '') weaponName += ' ';
@@ -160,9 +158,10 @@ function doWeaponCreate(pieces, stateHolder, next) {
 		activeCharacter.weapons.push(
 			{
 				name: weaponName,
-				abilityScore: abilityScore,
-				damageDie: damageDie,
-				damageType: damageType,
+				abilityScore: '',
+				damageType: '',
+				critRoll: '',
+				normalRoll: '',
 				isCurrent: isCurrent
 			}
 		);
