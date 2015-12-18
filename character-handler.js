@@ -1,5 +1,11 @@
 var async = require('async');
 
+function filterInt(value) {
+  if(/^(\-|\+)?([0-9]+|Infinity)$/.test(value))
+    return Number(value);
+  return NaN;
+}
+
 var keys = [
 	'name',
 	'strength',
@@ -231,6 +237,17 @@ ret.attack = function(pieces, stateHolder, next) {
 				}
 
 				max = weapon.damageDie;
+
+				var dieRoll = '';
+				if (!isNaN(filterInt(max))) {
+					dieRoll = '1d' + max;
+				} else {
+					if (diceToRoll == 1) {
+						dieRoll = max;
+					} else {
+					}
+				}
+
 				var damage = Math.floor(Math.random() * (max - min + 1)) + min;
 				var damageStr = damage + " + ";
 				if (diceToRoll == 2) {
@@ -270,7 +287,7 @@ function doSet(pieces, stateHolder, next) {
 		if (key == 'weapon') {
 			var foundIt = false;
 
-			for (var i = 0; i < res[0].weapons.length; i++) {
+			for (var i = 0; i < activeCharacter.weapons.length; i++) {
 				if (activeCharacter.weapons[i].name == value) {
 					activeCharacter.weapons[i].isCurrent = true;
 					foundIt = true;
