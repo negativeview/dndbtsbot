@@ -10,6 +10,39 @@ var weaponKeys = [
 	'isCurrent'
 ];
 
+ret.init = function(mongoose, handlers) {
+	ret.mongoose = mongoose;
+	ret.characterModel = mongoose.model('Character');
+	ret.handlers = handlers;
+};
+
+function scoreToModifier(score) {
+	return Math.floor((score - 10) / 2)
+}
+
+function getActiveCharacter(stateHolder, fail, pass) {
+	var parameters = {
+		user: stateHolder.username,
+		isCurrent: true
+	};
+
+	ret.characterModel.find(parameters).exec(
+		function(err, res) {
+			if (err) {
+				stateHolder.simpleAddMessage(stateHolder.username, err);
+				return fail();
+			}
+
+			if (res.length == 0) {
+				stateHolder.simpleAddMessage(stateHolder.username, 'No current character set.');
+				return fail();
+			}
+
+			return pass(res[0]);
+		}
+	);
+}
+
 ret.outputWeapons = function(stateHolder, activeCharacter, next) {
 	stateHolder.simpleAddMessage(stateHolder.username, "\n```Weapons```");
 	if (activeCharacter.weapons.length == 0) {
@@ -30,7 +63,7 @@ ret.outputWeapons = function(stateHolder, activeCharacter, next) {
 	next();
 }
 
-function doWeaponCreate(pieces, stateHolder, next) {
+function doWeaponCreate(pieces, stateHolder, activeCharacter, next) {
 	if (pieces.length < 4) {
 		stateHolder.simpleAddMessage(stateHolder.username, 'Wrong number of paramters to create a character weapon.');
 		return next();
@@ -62,7 +95,7 @@ function doWeaponCreate(pieces, stateHolder, next) {
 	});
 }
 
-function doWeaponSet(pieces, stateHolder, next) {
+function doWeaponSet(pieces, stateHolder, activeCharacter, next) {
 	var finalParam = '';
 	for (var i = 4; i < pieces.length; i++) {
 		if (i != 4) finalParam = finalParam + ' ';
@@ -105,7 +138,7 @@ function doWeaponSet(pieces, stateHolder, next) {
 	return next();
 }
 
-function doWeaponDrop(pieces, stateHolder, next) {
+function doWeaponDrop(pieces, stateHolder, activeCharacter, next) {
 	if (pieces.length < 4) {
 		stateHolder.simpleAddMessage(stateHolder.username, 'Wrong number of paramters to drop a weapon.');
 		return next();
@@ -130,7 +163,7 @@ function doWeaponDrop(pieces, stateHolder, next) {
 	}
 }
 
-function doWeapon(pieces, stateHolder, activeCharacter, next) {
+ret.doWeapon = function(pieces, stateHolder, activeCharacter, next) {
 	if (pieces.length == 2) {
 		stateHolder.simpleAddMessage(stateHolder.username, 'Wrong number of paramters to character weapon.');
 		return next();		
@@ -168,10 +201,14 @@ ret.attack = function(pieces, stateHolder, next) {
 					isCrit = true;
 					toHit = "**Critical**";
 				} else {
-					toHit = toHit + " + " + modifier + " + " + activeCharacter.proficiencyBonus;
-					if (weapon.magicModifier)
-						toHit += " + " + weapon.magicModifer;
-					toHit += " = **" + (toHit + modifier + activeCharacter.proficiencyBonus) + "**";
+					var actualToHit = parseInt(toHit) + parseInt(modifier) + parseInt(activeCharacter.proficiencyBonus);
+
+					toHit = "1d20 (" + toHit + ") + " + modifier + " + " + activeCharacter.proficiencyBonus;
+					if (weapon.magicModifier) {
+						toHit += " + " + parseInt(weapon.magicModifier);
+						actualToHit += parseInt(weapon.magicModifier);
+					}
+					toHit += " = **" + actualToHit + "**";
 				}
 
 				max = weapon.damageDie;
@@ -183,8 +220,10 @@ ret.attack = function(pieces, stateHolder, next) {
 					diceToRoll = weapon.normalRoll || '1d' + weapon.damageDie;
 				}
 
+				diceToRoll += '+' + modifier;
+
 				if (weapon.magicModifier)
-					diceToRoll += " + " + weapon.magicModifier;
+					diceToRoll += "+" + weapon.magicModifier;
 
 				var fakeStateHolder = Object.create(stateHolder);
 				fakeStateHolder.simpleAddMessage = function(to, message) {

@@ -150,6 +150,8 @@ ret.init = function(mongoose, handlers) {
 
 	ret.characterModel = mongoose.model('Character');
 	ret.handlers = handlers;
+
+	weapons.init(mongoose, handlers);
 	
 	var skillKeys = Object.keys(skills).sort();
 	for (var i = 0; i < skillKeys.length; i++) {
