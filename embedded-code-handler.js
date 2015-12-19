@@ -26,12 +26,13 @@ function doesMatch(command, matchDefinition) {
 
 var ret = {
 	patterns: [
-		{ name: 'Channel variable',
+		{ name: 'LE, GE, NE',
 			matches: function(command) {
 				return doesMatch(
 					command,
 					[
-						['CHANNEL_VARIABLE']
+						['LEFT_ANGLE', 'RIGHT_ANGLE', 'EXCLAMATION'],
+						['EQUALS']
 					]
 				);
 			},
@@ -41,29 +42,263 @@ var ret = {
 					tmpCommand.push(command[i]);
 				}
 
-				var internalCommand = [
-					'!var',
-					'get',
-					'channel',
-					command[index].rawValue.substring(1)
-				];
-				ret.fakeStateHolder.clearMessages();
-				ret.handlers.execute(
-					'!var',
-					internalCommand,
-					ret.fakeStateHolder,
-					function() {
+				switch (command[index].type) {
+					case 'LEFT_ANGLE':
 						tmpCommand.push({
-							type: 'QUOTED_STRING',
-							rawValue: ret.fakeStateHolder.result
+							type: 'LTE',
+							rawValue: '<='
 						});
+						break;
+					case 'RIGHT_ANGLE':
+						tmpCommand.push({
+							type: 'GTE',
+							rawValue: '>='
+						});
+						break;
+					case 'EXCLAMATION':
+						tmpCommand.push({
+							type: 'NE',
+							rawValue: '!='
+						});
+						break;
+				}
+				for (var i = index + 2; i < command.length; i++) {
+					tmpCommand.push(command[i]);
+				}
 
-						for (var i = index + 1; i < command.length; i++) {
-							tmpCommand.push(command[i]);
-						}
-						return cb(tmpCommand);
-					}
+				return cb(tmpCommand);
+			}
+		},
+		{ name: 'Variable Assignment',
+			matches: function(command) {
+				if (command.length != 5 && command.length != 4) return false;
+				if (command.length == 5 && command[0].type != 'VAR') return false;
+
+				var offset = 0;
+				if (command.length == 5) offset = 1;
+
+				if (command[offset + 0].type != 'VARIABLE') return false;
+				if (command[offset + 1].type != 'EQUALS') return false;
+				if (command[offset + 2].type != 'QUOTED_STRING' && command[offset + 2].type != 'NUMBER') return false;
+				if (command[offset + 3].type != 'SEMICOLON') return false;
+
+				return offset;
+			},
+			work: function(stateHolder, index, command, state, cb) {
+				state.variables[command[index + 0].rawValue] = command[index + 2].rawValue;
+
+				return cb([]);
+			}
+		},
+		{ name: 'Math and concatenation',
+			matches: function(command) {
+				return doesMatch(
+					command,
+					[
+						['QUOTED_STRING', 'NUMBER'],
+						['PLUS', 'MINUS', 'ASTERISK', 'FORWARDSLASH'],
+						['QUOTED_STRING', 'NUMBER']
+					]
 				);
+			},
+			work: function(stateHolder, index, command, state, cb) {
+				var val1 = command[index].rawValue;
+				var val2 = command[index + 2].rawValue;
+
+				var tmpCommand = [];
+				for (var i = 0; i < index; i++) {
+					tmpCommand.push(command[i]);
+				}
+
+				var num1 = parseInt(val1);
+				var num2 = parseInt(val2);
+
+				switch(command[index+1].type) {
+					case 'ASTERISK':						
+						tmpCommand.push(
+						{
+							type: 'NUMBER',
+							rawValue: num1 * num2
+						});
+						break;
+					case 'FORWARDSLASH':
+						tmpCommand.push(
+						{
+							type: 'NUMBER',
+							rawValue: Math.floor(num1 / num2)
+						});
+						break;
+					case 'MINUS':						
+						tmpCommand.push(
+						{
+							type: 'NUMBER',
+							rawValue: num1 - num2
+						});
+						break;
+					case 'PLUS':
+						if (!isNaN(filterInt(val1)) && !isNaN(filterInt(val2))) {
+							tmpCommand.push(
+							{
+								type: 'NUMBER',
+								rawValue: filterInt(val1) + filterInt(val2)
+							});
+						} else {
+							tmpCommand.push(
+							{
+								type: 'QUOTED_STRING',
+								rawValue: val1 + val2
+							});
+						}
+						break;
+				}
+				for (var i = index + 3; i < command.length; i++) {
+					tmpCommand.push(command[i]);
+				}
+
+				return cb(tmpCommand);
+			}
+		},
+
+
+
+
+
+		{ name: 'Equality',
+			matches: function(command) {
+				return doesMatch(
+					command,
+					[
+						['QUOTED_STRING', 'NUMBER'],
+						['DOUBLE_EQUALS', 'NE', 'LTE', 'GTE', 'RIGHT_ANGLE', 'LEFT_ANGLE'],
+						['QUOTED_STRING', 'NUMBER']
+					]
+				)
+			},
+			work: function(stateHolder, index, command, state, cb) {
+				var tmpCommand = [];
+				for (var i = 0; i < index; i++) {
+					tmpCommand.push(command[i]);
+				}
+
+				var argument1 = command[index + 0].rawValue;
+				var argument2 = command[index + 2].rawValue;
+
+				switch (command[index + 1].type) {
+					case 'DOUBLE_EQUALS':
+						if (argument1 == argument2) {
+							tmpCommand.push({
+								type: 'BOOLEAN',
+								rawValue: 'true'
+							});
+						} else {
+							tmpCommand.push({
+								type: 'BOOLEAN',
+								rawValue: 'false'
+							});
+						}
+						break;
+					case 'NE':
+						if (argument1 != argument2) {
+							tmpCommand.push({
+								type: 'BOOLEAN',
+								rawValue: 'true'
+							});
+						} else {
+							tmpCommand.push({
+								type: 'BOOLEAN',
+								rawValue: 'false'
+							});
+						}
+						break;
+					case 'RIGHT_ANGLE':
+						if (parseInt(argument1) > parseInt(argument2)) {
+							tmpCommand.push({
+								type: 'BOOLEAN',
+								rawValue: 'true'
+							});
+						} else {
+							tmpCommand.push({
+								type: 'BOOLEAN',
+								rawValue: 'false'
+							});
+						}
+						break;
+					case 'LEFT_ANGLE':
+						if (parseInt(argument1) < parseInt(argument2)) {
+							tmpCommand.push({
+								type: 'BOOLEAN',
+								rawValue: 'true'
+							});
+						} else {
+							tmpCommand.push({
+								type: 'BOOLEAN',
+								rawValue: 'false'
+							});
+						}
+						break;
+					case 'LTE':
+						if (parseInt(argument1) <= parseInt(argument2)) {
+							tmpCommand.push({
+								type: 'BOOLEAN',
+								rawValue: 'true'
+							});
+						} else {
+							tmpCommand.push({
+								type: 'BOOLEAN',
+								rawValue: 'false'
+							});
+						}
+						break;
+					case 'GTE':
+						if (parseInt(argument1) >= parseInt(argument2)) {
+							tmpCommand.push({
+								type: 'BOOLEAN',
+								rawValue: 'true'
+							});
+						} else {
+							tmpCommand.push({
+								type: 'BOOLEAN',
+								rawValue: 'false'
+							});
+						}
+						break;
+				}
+
+				for (var i = index + 3; i < command.length; i++) {
+					tmpCommand.push(command[i]);
+				}
+				return cb(tmpCommand);
+			}
+		},
+		{ name: 'Simple Branch',
+			matches: function(command) {
+				return doesMatch(
+					command,
+					[
+						['BOOLEAN'],
+						['QUESTION_MARK'],
+						['QUOTED_STRING', 'NUMBER'],
+						['COLON'],
+						['QUOTED_STRING', 'NUMBER']
+					]
+				)
+			},
+			work: function(stateHolder, index, command, state, cb) {
+				var tmpCommand = [];
+				for (var i = 0; i < index; i++) {
+					tmpCommand.push(command[i]);
+				}
+
+				if (command[index].rawValue == 'true') {
+					tmpCommand.push(command[index + 2]);
+				} else {
+					tmpCommand.push(command[index + 4]);
+				}
+
+				for (var i = index + 5; i < command.length; i++) {
+					tmpCommand.push(command[i]);
+				}
+				return cb(tmpCommand);
 			}
 		},
 		{ name: 'Table lookup',
@@ -73,7 +308,7 @@ var ret = {
 					[
 						['VARIABLE'],
 						['LEFT_BRACKET'],
-						['QUOTED_STRING', 'NUMBER', 'VARIABLE'],
+						['QUOTED_STRING', 'NUMBER'],
 						['RIGHT_BRACKET']
 					]
 				);
@@ -85,9 +320,6 @@ var ret = {
 				}
 
 				var key = command[i + 2].rawValue;
-				if (command[i + 2].type == 'VARIABLE') {
-					key = state.variables[key];
-				}
 
 				var internalCommand = [
 					'!table',
@@ -122,7 +354,7 @@ var ret = {
 					command,
 					[
 						['ECHO'],
-						['QUOTED_STRING', 'VARIABLE', 'NUMBER'],
+						['QUOTED_STRING', 'NUMBER'],
 						['SEMICOLON']
 					]
 				);
@@ -130,9 +362,7 @@ var ret = {
 			work: function(stateHolder, index, command, state, cb) {
 				ret.stateHolder.simpleAddMessage(
 					ret.stateHolder.channelID,
-					command[1].type == 'VARIABLE' ?
-						state.variables[command[1].rawValue] :
-						command[1].rawValue
+					command[1].rawValue
 				);
 				return cb([]);
 			}
@@ -143,7 +373,7 @@ var ret = {
 					command,
 					[
 						['IGNORE'],
-						['QUOTED_STRING', 'VARIABLE', 'NUMBER'],
+						['QUOTED_STRING', 'NUMBER'],
 						['SEMICOLON']
 					]
 				);
@@ -159,14 +389,14 @@ var ret = {
 					[
 						['FUNCTION'],
 						['LEFT_PAREN'],
-						['QUOTED_STRING', 'VARIABLE'],
+						['QUOTED_STRING'],
 						['RIGHT_PAREN']
 					]
 				);
 			},
 			work: function(stateHolder, index, command, state, cb) {
 				var commandName = command[index].rawValue;
-				var argument = command[index + 2].type == 'VARIABLE' ? state.variables[command[index + 2].rawValue] : command[index + 2].rawValue;
+				var argument = command[index + 2].rawValue;
 
 				var tmpCommand = [];
 				for (var i = 0; i < index; i++) {
@@ -208,7 +438,7 @@ var ret = {
 					command,
 					[
 						['LEFT_PAREN'],
-						['CHANNEL_VARIABLE', 'VARIABLE', 'QUOTED_STRING', 'NUMBER'],
+						['CHANNEL_VARIABLE', 'QUOTED_STRING', 'NUMBER', 'BOOLEAN'],
 						['RIGHT_PAREN']
 					]
 				);
@@ -226,69 +456,6 @@ var ret = {
 					tmpCommand.push(command[i]);
 				}
 				return cb(tmpCommand);
-			}
-		},
-		{ name: 'String plus variable',
-			matches: function(command) {
-				return doesMatch(
-					command,
-					[
-						['VARIABLE', 'QUOTED_STRING', 'NUMBER'],
-						['PLUS'],
-						['QUOTED_STRING', 'VARIABLE', 'NUMBER']
-					]
-				);
-			},
-			work: function(stateHolder, index, command, state, cb) {
-				var val1 = command[index].rawValue;
-				var val2 = command[index + 2].rawValue;
-
-				if (command[index].type == 'VARIABLE') val1 = state.variables[val1];
-				if (command[index + 2].type == 'VARIABLE') val2 = state.variables[val2];
-
-				var tmpCommand = [];
-				for (var i = 0; i < index; i++) {
-					tmpCommand.push(command[i]);
-				}
-				if (!isNaN(filterInt(val1)) && !isNaN(filterInt(val2))) {
-					tmpCommand.push(
-					{
-						type: 'NUMBER',
-						rawValue: filterInt(val1) + filterInt(val2)
-					});
-				} else {
-					tmpCommand.push(
-					{
-						type: 'QUOTED_STRING',
-						rawValue: val1 + val2
-					});
-				}
-				for (var i = index + 3; i < command.length; i++) {
-					tmpCommand.push(command[i]);
-				}
-
-				return cb(tmpCommand);
-			}
-		},
-		{ name: 'Variable Assignment',
-			matches: function(command) {
-				if (command.length != 5 && command.length != 4) return false;
-				if (command.length == 5 && command[0].type != 'VAR') return false;
-
-				var offset = 0;
-				if (command.length == 5) offset = 1;
-
-				if (command[offset + 0].type != 'VARIABLE') return false;
-				if (command[offset + 1].type != 'EQUALS') return false;
-				if (command[offset + 2].type != 'QUOTED_STRING' && command[offset + 2].type != 'NUMBER') return false;
-				if (command[offset + 3].type != 'SEMICOLON') return false;
-
-				return offset;
-			},
-			work: function(stateHolder, index, command, state, cb) {
-				state.variables[command[index + 0].rawValue] = command[index + 2].rawValue;
-
-				return cb([]);
 			}
 		},
 		{ name: 'Macro arguments',
@@ -316,6 +483,74 @@ var ret = {
 				}
 				return cb(tmpCommand);
 			}
+		},
+		{ name: 'Normal variable',
+			matches: function(command) {
+				return doesMatch(
+					command,
+					[
+						['VARIABLE']
+					]
+				);
+			},
+			work: function(stateHolder, index, command, state, cb) {
+				var tmpCommand = [];
+				for (var i = 0; i < index; i++) {
+					tmpCommand.push(command[i]);
+				}
+
+				tmpCommand.push(
+					{
+						type: 'QUOTED_STRING',
+						rawValue: state.variables[command[index].rawValue]
+					}
+				);
+				
+				for (var i = index + 1; i < command.length; i++) {
+					tmpCommand.push(command[i]);
+				}
+				return cb(tmpCommand);
+			}
+		},
+		{ name: 'Channel variable',
+			matches: function(command) {
+				return doesMatch(
+					command,
+					[
+						['CHANNEL_VARIABLE']
+					]
+				);
+			},
+			work: function(stateHolder, index, command, state, cb) {
+				var tmpCommand = [];
+				for (var i = 0; i < index; i++) {
+					tmpCommand.push(command[i]);
+				}
+
+				var internalCommand = [
+					'!var',
+					'get',
+					'channel',
+					command[index].rawValue.substring(1)
+				];
+				ret.fakeStateHolder.clearMessages();
+				ret.handlers.execute(
+					'!var',
+					internalCommand,
+					ret.fakeStateHolder,
+					function() {
+						tmpCommand.push({
+							type: 'QUOTED_STRING',
+							rawValue: ret.fakeStateHolder.result
+						});
+
+						for (var i = index + 1; i < command.length; i++) {
+							tmpCommand.push(command[i]);
+						}
+						return cb(tmpCommand);
+					}
+				);
+			}
 		}
 	]
 };
@@ -327,6 +562,7 @@ ret.setHandlers = function(handlers) {
 function handleSingleCommand(stateHolder, command, state, callback) {
 	if (command.length == 0) return callback(command);
 
+	//(stateHolder.real ? stateHolder.real : stateHolder).simpleAddMessage(stateHolder.username, JSON.stringify(command) + "\n");
 	console.log(command);
 
 	for (var i = 0; i < ret.patterns.length; i++) {
@@ -448,6 +684,7 @@ function executeCommands(commands, state, next) {
 		function(iterator, callback) {
 			var temporaryStateHolder = ret.stateHolder.clone();
 			temporaryStateHolder.isTemporary = true;
+			temporaryStateHolder.real = ret.stateHolder;
 
 			handleSingleCommand(temporaryStateHolder, iterator, state, function(result) {
 				temporaryStateHolder.clearMessages(ret.stateHolder.channelID);
@@ -469,9 +706,6 @@ ret.handle = function(pieces, stateHolder, next) {
 	ret.fakeStateHolder.simpleAddMessage = function(to, message) {
 		ret.fakeStateHolder.result += message;
 	};
-
-	console.log(stateHolder);
-	console.log(pieces);
 
 	var state = {
 		variables: {},
@@ -543,7 +777,61 @@ ret.handle = function(pieces, stateHolder, next) {
 			type: 'PLUS'
 		});
 	});
-	lex.addRule(/=/, function(lexeme) {
+	lex.addRule(/\-/, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'MINUS'
+		});
+	});
+	lex.addRule(/\*/, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'ASTERISK'
+		});
+	});
+	lex.addRule(/\//, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'FORWARDSLASH'
+		});
+	});
+	lex.addRule(/\?/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'QUESTION_MARK'
+		});
+	});
+	lex.addRule(/:/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'COLON'
+		});
+	});
+	lex.addRule(/==/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'DOUBLE_EQUALS'
+		});
+	});
+	lex.addRule(/</gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'LEFT_ANGLE'
+		});
+	});
+	lex.addRule(/>/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'RIGHT_ANGLE'
+		});
+	});
+	lex.addRule(/\!/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'EXCLAMATION'
+		});
+	});
+	lex.addRule(/=/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
 			type: 'EQUALS'
@@ -642,7 +930,7 @@ ret.handle = function(pieces, stateHolder, next) {
 			next();
 		});
 	} catch (e) {
-		console.log(e);
+		throw e;
 		return next();
 	}
 }
