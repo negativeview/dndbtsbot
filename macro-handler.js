@@ -29,6 +29,10 @@ ret.get = function(isAdmin, pieces, stateHolder, next) {
 	if (isAdmin) params.server = stateHolder.serverID;
 	if (!isAdmin) params.user = stateHolder.username;
 
+	if (pieces.length >= 1) {
+		params.name = pieces[0];
+	}
+
 	model.find(params).exec(function(err, res) {
 		if (err) {
 			stateHolder.simpleAddMessage(stateHolder.username, err);
@@ -38,9 +42,14 @@ ret.get = function(isAdmin, pieces, stateHolder, next) {
 		var answerMessage = '';
 		if (res.length > 0) {
 			for (var i = 0; i < res.length; i++) {
-				answerMessage += '`' + res[i].name + '` ' + res[i].macro;
-				if (i != res.length-1) {
-					answerMessage += "\n";
+				if (params.name) {
+					answerMessage += '`' + res[i].name + '` ';
+					answerMessage += res[i].macro;
+					if (i != res.length-1) {
+						answerMessage += "\n";
+					}
+				} else {
+					answerMessage += res[i].name + "\n";
 				}
 			}
 		} else {
