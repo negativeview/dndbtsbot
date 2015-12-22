@@ -199,7 +199,7 @@ Dice.prototype.execute = function execute(command, callback) {
       lexeme: lexeme
     });
   });
-  lex.addRule(/-?(\d+)d(\d+)/, function(lexeme) {
+  lex.addRule(/-?(\d+)d(\d+)/i, function(lexeme) {
     tokens.push({
       type: 'die',
       lexeme: lexeme
