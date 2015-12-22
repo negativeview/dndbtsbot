@@ -18,7 +18,6 @@ module.exports = {
 			tmpCommand.push(command[i]);
 		}
 
-		console.log(command[index]);
 		command[index].object.getSub(command[index + 2].rawValue, function(result) {
 			tmpCommand.push({
 				type: 'QUOTED_STRING',
