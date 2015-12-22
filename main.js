@@ -9,14 +9,15 @@ var markov = require('./markov.js');
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	if (user == bot.username || user == bot.id) return;
 
+	var stateHolder = stateHolderClass(user, userID, channelID, rawEvent);
+	var b = block.create(mongoose, bot, stateHolder);
+
 	if (message[0] != '!') {
 		var splitMessages = message.split(/[\n ]/);
-		markov.parse(splitMessages);
+		markov.parse(splitMessages, stateHolder);
 		return;
 	}
 
-	var stateHolder = stateHolderClass(user, userID, channelID, rawEvent);
-	var b = block.create(mongoose, bot, stateHolder);
 	b.setHandlers(handlers);
 
 	globalHandlerMiddle(message, b);
