@@ -7,7 +7,6 @@ var rollstatsHandler = require('./roll-stats.js');
 var varHandler = require('./var-handler.js');
 var evaluateHandler = require('./evaluate-handler.js');
 var gameHandler = require('./game-handler.js');
-var eachHandler = require('./each-handler.js');
 var tableHandler = require('./table-handler.js');
 var embeddedCodeHandler = require('./embedded-code-handler.js');
 var characterHandler = require('./character-handler.js');

@@ -4,11 +4,16 @@ var async = require('async');
 var handlers = require('./handler-registry.js');
 var block = require('./execution-block.js');
 var stateHolderClass = require('./state-holder.js');	
+var markov = require('./markov.js');
 
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	if (user == bot.username || user == bot.id) return;
 
-	if (message[0] != '!') return;
+	if (message[0] != '!') {
+		var splitMessages = message.split(/[\n ]/);
+		markov.parse(splitMessages);
+		return;
+	}
 
 	var stateHolder = stateHolderClass(user, userID, channelID, rawEvent);
 	var b = block.create(mongoose, bot, stateHolder);
@@ -20,6 +25,8 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 }
 
 function globalHandlerMiddle(message, block) {
+	var splitMessages = message.split("\n");
+
 	/**
 	 * If our first command is setmacro or adminsetmacro, we need to treat things specially.
 	 * Instead of being able to process multiple commands in a message, we must gobble the whole
@@ -36,7 +43,6 @@ function globalHandlerMiddle(message, block) {
 	/**
 	 * If it's not one of those special commands, split commands up and run them individually.
 	 **/
-	var splitMessages = message.split("\n");
 	var currentMessage = splitMessages[0];
 	for (var i = 1; i < splitMessages.length; i++) {
 		if (splitMessages[i][0] != '!') {
@@ -58,6 +64,7 @@ mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 
 	bot.on('ready', function() {
 		console.log(bot.username + " - (" + bot.id + ")");
+		markov.init(mongoose, bot);
 	});
 
 	bot.on('message', globalHandlerWrap);
