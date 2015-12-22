@@ -34,8 +34,8 @@ function startReplyChain(err, res, stateHolder) {
 
 	res.sort(
 		function(a, b) {
-			if (a.times < b.times) return 1;
-			if (b.times < a.times) return -1;
+			if (a.times < b.times) return -1;
+			if (b.times < a.times) return 1;
 			return 0;
 		}
 	);
