@@ -33,6 +33,8 @@ ret.run = function(pieces, stateHolder, next) {
 		"!character proficiency <skill/save> <on/off> - Toggles proficiency in a thing.\n" +
 		"!attack - Attacks with your active weapon.\n" +
 
+		"\nMore complete documentation: https://docs.google.com/document/d/1x_VHuuMAvvsIEUWdlamcq0wFT8ZaRE_lDouCOhh1VkM/edit?usp=sharing\n" +
+
 		"\n`!help advanced` gets help for more advanced options.\n" +
 		"Source code can be found at https://github.com/negativeview/dndbtsbot";
 
