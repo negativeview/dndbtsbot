@@ -1,575 +1,51 @@
 var lexer = require('lex');
 var async = require('async');
+var helper   = require('./embedded-code-handlers/helper.js');
+var patterns = require('./embedded-code-handlers/patterns/all.js');
 
-function filterInt(value) {
-  if(/^(\-|\+)?([0-9]+|Infinity)$/.test(value))
-    return Number(value);
-  return NaN;
-}
-
-function doesMatch(command, matchDefinition) {
-	for (var i = 0; i <= command.length - matchDefinition.length; i++) {
-		var found = true;
-
-		for (var m = 0; m < matchDefinition.length; m++) {
-			if (matchDefinition[m].indexOf(command[i + m].type) == -1) {
-				found = false;
-				break;
-			} 
-		}
-
-		if (found) return i;
-	}
-
-	return false;
-}
+var channel = require('./embedded-code-handlers/channel.js');
+var user = require('./embedded-code-handlers/user.js');
+var server = require('./embedded-code-handlers/server.js');
+var character = require('./embedded-code-handlers/character.js');
 
 var ret = {
 	patterns: [
-		{ name: 'LE, GE, NE',
-			matches: function(command) {
-				return doesMatch(
-					command,
-					[
-						['LEFT_ANGLE', 'RIGHT_ANGLE', 'EXCLAMATION'],
-						['EQUALS']
-					]
-				);
-			},
-			work: function(stateHolder, index, command, state, cb) {
-				var tmpCommand = [];
-				for (var i = 0; i < index; i++) {
-					tmpCommand.push(command[i]);
-				}
-
-				switch (command[index].type) {
-					case 'LEFT_ANGLE':
-						tmpCommand.push({
-							type: 'LTE',
-							rawValue: '<='
-						});
-						break;
-					case 'RIGHT_ANGLE':
-						tmpCommand.push({
-							type: 'GTE',
-							rawValue: '>='
-						});
-						break;
-					case 'EXCLAMATION':
-						tmpCommand.push({
-							type: 'NE',
-							rawValue: '!='
-						});
-						break;
-				}
-				for (var i = index + 2; i < command.length; i++) {
-					tmpCommand.push(command[i]);
-				}
-
-				return cb(tmpCommand);
-			}
-		},
-		{ name: 'Variable Assignment',
-			matches: function(command) {
-				if (command.length != 5 && command.length != 4) return false;
-				if (command.length == 5 && command[0].type != 'VAR') return false;
-
-				var offset = 0;
-				if (command.length == 5) offset = 1;
-
-				if (command[offset + 0].type != 'VARIABLE') return false;
-				if (command[offset + 1].type != 'EQUALS') return false;
-				if (command[offset + 2].type != 'QUOTED_STRING' && command[offset + 2].type != 'NUMBER') return false;
-				if (command[offset + 3].type != 'SEMICOLON') return false;
-
-				return offset;
-			},
-			work: function(stateHolder, index, command, state, cb) {
-				state.variables[command[index + 0].rawValue] = command[index + 2].rawValue;
-
-				return cb([]);
-			}
-		},
-		{ name: 'Math and concatenation',
-			matches: function(command) {
-				return doesMatch(
-					command,
-					[
-						['QUOTED_STRING', 'NUMBER'],
-						['PLUS', 'MINUS', 'ASTERISK', 'FORWARDSLASH'],
-						['QUOTED_STRING', 'NUMBER']
-					]
-				);
-			},
-			work: function(stateHolder, index, command, state, cb) {
-				var val1 = command[index].rawValue;
-				var val2 = command[index + 2].rawValue;
-
-				var tmpCommand = [];
-				for (var i = 0; i < index; i++) {
-					tmpCommand.push(command[i]);
-				}
-
-				var num1 = parseInt(val1);
-				var num2 = parseInt(val2);
-
-				switch(command[index+1].type) {
-					case 'ASTERISK':						
-						tmpCommand.push(
-						{
-							type: 'NUMBER',
-							rawValue: num1 * num2
-						});
-						break;
-					case 'FORWARDSLASH':
-						tmpCommand.push(
-						{
-							type: 'NUMBER',
-							rawValue: Math.floor(num1 / num2)
-						});
-						break;
-					case 'MINUS':						
-						tmpCommand.push(
-						{
-							type: 'NUMBER',
-							rawValue: num1 - num2
-						});
-						break;
-					case 'PLUS':
-						if (!isNaN(filterInt(val1)) && !isNaN(filterInt(val2))) {
-							tmpCommand.push(
-							{
-								type: 'NUMBER',
-								rawValue: filterInt(val1) + filterInt(val2)
-							});
-						} else {
-							tmpCommand.push(
-							{
-								type: 'QUOTED_STRING',
-								rawValue: val1 + val2
-							});
-						}
-						break;
-				}
-				for (var i = index + 3; i < command.length; i++) {
-					tmpCommand.push(command[i]);
-				}
-
-				return cb(tmpCommand);
-			}
-		},
-
-
-
-
-
-		{ name: 'Equality',
-			matches: function(command) {
-				return doesMatch(
-					command,
-					[
-						['QUOTED_STRING', 'NUMBER'],
-						['DOUBLE_EQUALS', 'NE', 'LTE', 'GTE', 'RIGHT_ANGLE', 'LEFT_ANGLE'],
-						['QUOTED_STRING', 'NUMBER']
-					]
-				)
-			},
-			work: function(stateHolder, index, command, state, cb) {
-				var tmpCommand = [];
-				for (var i = 0; i < index; i++) {
-					tmpCommand.push(command[i]);
-				}
-
-				var argument1 = command[index + 0].rawValue;
-				var argument2 = command[index + 2].rawValue;
-
-				switch (command[index + 1].type) {
-					case 'DOUBLE_EQUALS':
-						if (argument1 == argument2) {
-							tmpCommand.push({
-								type: 'BOOLEAN',
-								rawValue: 'true'
-							});
-						} else {
-							tmpCommand.push({
-								type: 'BOOLEAN',
-								rawValue: 'false'
-							});
-						}
-						break;
-					case 'NE':
-						if (argument1 != argument2) {
-							tmpCommand.push({
-								type: 'BOOLEAN',
-								rawValue: 'true'
-							});
-						} else {
-							tmpCommand.push({
-								type: 'BOOLEAN',
-								rawValue: 'false'
-							});
-						}
-						break;
-					case 'RIGHT_ANGLE':
-						if (parseInt(argument1) > parseInt(argument2)) {
-							tmpCommand.push({
-								type: 'BOOLEAN',
-								rawValue: 'true'
-							});
-						} else {
-							tmpCommand.push({
-								type: 'BOOLEAN',
-								rawValue: 'false'
-							});
-						}
-						break;
-					case 'LEFT_ANGLE':
-						if (parseInt(argument1) < parseInt(argument2)) {
-							tmpCommand.push({
-								type: 'BOOLEAN',
-								rawValue: 'true'
-							});
-						} else {
-							tmpCommand.push({
-								type: 'BOOLEAN',
-								rawValue: 'false'
-							});
-						}
-						break;
-					case 'LTE':
-						if (parseInt(argument1) <= parseInt(argument2)) {
-							tmpCommand.push({
-								type: 'BOOLEAN',
-								rawValue: 'true'
-							});
-						} else {
-							tmpCommand.push({
-								type: 'BOOLEAN',
-								rawValue: 'false'
-							});
-						}
-						break;
-					case 'GTE':
-						if (parseInt(argument1) >= parseInt(argument2)) {
-							tmpCommand.push({
-								type: 'BOOLEAN',
-								rawValue: 'true'
-							});
-						} else {
-							tmpCommand.push({
-								type: 'BOOLEAN',
-								rawValue: 'false'
-							});
-						}
-						break;
-				}
-
-				for (var i = index + 3; i < command.length; i++) {
-					tmpCommand.push(command[i]);
-				}
-				return cb(tmpCommand);
-			}
-		},
-		{ name: 'Simple Branch',
-			matches: function(command) {
-				return doesMatch(
-					command,
-					[
-						['BOOLEAN'],
-						['QUESTION_MARK'],
-						['QUOTED_STRING', 'NUMBER'],
-						['COLON'],
-						['QUOTED_STRING', 'NUMBER']
-					]
-				)
-			},
-			work: function(stateHolder, index, command, state, cb) {
-				var tmpCommand = [];
-				for (var i = 0; i < index; i++) {
-					tmpCommand.push(command[i]);
-				}
-
-				if (command[index].rawValue == 'true') {
-					tmpCommand.push(command[index + 2]);
-				} else {
-					tmpCommand.push(command[index + 4]);
-				}
-
-				for (var i = index + 5; i < command.length; i++) {
-					tmpCommand.push(command[i]);
-				}
-				return cb(tmpCommand);
-			}
-		},
-		{ name: 'Table lookup',
-			matches: function(command) {
-				return doesMatch(
-					command,
-					[
-						['VARIABLE'],
-						['LEFT_BRACKET'],
-						['QUOTED_STRING', 'NUMBER'],
-						['RIGHT_BRACKET']
-					]
-				);
-			},
-			work: function(stateHolder, index, command, state, cb) {
-				var tmpCommand = [];
-				for (var i = 0; i < index; i++) {
-					tmpCommand.push(command[i]);
-				}
-
-				var key = command[i + 2].rawValue;
-
-				var internalCommand = [
-					'!table',
-					'get',
-					'me',
-					command[i].rawValue,
-					key
-				];
-
-				ret.fakeStateHolder.clearMessages();
-				ret.handlers.execute(
-					'!table',
-					internalCommand,
-					ret.fakeStateHolder,
-					function() {
-						tmpCommand.push({
-							type: 'QUOTED_STRING',
-							rawValue: ret.fakeStateHolder.result
-						});
-
-						for (var i = index + 4; i < command.length; i++) {
-							tmpCommand.push(command[i]);
-						}
-						return cb(tmpCommand);
-					}
-				);
-			}
-		},
-		{ name: 'Echo something',
-			matches: function(command) {
-				return doesMatch(
-					command,
-					[
-						['ECHO'],
-						['QUOTED_STRING', 'NUMBER'],
-						['SEMICOLON']
-					]
-				);
-			},
-			work: function(stateHolder, index, command, state, cb) {
-				ret.stateHolder.simpleAddMessage(
-					ret.stateHolder.channelID,
-					command[1].rawValue
-				);
-				return cb([]);
-			}
-		},
-		{ name: 'Ignore something',
-			matches: function(command) {
-				return doesMatch(
-					command,
-					[
-						['IGNORE'],
-						['QUOTED_STRING', 'NUMBER'],
-						['SEMICOLON']
-					]
-				);
-			},
-			work: function(stateHolder, index, command, state, cb) {
-				return cb([]);
-			}
-		},
-		{ name: 'Function execution',
-			matches: function(command) {
-				return doesMatch(
-					command,
-					[
-						['FUNCTION'],
-						['LEFT_PAREN'],
-						['QUOTED_STRING'],
-						['RIGHT_PAREN']
-					]
-				);
-			},
-			work: function(stateHolder, index, command, state, cb) {
-				var commandName = command[index].rawValue;
-				var argument = command[index + 2].rawValue;
-
-				var tmpCommand = [];
-				for (var i = 0; i < index; i++) {
-					tmpCommand.push(command[i]);
-				}
-
-				var internalCommand = [
-					'!' + commandName,
-				];
-
-				var arguments = argument.split(" ");
-				for (var i = 0; i < arguments.length; i++) {
-					internalCommand.push(arguments[i]);
-				}
-
-				ret.fakeStateHolder.clearMessages();
-				ret.handlers.execute(
-					'!' + commandName,
-					internalCommand,
-					ret.fakeStateHolder,
-					function() {
-						tmpCommand.push({
-							type: 'QUOTED_STRING',
-							rawValue: ret.fakeStateHolder.result
-						});
-
-						for (var i = index + 4; i < command.length; i++) {
-							tmpCommand.push(command[i]);
-						}
-
-						return cb(tmpCommand);
-					}
-				);
-			}
-		},
-		{ name: 'Squash parens',
-			matches: function(command) {
-				var res = doesMatch(
-					command,
-					[
-						['LEFT_PAREN'],
-						['CHANNEL_VARIABLE', 'QUOTED_STRING', 'NUMBER', 'BOOLEAN'],
-						['RIGHT_PAREN']
-					]
-				);
-				return res;
-			},
-			work: function(stateHolder, index, command, state, cb) {
-				var tmpCommand = [];
-				for (var i = 0; i < index; i++) {
-					tmpCommand.push(command[i]);
-				}
-
-				tmpCommand.push(command[index + 1]);
-				
-				for (var i = index + 3; i < command.length; i++) {
-					tmpCommand.push(command[i]);
-				}
-				return cb(tmpCommand);
-			}
-		},
-		{ name: 'Macro arguments',
-			matches: function(command) {
-				return doesMatch(
-					command,
-					[
-						['LEFT_CURLY'],
-						['NUMBER', 'STRING'],
-						['RIGHT_CURLY']
-					]
-				);
-			},
-			work: function(stateHolder, index, command, state, cb) {
-				var tmpCommand = [];
-				for (var i = 0; i < index; i++) {
-					tmpCommand.push(command[i]);
-				}
-				tmpCommand.push({
-					type: 'QUOTED_STRING',
-					rawValue: state.args[command[index+1].rawValue]
-				});
-				for (var i = index + 3; i < command.length; i++) {
-					tmpCommand.push(command[i]);
-				}
-				return cb(tmpCommand);
-			}
-		},
-		{ name: 'Normal variable',
-			matches: function(command) {
-				return doesMatch(
-					command,
-					[
-						['VARIABLE']
-					]
-				);
-			},
-			work: function(stateHolder, index, command, state, cb) {
-				var tmpCommand = [];
-				for (var i = 0; i < index; i++) {
-					tmpCommand.push(command[i]);
-				}
-
-				tmpCommand.push(
-					{
-						type: 'QUOTED_STRING',
-						rawValue: state.variables[command[index].rawValue]
-					}
-				);
-				
-				for (var i = index + 1; i < command.length; i++) {
-					tmpCommand.push(command[i]);
-				}
-				return cb(tmpCommand);
-			}
-		},
-		{ name: 'Channel variable',
-			matches: function(command) {
-				return doesMatch(
-					command,
-					[
-						['CHANNEL_VARIABLE']
-					]
-				);
-			},
-			work: function(stateHolder, index, command, state, cb) {
-				var tmpCommand = [];
-				for (var i = 0; i < index; i++) {
-					tmpCommand.push(command[i]);
-				}
-
-				var internalCommand = [
-					'!var',
-					'get',
-					'channel',
-					command[index].rawValue.substring(1)
-				];
-				ret.fakeStateHolder.clearMessages();
-				ret.handlers.execute(
-					'!var',
-					internalCommand,
-					ret.fakeStateHolder,
-					function() {
-						tmpCommand.push({
-							type: 'QUOTED_STRING',
-							rawValue: ret.fakeStateHolder.result
-						});
-
-						for (var i = index + 1; i < command.length; i++) {
-							tmpCommand.push(command[i]);
-						}
-						return cb(tmpCommand);
-					}
-				);
-			}
-		}
+		patterns.variableDotEquals,
+		patterns.comparison,
+		patterns.variableAssignment,
+		patterns.mathAndConcat,
+		patterns.equality,
+		patterns.ternary,
+		patterns.tableLookups,
+		patterns.echo,
+		patterns.ignore,
+		patterns.functionExecution,
+		patterns.squashParens,
+		patterns.macroArguments,
+		patterns.variableDot,
+		patterns.normalVariable,
 	]
 };
 
 ret.setHandlers = function(handlers) {
 	ret.handlers = handlers;
+	helper.handlers = handlers;
 };
+
+ret.setMongoose = function(mongoose) {
+	ret.mongoose = mongoose;
+	ret.varModel = mongoose.model('Var');
+	ret.characterModel = mongoose.model('Character');
+}
 
 function handleSingleCommand(stateHolder, command, state, callback) {
 	if (command.length == 0) return callback(command);
-
-	//(stateHolder.real ? stateHolder.real : stateHolder).simpleAddMessage(stateHolder.username, JSON.stringify(command) + "\n");
-	console.log(command);
 
 	for (var i = 0; i < ret.patterns.length; i++) {
 		var pattern = ret.patterns[i];
 		var found = pattern.matches(command);
 		if (found !== false) {
-			pattern.work(stateHolder, found, command, state, function(newCommand) {
+			pattern.work(stateHolder, found, command, state, ret.handlers, function(newCommand) {
 				handleSingleCommand(stateHolder, newCommand, state, callback);
 			});
 			return;
@@ -585,7 +61,7 @@ function handleSingleCommand(stateHolder, command, state, callback) {
 	return callback(command);
 }
 
-function executeCommands(commands, state, next) {
+function fixStrings(commands) {
 	// Fix strings
 	var workingCommands = [];
 
@@ -625,9 +101,11 @@ function executeCommands(commands, state, next) {
 		}
 		workingCommands.push(workingCommand);
 	}
+	return workingCommands;
+}
 
-	commands = workingCommands;
-	workingCommands = [];
+function removeWhitespace(commands) {
+	var workingCommands = [];
 
 	// Now we can remove all the whitespace.
 	for (var i = 0; i < commands.length; i++) {
@@ -641,9 +119,11 @@ function executeCommands(commands, state, next) {
 		}
 		workingCommands.push(workingCommand);
 	}
+	return workingCommands;
+}
 
-	commands = workingCommands;
-	workingCommands = [];
+function decideStringOrVariable(commands) {
+	var workingCommands = [];
 
 	for (var i = 0; i < commands.length; i++) {
 		var command = commands[i];
@@ -658,18 +138,47 @@ function executeCommands(commands, state, next) {
 					};
 					workingCommand.push(token);
 				} else {
-					if (token.rawValue[0] == '#') {
-						token = {
-							rawValue: token.rawValue,
-							type: 'CHANNEL_VARIABLE'
-						};
-					} else {
-						token = {
-							rawValue: token.rawValue,
-							type: 'VARIABLE'
-						};
+					var pieces = token.rawValue.split(".");
+					for (var n = 0; n < pieces.length; n++) {
+						if (n != 0) {
+							token = {
+								rawValue: '.',
+								type: 'DOT'
+							}
+							workingCommand.push(token);
+						}
+						if (n == 0 && pieces[n] == 'channel') {
+							token = {
+								rawValue: 'channel',
+								object: channel(ret.stateHolder, ret.varModel),
+								type: 'CHANNEL'
+							};
+						} else if (n == 0 && pieces[n] == 'user') {
+							token = {
+								rawValue: 'user',
+								object: user(ret.stateHolder, ret.varModel),
+								type: 'USER'
+							};
+						} else if (n == 0 && pieces[n] == 'character') {
+							token = {
+								rawValue: 'character',
+								object: character(ret.stateHolder, ret.characterModel, ret.varModel),
+								type: 'CHARACTER'
+							};
+						} else if (n == 0 && pieces[n] == 'server') {
+							token = {
+								rawValue: 'server',
+								object: server(ret.stateHolder, ret.varModel),
+								type: 'SERVER'
+							};
+						} else {
+							token = {
+								rawValue: pieces[n],
+								type: 'VARIABLE',
+							};
+						}
+						workingCommand.push(token);
 					}
-					workingCommand.push(token);
 				}
 			} else {
 				workingCommand.push(token);
@@ -677,8 +186,10 @@ function executeCommands(commands, state, next) {
 		}
 		workingCommands.push(workingCommand);
 	}
+	return workingCommands;
+}
 
-	commands = workingCommands;
+function executeCommands(commands, state, next) {
 	async.eachSeries(
 		commands,
 		function(iterator, callback) {
@@ -697,28 +208,8 @@ function executeCommands(commands, state, next) {
 	);
 }
 
-ret.handle = function(pieces, stateHolder, next) {
+function tokenize(command) {
 	var lex = new lexer();
-
-	ret.stateHolder = stateHolder;
-	ret.fakeStateHolder = Object.create(stateHolder);
-	ret.fakeStateHolder.result = '';
-	ret.fakeStateHolder.simpleAddMessage = function(to, message) {
-		ret.fakeStateHolder.result += message;
-	};
-
-	var state = {
-		variables: {},
-		args: ('originalArgs' in stateHolder) ? stateHolder.originalArgs : pieces
-	};
-
-	var command = '';
-	for (var i = 1; i < pieces.length; i++) {
-		if (command != '')
-			command += ' ';
-		command += pieces[i];
-	}
-	console.log('Input code from user:' + "\n" + command);
 
 	var tokens = [];
 
@@ -925,14 +416,50 @@ ret.handle = function(pieces, stateHolder, next) {
 			});
 			commands.push(tokens);
 		}
-
-		executeCommands(commands, state, function() {
-			next();
-		});
 	} catch (e) {
-		throw e;
-		return next();
+		console.log(e);
 	}
+
+	commands = fixStrings(commands);
+	commands = removeWhitespace(commands);
+	commands = decideStringOrVariable(commands);
+
+	return commands;
+}
+
+ret.debug = function(pieces, stateHolder, next) {
+	var command = '';
+	for (var i = 1; i < pieces.length; i++) {
+		if (command != '')
+			command += ' ';
+		command += pieces[i];
+	}
+
+	var commands = tokenize(command);
+	stateHolder.simpleAddMessage(stateHolder.username, JSON.stringify(commands, ['rawValue', 'type'], "\t"));
+	return next();
+}
+
+ret.handle = function(pieces, stateHolder, next) {
+	ret.stateHolder = stateHolder;
+
+	var state = {
+		variables: {},
+		args: ('originalArgs' in stateHolder) ? stateHolder.originalArgs : pieces
+	};
+
+	var command = '';
+	for (var i = 1; i < pieces.length; i++) {
+		if (command != '')
+			command += ' ';
+		command += pieces[i];
+	}
+
+	var commands = tokenize(command);
+
+	executeCommands(commands, state, function() {
+		next();
+	});
 }
 
 module.exports = ret;

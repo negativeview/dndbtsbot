@@ -8,7 +8,9 @@ ret.init = function(mongoose) {
 		name: String,
 		user: String,
 		channel: String,
-		value: String
+		server: String,
+		value: String,
+		character: String
 	});
 	mongoose.model('Var', VarSchema);
 
@@ -165,10 +167,6 @@ function varSet(pieces, stateHolder, next) {
 		parameters.user = stateHolder.memberNameToNumber(stateHolder.serverID, pieces[3]);
 		parameters.name = pieces[4];
 		index = 5;
-	}
-
-	if (parameters.name[0] == '_' && !stateHolder.officialVar) {
-		stateHolder.simpleAddMessage(stateHolder.username, '**Note** that variables that start with a _ will likely have a special meaning in the future. If you are using this variable for an unofficial reason, be warned.');
 	}
 
 	var value = '';

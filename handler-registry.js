@@ -25,6 +25,7 @@ var handlers = {
 	'!evaluate': evaluateHandler.evaluate,
 	'!table': tableHandler.handle,
 	'!!': embeddedCodeHandler.handle,
+	'!<': embeddedCodeHandler.debug,
 	'!character': characterHandler.handle,
 	'!attack': characterHandler.attack,
 	'!dm': varHandler.dm
@@ -41,6 +42,7 @@ ret.init = function(mongoose, bot) {
 	tableHandler.init(mongoose);
 	embeddedCodeHandler.setHandlers(ret);
 	characterHandler.init(mongoose, ret);
+	embeddedCodeHandler.setMongoose(mongoose);
 }
 
 ret.addHandler = function(command, handler) {
