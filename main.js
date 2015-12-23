@@ -14,7 +14,7 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 
 	if (message[0] != '!') {
 		var splitMessages = message.split(/[\n ]/);
-		markov.parse(splitMessages, stateHolder);
+		//markov.parse(splitMessages, stateHolder);
 		return;
 	}
 
