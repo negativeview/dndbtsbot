@@ -211,11 +211,13 @@ ret.parse = function(message, stateHolder) {
 							p.next.push({word: model.word, times: 1});
 						}
 
-						p.save(function(err) {
-							if (err) throw err;
-
+						try {
+							p.save(function(err) {
+								return callback_a();
+							});
+						} catch (err) {
 							return callback_a();
-						});
+						}
 					} else {
 						var foundPrevious = false;
 						for (var i = 0; i < model.previous.length; i++) {
@@ -237,9 +239,11 @@ ret.parse = function(message, stateHolder) {
 			);
 		},
 		function() {
-			previous.save(function(err) {
-				if (err) throw err;
-			});
+			try {
+				previous.save(function(err) {
+				});
+			} catch (e) {
+			}
 		}
 	);
 };
