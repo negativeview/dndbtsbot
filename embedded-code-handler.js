@@ -19,6 +19,7 @@ var ret = {
 		patterns.ternary,
 		patterns.tableLookups,
 		patterns.echo,
+		patterns.pm,
 		patterns.ignore,
 		patterns.functionExecution,
 		patterns.squashParens,
@@ -257,6 +258,13 @@ function tokenize(command) {
 
 	var tokens = [];
 
+	lex.addRule(/\{[0-9]+\}/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'MACRO_ARGUMENT'
+		});
+	});
+
 	lex.addRule(/[ \t\n\r]/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
@@ -273,6 +281,12 @@ function tokenize(command) {
 		tokens.push({
 			rawValue: lexeme,
 			type: 'ECHO'
+		});
+	});
+	lex.addRule(/pm/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'PM'
 		});
 	});
 	lex.addRule(/ignore/gm, function(lexeme) {

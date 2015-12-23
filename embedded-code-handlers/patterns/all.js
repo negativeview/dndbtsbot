@@ -13,5 +13,6 @@ module.exports = {
 	normalVariable: require('./normal-variable.js'),
 	variableDot: require('./variable-dot.js'),
 	variableDotEquals: require('./variable-dot-equals.js'),
-	doForeach: require('./do-foreach.js')
+	doForeach: require('./do-foreach.js'),
+	pm: require('./pm.js')
 };

@@ -6,9 +6,7 @@ module.exports = {
 		return helper.doesMatch(
 			command,
 			[
-				['LEFT_CURLY'],
-				['NUMBER', 'STRING'],
-				['RIGHT_CURLY']
+				['MACRO_ARGUMENT']
 			]
 		);
 	},
@@ -17,11 +15,14 @@ module.exports = {
 		for (var i = 0; i < index; i++) {
 			tmpCommand.push(command[i]);
 		}
+
+		var matches = command[index].rawValue.match(/\{([0-9]*)\}/);
+
 		tmpCommand.push({
 			type: 'QUOTED_STRING',
-			rawValue: state.args[command[index+1].rawValue]
+			rawValue: state.args[matches[1]]
 		});
-		for (var i = index + 3; i < command.length; i++) {
+		for (var i = index + 1; i < command.length; i++) {
 			tmpCommand.push(command[i]);
 		}
 		return cb(tmpCommand);
