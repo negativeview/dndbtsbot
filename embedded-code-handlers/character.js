@@ -1,7 +1,9 @@
-function newCharacter(stateHolder, characterModel) {
+function newCharacter(stateHolder, characterModel, tableModel, tableRowModel) {
 	var ret = {
 		stateHolder: stateHolder,
 		characterModel: characterModel,
+		tableModel: tableModel,
+		tableRowModel: tableRowModel,
 		getSub: function(key, next) {
 			var parameters = {
 				user: ret.stateHolder.username,

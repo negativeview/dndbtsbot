@@ -9,13 +9,20 @@ module.exports = {
 
 		if (command[offset + 0].type != 'VARIABLE') return false;
 		if (command[offset + 1].type != 'EQUALS') return false;
-		if (command[offset + 2].type != 'QUOTED_STRING' && command[offset + 2].type != 'NUMBER') return false;
+		if (command[offset + 2].type != 'QUOTED_STRING' && command[offset + 2].type != 'NUMBER' && command[offset + 2].type != 'VARIABLE') return false;
 		if (command[offset + 3].type != 'SEMICOLON') return false;
 
 		return offset;
 	},
-	work: function(stateHolder, index, command, state, handlers, cb) {
-		state.variables[command[index + 0].rawValue] = command[index + 2].rawValue;
+	work: function(stateHolder, index, command, state, handlers, execute, cb) {
+		state.variables[command[index + 0].rawValue] =
+			command[index + 2].type == 'VARIABLE' ?
+				(
+					state.blockVariables[command[index + 2].rawValue] ?
+						state.blockVariables[command[index + 2].rawValue] :
+						state.variables[command[index + 2].rawValue]
+				) :
+				command[index + 2].rawValue;
 
 		return cb([]);
 	}

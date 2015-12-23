@@ -10,6 +10,7 @@ var character = require('./embedded-code-handlers/character.js');
 
 var ret = {
 	patterns: [
+		patterns.doForeach,
 		patterns.variableDotEquals,
 		patterns.comparison,
 		patterns.variableAssignment,
@@ -36,6 +37,8 @@ ret.setMongoose = function(mongoose) {
 	ret.mongoose = mongoose;
 	ret.varModel = mongoose.model('Var');
 	ret.characterModel = mongoose.model('Character');
+	ret.tableModel = mongoose.model('Table');
+	ret.tableRowModel = mongoose.model('TableRow');
 }
 
 function handleSingleCommand(stateHolder, command, state, callback) {
@@ -45,7 +48,7 @@ function handleSingleCommand(stateHolder, command, state, callback) {
 		var pattern = ret.patterns[i];
 		var found = pattern.matches(command);
 		if (found !== false) {
-			pattern.work(stateHolder, found, command, state, ret.handlers, function(newCommand) {
+			pattern.work(stateHolder, found, command, state, ret.handlers, executeCommands, function(newCommand) {
 				handleSingleCommand(stateHolder, newCommand, state, callback);
 			});
 			return;
@@ -61,137 +64,127 @@ function handleSingleCommand(stateHolder, command, state, callback) {
 	return callback(command);
 }
 
-function fixStrings(commands) {
-	// Fix strings
-	var workingCommands = [];
-
-	// Pull quoted strings into their own token.
-	for (var i = 0; i < commands.length; i++) {
-		var command = commands[i];
-		var workingCommand = [];
-		var inString = false;
-		var workingString = '';
-		var stringType = null;
-		for (var m = 0; m < command.length; m++) {
-			var token = command[m];
-			if (!inString) {
-				if (token.type == 'SINGLE_QUOTE') {
-					inString = true;
-					stringType = 'SINGLE_QUOTE';
-				} else if (token.type == 'DOUBLE_QUOTE') {
-					inString = true;
-					stringType = 'DOUBLE_QUOTE';
-				} else {
-					workingCommand.push(token);
-				}
+function fixStrings(command) {
+	var workingCommand = [];
+	var inString = false;
+	var workingString = '';
+	var stringType = null;
+	for (var m = 0; m < command.length; m++) {
+		var token = command[m];
+		if (!inString) {
+			if (token.type == 'SINGLE_QUOTE') {
+				inString = true;
+				stringType = 'SINGLE_QUOTE';
+			} else if (token.type == 'DOUBLE_QUOTE') {
+				inString = true;
+				stringType = 'DOUBLE_QUOTE';
 			} else {
-				if (token.type == stringType) {
-					stringType = null;
-					inString = false;
-					token = {
-						type: 'QUOTED_STRING',
-						rawValue: workingString
-					};
-					workingString = '';
-					workingCommand.push(token);
-				} else {
-					workingString += token.rawValue;
-				}
-			}
-		}
-		workingCommands.push(workingCommand);
-	}
-	return workingCommands;
-}
-
-function removeWhitespace(commands) {
-	var workingCommands = [];
-
-	// Now we can remove all the whitespace.
-	for (var i = 0; i < commands.length; i++) {
-		var command = commands[i];
-		var workingCommand = [];
-		for (var m = 0; m < command.length; m++) {
-			var token = command[m];
-			if (token.type != 'WHITESPACE') {
 				workingCommand.push(token);
 			}
+		} else {
+			if (token.type == stringType) {
+				stringType = null;
+				inString = false;
+				token = {
+					type: 'QUOTED_STRING',
+					rawValue: workingString
+				};
+				workingString = '';
+				workingCommand.push(token);
+			} else {
+				workingString += token.rawValue;
+			}
 		}
-		workingCommands.push(workingCommand);
 	}
-	return workingCommands;
+	return workingCommand;
 }
 
-function decideStringOrVariable(commands) {
-	var workingCommands = [];
+function removeWhitespace(command) {
+	var workingCommand = [];
+	for (var m = 0; m < command.length; m++) {
+		var token = command[m];
+		if (token.type != 'WHITESPACE') {
+			workingCommand.push(token);
+		}
+	}
+	return workingCommand;
+}
 
-	for (var i = 0; i < commands.length; i++) {
-		var command = commands[i];
-		var workingCommand = [];
-		for (var m = 0; m < command.length; m++) {
-			var token = command[m];
-			if (token.type == 'STRING') {
-				if (ret.handlers.findCommand(token.rawValue)) {
-					token = {
-						rawValue: token.rawValue,
-						type: 'FUNCTION'
-					};
-					workingCommand.push(token);
-				} else {
-					var pieces = token.rawValue.split(".");
-					for (var n = 0; n < pieces.length; n++) {
-						if (n != 0) {
-							token = {
-								rawValue: '.',
-								type: 'DOT'
-							}
-							workingCommand.push(token);
-						}
-						if (n == 0 && pieces[n] == 'channel') {
-							token = {
-								rawValue: 'channel',
-								object: channel(ret.stateHolder, ret.varModel),
-								type: 'CHANNEL'
-							};
-						} else if (n == 0 && pieces[n] == 'user') {
-							token = {
-								rawValue: 'user',
-								object: user(ret.stateHolder, ret.varModel),
-								type: 'USER'
-							};
-						} else if (n == 0 && pieces[n] == 'character') {
-							token = {
-								rawValue: 'character',
-								object: character(ret.stateHolder, ret.characterModel, ret.varModel),
-								type: 'CHARACTER'
-							};
-						} else if (n == 0 && pieces[n] == 'server') {
-							token = {
-								rawValue: 'server',
-								object: server(ret.stateHolder, ret.varModel),
-								type: 'SERVER'
-							};
-						} else {
-							token = {
-								rawValue: pieces[n],
-								type: 'VARIABLE',
-							};
+function decideStringOrVariable(command) {
+	var workingCommand = [];
+	for (var m = 0; m < command.length; m++) {
+		var token = command[m];
+		if (token.type == 'STRING') {
+			if (ret.handlers.findCommand(token.rawValue)) {
+				token = {
+					rawValue: token.rawValue,
+					type: 'FUNCTION'
+				};
+				workingCommand.push(token);
+			} else {
+				var pieces = token.rawValue.split(".");
+				for (var n = 0; n < pieces.length; n++) {
+					if (n != 0) {
+						token = {
+							rawValue: '.',
+							type: 'DOT'
 						}
 						workingCommand.push(token);
 					}
+					if (n == 0 && pieces[n] == 'channel') {
+						token = {
+							rawValue: 'channel',
+							object: channel(ret.stateHolder, ret.varModel, ret.tableModel, ret.tableRowModel),
+							type: 'CHANNEL'
+						};
+					} else if (n == 0 && pieces[n] == 'user') {
+						token = {
+							rawValue: 'user',
+							object: user(ret.stateHolder, ret.varModel, ret.tableModel, ret.tableRowModel),
+							type: 'USER'
+						};
+					} else if (n == 0 && pieces[n] == 'character') {
+						token = {
+							rawValue: 'character',
+							object: character(ret.stateHolder, ret.characterModel, ret.varModel, ret.tableModel, ret.tableRowModel),
+							type: 'CHARACTER'
+						};
+					} else if (n == 0 && pieces[n] == 'server') {
+						token = {
+							rawValue: 'server',
+							object: server(ret.stateHolder, ret.varModel, ret.tableModel, ret.tableRowModel),
+							type: 'SERVER'
+						};
+					} else {
+						token = {
+							rawValue: pieces[n],
+							type: 'VARIABLE',
+						};
+					}
+					workingCommand.push(token);
 				}
-			} else {
-				workingCommand.push(token);
 			}
+		} else {
+			workingCommand.push(token);
 		}
-		workingCommands.push(workingCommand);
 	}
-	return workingCommands;
+	return workingCommand;
 }
 
 function executeCommands(commands, state, next) {
+	var totalCommands = [];
+	var currentCommands = [];
+	for (var i = 0; i < commands.length; i++) {
+		var command = commands[i];
+		currentCommands.push(command);
+		if (command.type == 'BLOCK' || command.type == 'SEMICOLON') {
+			totalCommands.push(currentCommands);
+			currentCommands = [];
+		}
+	}
+
 	async.eachSeries(
-		commands,
+		totalCommands,
 		function(iterator, callback) {
 			var temporaryStateHolder = ret.stateHolder.clone();
 			temporaryStateHolder.isTemporary = true;
@@ -208,13 +201,61 @@ function executeCommands(commands, state, next) {
 	);
 }
 
+function breakIntoStatementsAndBlocks(tokens) {
+	while (true) {
+		var createdBlock = false;
+		var blockStartIndex = 0;
+		var inBlock = false;
+
+		for (var i = 0; i < tokens.length; i++) {
+			var token = tokens[i];
+			if (token.type == 'LEFT_CURLY') {
+				blockStartIndex = i;
+				inBlock = true;
+			}
+			if (token.type == 'RIGHT_CURLY') {
+				if (inBlock) {
+					createdBlock = true;
+					break;
+				}
+			}
+		}
+
+		if (createdBlock) {
+			var endLocation = i;
+			var tmpTokens = [];
+			for (var i = 0; i < blockStartIndex; i++) {
+				tmpTokens.push(tokens[i]);
+			}
+
+			var blockContents = [];
+			for (var i = blockStartIndex + 1; i < endLocation; i++) {
+				blockContents.push(tokens[i]);
+			}
+
+			var blockToken = {
+				type: 'BLOCK',
+				rawValue: '...',
+				internal: blockContents
+			};
+			tmpTokens.push(blockToken);
+
+			for (var i = endLocation + 1; i < tokens.length; i++) {
+				tmpTokens.push(tokens[i]);
+			}
+			tokens = tmpTokens;
+		} else {
+			break;
+		}
+	}
+
+	return tokens;
+}
+
 function tokenize(command) {
 	var lex = new lexer();
 
 	var tokens = [];
-
-	var currentCommand = [];
-	var commands = [];
 
 	lex.addRule(/[ \t\n\r]/, function(lexeme) {
 		tokens.push({
@@ -254,6 +295,12 @@ function tokenize(command) {
 		tokens.push({
 			rawValue: lexeme,
 			type: 'VAR'
+		});
+	});
+	lex.addRule(/foreach/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'FOREACH'
 		});
 	});
 	lex.addRule(/if/gm, function(lexeme) {
@@ -333,8 +380,6 @@ function tokenize(command) {
 			rawValue: lexeme,
 			type: 'SEMICOLON'
 		});
-		commands.push(tokens);
-		tokens = [];
 	});
 	lex.addRule(/\(/, function(lexeme) {
 		tokens.push({
@@ -408,23 +453,16 @@ function tokenize(command) {
 
 	try {
 		lex.lex();
-
-		if (tokens.length) {
-			tokens.push({
-				rawValue: ';',
-				type: 'SEMICOLON'
-			});
-			commands.push(tokens);
-		}
 	} catch (e) {
 		console.log(e);
 	}
 
-	commands = fixStrings(commands);
-	commands = removeWhitespace(commands);
-	commands = decideStringOrVariable(commands);
+	tokens = fixStrings(tokens);
+	tokens = removeWhitespace(tokens);
+	tokens = decideStringOrVariable(tokens);
+	statements = breakIntoStatementsAndBlocks(tokens);
 
-	return commands;
+	return statements;
 }
 
 ret.debug = function(pieces, stateHolder, next) {
@@ -436,7 +474,7 @@ ret.debug = function(pieces, stateHolder, next) {
 	}
 
 	var commands = tokenize(command);
-	stateHolder.simpleAddMessage(stateHolder.username, JSON.stringify(commands, ['rawValue', 'type'], "\t"));
+	stateHolder.simpleAddMessage(stateHolder.username, JSON.stringify(commands, ['rawValue', 'type'], "      "));
 	return next();
 }
 
@@ -445,6 +483,7 @@ ret.handle = function(pieces, stateHolder, next) {
 
 	var state = {
 		variables: {},
+		blockVariables: {},
 		args: ('originalArgs' in stateHolder) ? stateHolder.originalArgs : pieces
 	};
 

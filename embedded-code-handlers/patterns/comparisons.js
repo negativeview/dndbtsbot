@@ -11,7 +11,7 @@ module.exports = {
 			]
 		);
 	},
-	work: function(stateHolder, index, command, state, handlers, cb) {
+	work: function(stateHolder, index, command, state, handlers, execute, cb) {
 		var tmpCommand = [];
 		for (var i = 0; i < index; i++) {
 			tmpCommand.push(command[i]);

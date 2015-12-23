@@ -13,7 +13,7 @@ module.exports = {
 			]
 		);
 	},
-	work: function(stateHolder, index, command, state, handlers, cb) {
+	work: function(stateHolder, index, command, state, handlers, execute, cb) {
 		var commandName = command[index].rawValue;
 		var argument = command[index + 2].rawValue;
 

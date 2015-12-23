@@ -15,7 +15,7 @@ module.exports = {
 			]
 		);
 	},
-	work: function(stateHolder, index, command, state, handlers, cb) {
+	work: function(stateHolder, index, command, state, handlers, execute, cb) {
 		command[index].object.putSub(
 			command[index + 2].rawValue,
 			command[index + 4].rawValue,

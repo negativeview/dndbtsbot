@@ -12,7 +12,7 @@ module.exports = {
 			]
 		);
 	},
-	work: function(stateHolder, index, command, state, handlers, cb) {
+	work: function(stateHolder, index, command, state, handlers, execute, cb) {
 		var val1 = command[index].rawValue;
 		var val2 = command[index + 2].rawValue;
 

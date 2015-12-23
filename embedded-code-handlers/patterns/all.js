@@ -12,5 +12,6 @@ module.exports = {
 	macroArguments: require('./macro-arguments.js'),
 	normalVariable: require('./normal-variable.js'),
 	variableDot: require('./variable-dot.js'),
-	variableDotEquals: require('./variable-dot-equals.js')
+	variableDotEquals: require('./variable-dot-equals.js'),
+	doForeach: require('./do-foreach.js')
 };
