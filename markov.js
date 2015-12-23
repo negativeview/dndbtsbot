@@ -72,7 +72,7 @@ function startReplyChain(err, res, stateHolder) {
 			ret.wordModel.find({word: chosen.word}).exec(function(err2, res2) {
 				if (err2) throw err2;
 
-				if (res2.length == 0) throw "No result for " + chosen.word;
+				if (res2.length == 0) return next();
 
 				theReply.push(res2[0]);
 
@@ -97,7 +97,7 @@ function startReplyChain(err, res, stateHolder) {
 					ret.wordModel.find({word: chosen.word}).exec(function(err2, res2) {
 						if (err2) throw err2;
 
-						if (res2.length == 0) throw "No result for " + chosen.word;
+						if (res2.length == 0) return next2();
 
 						theReply.push(res2[0]);
 
