@@ -4,7 +4,6 @@ var async = require('async');
 module.exports = {
 	name: 'Do If Else',
 	matches: function(command) {
-		console.log(command);
 		return helper.doesMatch(
 			command,
 			[
@@ -19,7 +18,6 @@ module.exports = {
 		);
 	},
 	work: function(stateHolder, index, command, state, handlers, execute, cb) {
-		console.log('if else');
 		var tmpCommand = [];
 		for (var i = 0; i < index; i++) {
 			tmpCommand.push(command[i]);

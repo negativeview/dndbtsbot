@@ -10,6 +10,7 @@ var character = require('./embedded-code-handlers/character.js');
 
 var ret = {
 	patterns: [
+		patterns.tableActualSet,
 		patterns.doForeach,
 		patterns.doIfElse,
 		patterns.doIf,
@@ -19,15 +20,17 @@ var ret = {
 		patterns.mathAndConcat,
 		patterns.equality,
 		patterns.ternary,
-		patterns.tableLookups,
 		patterns.echo,
 		patterns.pm,
 		patterns.ignore,
 		patterns.functionExecution,
 		patterns.squashParens,
 		patterns.macroArguments,
+		patterns.variableDotBracket,
+		patterns.tableLookups,
 		patterns.variableDot,
 		patterns.normalVariable,
+		patterns.tableActualLookup
 	]
 };
 

@@ -1,15 +1,15 @@
 var helper = require('../helper.js');
 
 module.exports = {
-	name: 'Table lookup',
+	name: 'Variable Dot Bracket',
 	matches: function(command) {
 		return helper.doesMatch(
 			command,
 			[
+				['SERVER', 'CHANNEL', 'USER', 'CHARACTER'],
+				['DOT'],
 				['VARIABLE'],
-				['LEFT_BRACKET'],
-				['QUOTED_STRING', 'NUMBER'],
-				['RIGHT_BRACKET']
+				['LEFT_BRACKET']
 			]
 		);
 	},
@@ -21,12 +21,12 @@ module.exports = {
 
 		tmpCommand.push({
 			type: 'TABLE',
-			namespace: 'user',
+			namespace: command[index].rawValue,
 			name: command[index+2].rawValue,
-			rawValue: 'me.' + command[index+2].rawValue
+			rawValue: command[index].rawValue + '.' + command[index+2].rawValue
 		});
 
-		for (var i = index + 4; i < command.length; i++) {
+		for (var i = index + 3; i < command.length; i++) {
 			tmpCommand.push(command[i]);
 		}
 		return cb(tmpCommand);

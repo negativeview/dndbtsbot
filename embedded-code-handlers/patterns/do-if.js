@@ -16,7 +16,6 @@ module.exports = {
 		);
 	},
 	work: function(stateHolder, index, command, state, handlers, execute, cb) {
-		console.log('do if');
 		var tmpCommand = [];
 		for (var i = 0; i < index; i++) {
 			tmpCommand.push(command[i]);
