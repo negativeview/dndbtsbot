@@ -14,5 +14,7 @@ module.exports = {
 	variableDot: require('./variable-dot.js'),
 	variableDotEquals: require('./variable-dot-equals.js'),
 	doForeach: require('./do-foreach.js'),
+	doIf: require('./do-if.js'),
+	doIfElse: require('./do-if-else.js'),
 	pm: require('./pm.js')
 };

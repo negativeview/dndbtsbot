@@ -6,9 +6,10 @@ function newServer(stateHolder, varModel, tableModel, tableRowModel) {
 		tableRowModel: tableRowModel,
 		getTable: function(name, next) {
 			var parameters = {
-				server: stateHolder.serverID,
+				server: stateHolder.bot.serverFromChannel(stateHolder.channelID),
 				name: name
 			};
+
 			ret.tableModel.find(parameters).exec(
 				function(err, res) {
 					if (err) {

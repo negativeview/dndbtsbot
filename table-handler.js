@@ -7,6 +7,7 @@ ret.init = function(mongoose) {
 		name: String,
 		user: String,
 		channel: String,
+		server: String,
 		publicEdit: Boolean
 	});
 	mongoose.model('Table', TableSchema);
@@ -29,6 +30,8 @@ ret.getAll = function(pieces, stateHolder, next) {
 		parameters.user = stateHolder.username;
 	} else if (pieces[2] == 'channel') {
 		parameters.channel = stateHolder.channelID
+	} else if (pieces[2] == 'server') {
+		parameters.server = stateHolder.bot.serverFromChannel(stateHolder.channelID);
 	} else {
 		stateHolder.simpleAddMessage(stateHolder.username, 'Invalid namespace: ' + pieces[2]);
 		return next();
@@ -58,7 +61,6 @@ ret.getAll = function(pieces, stateHolder, next) {
 };
 
 ret.getKeys = function(pieces, stateHolder, next) {
-
 	var name = pieces[3];
 
 	var parameters = {
@@ -69,6 +71,8 @@ ret.getKeys = function(pieces, stateHolder, next) {
 		parameters.user = stateHolder.username;
 	} else if (pieces[2] == 'channel') {
 		parameters.channel = stateHolder.channelID
+	} else if (pieces[2] == 'server') {
+		parameters.server = stateHolder.bot.serverFromChannel(stateHolder.channelID);
 	} else {
 		stateHolder.simpleAddMessage(stateHolder.username, 'Invalid namespace: ' + pieces[2]);
 		return next();
@@ -123,6 +127,8 @@ ret.getRand = function(pieces, stateHolder, next) {
 		parameters.user = stateHolder.username;
 	} else if (pieces[2] == 'channel') {
 		parameters.channel = stateHolder.channelID
+	} else if (pieces[2] == 'server') {
+		parameters.server = stateHolder.bot.serverFromChannel(stateHolder.channelID);
 	} else {
 		stateHolder.simpleAddMessage(stateHolder.username, 'Invalid namespace: ' + pieces[2]);
 		return next();
@@ -179,6 +185,8 @@ ret.get = function(pieces, stateHolder, next) {
 		parameters.user = stateHolder.username;
 	} else if (pieces[2] == 'channel') {
 		parameters.channel = stateHolder.channelID
+	} else if (pieces[2] == 'server') {
+		parameters.server = stateHolder.bot.serverFromChannel(stateHolder.channelID);
 	} else {
 		stateHolder.simpleAddMessage(stateHolder.username, 'Invalid namespace: ' + pieces[2]);
 		return next();
@@ -244,6 +252,8 @@ ret.set = function(pieces, stateHolder, next) {
 		parameters.user = stateHolder.username;
 	} else if (pieces[2] == 'channel') {
 		parameters.channel = stateHolder.channelID
+	} else if (pieces[2] == 'server') {
+		parameters.server = stateHolder.bot.serverFromChannel(stateHolder.channelID);
 	} else {
 		stateHolder.simpleAddMessage(stateHolder.username, 'Invalid namespace: ' + pieces[2]);
 		return next();
@@ -332,6 +342,8 @@ ret.delKey = function(pieces, stateHolder, next) {
 		parameters.user = stateHolder.username;
 	} else if (pieces[2] == 'channel') {
 		parameters.channel = stateHolder.channelID
+	} else if (pieces[2] == 'server') {
+		parameters.server = stateHolder.bot.serverFromChannel(stateHolder.channelID);
 	} else {
 		stateHolder.simpleAddMessage(stateHolder.username, 'Invalid namespace: ' + pieces[2]);
 		return next();
@@ -386,6 +398,8 @@ ret.delTable = function(pieces, stateHolder, next) {
 		parameters.user = stateHolder.username;
 	} else if (pieces[2] == 'channel') {
 		parameters.channel = stateHolder.channelID
+	} else if (pieces[2] == 'server') {
+		parameters.server = stateHolder.bot.serverFromChannel(stateHolder.channelID);
 	} else {
 		stateHolder.simpleAddMessage(stateHolder.username, 'Invalid namespace: ' + pieces[2]);
 		return next();
@@ -446,6 +460,8 @@ ret.create = function(pieces, stateHolder, next) {
 		parameters.user = stateHolder.username;
 	} else if (pieces[2] == 'channel') {
 		parameters.channel = stateHolder.channelID
+	} else if (pieces[2] == 'server') {
+		parameters.server = stateHolder.bot.serverFromChannel(stateHolder.channelID);
 	} else {
 		stateHolder.simpleAddMessage(stateHolder.username, 'Invalid namespace: ' + pieces[2]);
 		return next();
@@ -483,9 +499,9 @@ ret.handle = function(pieces, stateHolder, next) {
 	}
 
 	var serverID = stateHolder.findServerID(stateHolder.channelID);
-	if (pieces[2] == 'channel') {
+	if (pieces[2] == 'channel' || pieces[2] == 'server') {
 		if (!serverID) {
-			stateHolder.simpleAddMessage(stateHolder.username, 'You must use this command from a channel so that I know what server to use.');
+			stateHolder.simpleAddMessage(stateHolder.username, 'You must use this command from a channel so that I know what server/channel to use.');
 			return next();
 		}
 

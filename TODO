@@ -1,0 +1,3 @@
+
+server.tableName["key"] should work. I need to make server.tableName turn into a 'TABLE' node and have things work on table nodes.
+error list for !! commands

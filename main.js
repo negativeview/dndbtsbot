@@ -64,6 +64,7 @@ mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 	handlers.init(mongoose, bot);
 
 	bot.on('ready', function() {
+		bot.setPresence({game: {name: 'with hippo\'s heart.'}});
 		console.log(bot.username + " - (" + bot.id + ")");
 		markov.init(mongoose, bot);
 	});
@@ -75,7 +76,3 @@ mongoose.connect('mongodb://127.0.0.1/test', function(err) {
 		bot.connect();
 	});
 });
-
-function getRandomInt(min, max) {
-	return Math.floor(Math.random() * (max - min)) + min;
-}

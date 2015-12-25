@@ -11,6 +11,8 @@ var character = require('./embedded-code-handlers/character.js');
 var ret = {
 	patterns: [
 		patterns.doForeach,
+		patterns.doIfElse,
+		patterns.doIf,
 		patterns.variableDotEquals,
 		patterns.comparison,
 		patterns.variableAssignment,
@@ -97,6 +99,15 @@ function fixStrings(command) {
 			}
 		}
 	}
+
+	if (inString) {
+		var erroredLine = '';
+		for (var i = 0; i < command.length; i++) {
+			if (i != 0) erroredLine += ' ';
+			erroredLine += command[i].rawValue;
+		}
+		throw "Missing closing " + stringType + " in line `" + erroredLine + "`";
+	}
 	return workingCommand;
 }
 
@@ -147,7 +158,7 @@ function decideStringOrVariable(command) {
 					} else if (n == 0 && pieces[n] == 'character') {
 						token = {
 							rawValue: 'character',
-							object: character(ret.stateHolder, ret.characterModel, ret.varModel, ret.tableModel, ret.tableRowModel),
+							object: character(ret.stateHolder, ret.characterModel, ret.tableModel, ret.tableRowModel, ret.varModel),
 							type: 'CHARACTER'
 						};
 					} else if (n == 0 && pieces[n] == 'server') {
@@ -175,13 +186,25 @@ function decideStringOrVariable(command) {
 function executeCommands(commands, state, next) {
 	var totalCommands = [];
 	var currentCommands = [];
+	
 	for (var i = 0; i < commands.length; i++) {
 		var command = commands[i];
 		currentCommands.push(command);
-		if (command.type == 'BLOCK' || command.type == 'SEMICOLON') {
+		if (command.type == 'SEMICOLON') {
 			totalCommands.push(currentCommands);
-			currentCommands = [];
+			currentCommands = [];			
+		} else if (command.type == 'BLOCK') {
+			if (commands.length > i + 1) {
+				if (commands[i + 1].type != 'ELSE') {
+					totalCommands.push(currentCommands);
+					currentCommands = [];
+				}
+			}
 		}
+	}
+
+	if (currentCommands.length) {
+		totalCommands.push(currentCommands);
 	}
 
 	async.eachSeries(
@@ -323,6 +346,12 @@ function tokenize(command) {
 			type: 'IF'
 		});
 	});
+	lex.addRule(/else/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'ELSE'
+		});
+	});
 	lex.addRule(/\+/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
@@ -437,7 +466,7 @@ function tokenize(command) {
 			type: 'SINGLE_QUOTE'
 		});
 	});
-	lex.addRule(/"/, function(lexeme) {
+	lex.addRule(/["“]/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
 			type: 'DOUBLE_QUOTE'
@@ -494,6 +523,7 @@ ret.debug = function(pieces, stateHolder, next) {
 
 ret.handle = function(pieces, stateHolder, next) {
 	ret.stateHolder = stateHolder;
+	ret.stateHolder.errorList = [];
 
 	var state = {
 		variables: {},
@@ -508,9 +538,17 @@ ret.handle = function(pieces, stateHolder, next) {
 		command += pieces[i];
 	}
 
-	var commands = tokenize(command);
+	try {
+		var commands = tokenize(command);
+	} catch (e) {
+		stateHolder.simpleAddMessage(stateHolder.username, e);
+		return next();
+	}
 
 	executeCommands(commands, state, function() {
+		if (ret.stateHolder.errorList.length) {
+			stateHolder.simpleAddMessage(stateHolder.username, ret.stateHolder.errorList.join("\n"));
+		}
 		next();
 	});
 }
