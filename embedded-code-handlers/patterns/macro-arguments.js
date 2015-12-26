@@ -18,10 +18,17 @@ module.exports = {
 
 		var matches = command[index].rawValue.match(/\{([0-9]*)\}/);
 
-		tmpCommand.push({
-			type: 'QUOTED_STRING',
-			rawValue: state.args[matches[1]]
-		});
+		if (matches.length) {
+			tmpCommand.push({
+				type: 'QUOTED_STRING',
+				rawValue: state.args[matches[1]]
+			});
+		} else {
+			tmpCommand.push({
+				type: 'QUOTED_STRING',
+				rawValue: ''
+			});			
+		}
 		for (var i = index + 1; i < command.length; i++) {
 			tmpCommand.push(command[i]);
 		}
