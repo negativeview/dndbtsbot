@@ -26,7 +26,7 @@ ret.init = function(mongoose) {
 ret.get = function(isAdmin, pieces, stateHolder, next) {
 	var model = isAdmin ? ret.adminMacroModel : ret.macroModel;
 	var params = {};
-	if (isAdmin) params.server = stateHolder.serverID;
+	if (isAdmin) params.server = stateHolder.bot.serverFromChannel(stateHolder.channelID);
 	if (!isAdmin) params.user = stateHolder.username;
 
 	if (pieces.length >= 1) {
@@ -76,7 +76,7 @@ ret.set = function(isAdmin, pieces, stateHolder, next) {
 	var params = {
 		name: macroName
 	};
-	if (isAdmin) params.server = stateHolder.serverID;
+	if (isAdmin) params.server = stateHolder.bot.serverFromChannel(stateHolder.channelID);
 	if (!isAdmin) params.user = stateHolder.username;
 
 	model.find(params).exec(function(err, res) {
@@ -118,7 +118,7 @@ ret.set = function(isAdmin, pieces, stateHolder, next) {
 ret.del = function(isAdmin, pieces, stateHolder, next) {
 	var model = isAdmin ? ret.adminMacroModel : ret.macroModel;
 	var params = {};
-	if (isAdmin) params.server = stateHolder.serverID;
+	if (isAdmin) params.server = stateHolder.bot.serverFromChannel(stateHolder.channelID);
 	if (!isAdmin) params.user = stateHolder.username;
 
 	var macroName = pieces[0];
@@ -204,7 +204,7 @@ ret.attempted = function(pieces, stateHolder, next) {
 	
 	ret.adminMacroModel.find({
 		name: pieces[0],
-		server: stateHolder.serverID
+		server: stateHolder.bot.serverFromChannel(stateHolder.channelID)
 	}).exec(function(err, res) {
 		if (err) {
 			stateHolder.simpleAddMessage(stateHolder.username, err);
