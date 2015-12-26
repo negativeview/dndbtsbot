@@ -19,13 +19,14 @@ module.exports = {
 		var matches = command[index].rawValue.match(/\{([0-9]*)\}/);
 
 		if (matches.length >= 2) {
-			if (state.args) {
+			var args = state.args ? state.args : state.originalArgs;
+
+			if (args) {
 				tmpCommand.push({
 					type: 'QUOTED_STRING',
-					rawValue: state.args[matches[1]]
+					rawValue: args[matches[1]]
 				});
 			} else {
-				console.log(state);
 				tmpCommand.push({
 					type: 'QUOTED_STRING',
 					rawValue: ''
