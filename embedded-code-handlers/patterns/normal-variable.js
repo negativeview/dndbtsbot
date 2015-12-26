@@ -18,10 +18,11 @@ module.exports = {
 
 		var variableName = command[index].rawValue;
 		var variableValue = '';
-		if (state.blockVariables[variableName]) {
+
+		if (state.blockVariables && state.blockVariables[variableName]) {
 			variableValue = state.blockVariables[variableName];
 		} else {
-			if (state.variables[variableName]) {
+			if (state.variables && state.variables[variableName]) {
 				variableValue = state.variables[variableName];
 			} else {
 				stateHolder.real.errorList.push(variableName + ' looks like a variable, but does not seem to be defined.');

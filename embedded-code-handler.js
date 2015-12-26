@@ -49,7 +49,7 @@ ret.setMongoose = function(mongoose) {
 
 function handleSingleCommand(stateHolder, command, state, callback) {
 	if (command.length == 0) return callback(command);
-
+	
 	for (var i = 0; i < ret.patterns.length; i++) {
 		var pattern = ret.patterns[i];
 		var found = pattern.matches(command);
@@ -331,12 +331,6 @@ function tokenize(command) {
 			type: 'LEFT_PAREN'
 		});
 	});
-	lex.addRule(/var/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'VAR'
-		});
-	});
 	lex.addRule(/foreach/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
@@ -488,7 +482,7 @@ function tokenize(command) {
 			type: 'DOUBLECOLON'
 		});
 	});
-	lex.addRule(/[^ '"\[\(\)\t\n;]+/gm, function(lexeme) {
+	lex.addRule(/[^ '"\[\]\(\)\t\n;]+/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
 			type: 'STRING'
