@@ -18,7 +18,7 @@ module.exports = {
 
 		var matches = command[index].rawValue.match(/\{([0-9]*)\}/);
 
-		if (matches.length) {
+		if (matches.length >= 2) {
 			tmpCommand.push({
 				type: 'QUOTED_STRING',
 				rawValue: state.args[matches[1]]
