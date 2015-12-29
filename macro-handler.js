@@ -215,9 +215,18 @@ ret.attempted = function(pieces, stateHolder, next) {
 		if (res.length) {
 			command = res[0].macro;
 
-			console.log(command);
+			var splitMessages = command.split("\n");
+			var currentMessage = splitMessages[0];
+			for (var i = 1; i < splitMessages.length; i++) {
+				if (splitMessages[i][0] != '!') {
+					currentMessage += "\n" + splitMessages[i]
+				} else {
+					stateHolder.block.addStatement(currentMessage);
+					currentMessage = splitMessages[i];
+				}
+			}
+			stateHolder.block.addStatement(currentMessage);
 
-			stateHolder.block.addStatement(command);
 			return next();
 		} else {
 			var parameters = {
@@ -233,7 +242,18 @@ ret.attempted = function(pieces, stateHolder, next) {
 
 				if (res.length) {
 					command = res[0].macro;
-					stateHolder.block.addStatement(command);
+
+					var splitMessages = command.split("\n");
+					var currentMessage = splitMessages[0];
+					for (var i = 1; i < splitMessages.length; i++) {
+						if (splitMessages[i][0] != '!') {
+							currentMessage += "\n" + splitMessages[i]
+						} else {
+							stateHolder.block.addStatement(currentMessage);
+							currentMessage = splitMessages[i];
+						}
+					}
+					stateHolder.block.addStatement(currentMessage);
 					return next();
 				} else {
 					return next();
