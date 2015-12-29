@@ -215,20 +215,9 @@ ret.attempted = function(pieces, stateHolder, next) {
 		if (res.length) {
 			command = res[0].macro;
 
-			var commands = [];
+			console.log(command);
 
-			var splitMessages = command.split("\n");
-			var currentMessage = splitMessages[0];
-			for (var i = 1; i < splitMessages.length; i++) {
-				if (splitMessages[i][0] != '!') {
-					currentMessage += "\n" + splitMessages[i]
-				} else {
-					commands.push(currentMessage);
-					currentMessage = splitMessages[i];
-				}
-			}
-			commands.push(currentMessage);
-			stateHolder.block.insertStatements(commands);
+			stateHolder.block.addStatement(command);
 			return next();
 		} else {
 			var parameters = {
@@ -243,27 +232,8 @@ ret.attempted = function(pieces, stateHolder, next) {
 				}
 
 				if (res.length) {
-					var commands = [];
 					command = res[0].macro;
-					var splitMessages = command.split("\n");
-					var currentMessage = splitMessages[0];
-					for (var i = 1; i < splitMessages.length; i++) {
-						if (splitMessages[i][0] != '!') {
-							currentMessage += "\n" + splitMessages[i]
-						} else {
-							commands.push(currentMessage);
-							currentMessage = splitMessages[i];
-						}
-					}
-					commands.push(currentMessage);
-
-					for (var i = 0; i < commands.length; i++) {
-						commands[i] = commands[i].replace(/\[(\d+)\]/g, function(match, p1, offset, string) {
-							return pieces[p1];
-						});
-					}
-
-					stateHolder.block.insertStatements(commands);
+					stateHolder.block.addStatement(command);
 					return next();
 				} else {
 					return next();
