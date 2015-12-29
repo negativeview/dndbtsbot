@@ -2,7 +2,6 @@ var diceHandler = require('./dice-handler.js');
 var echoHandler = require('./echo-handler.js');
 var helpHandler = require('./help-handler.js');
 var macroHandler = require('./macro-handler.js');
-var presenceHandler = require('./presence-handler.js');
 var rollstatsHandler = require('./roll-stats.js');
 var varHandler = require('./var-handler.js');
 var evaluateHandler = require('./evaluate-handler.js');
@@ -27,13 +26,11 @@ var handlers = {
 	'!<': embeddedCodeHandler.debug,
 	'!character': characterHandler.handle,
 	'!attack': characterHandler.attack,
-	'!dm': varHandler.dm
 }
 
 var ret = {};
 ret.init = function(mongoose, bot) {
 	macroHandler.init(mongoose);
-	presenceHandler.init(mongoose, bot);
 	rollstatsHandler.init(diceHandler);
 	helpHandler.init(mongoose);
 	varHandler.init(mongoose);

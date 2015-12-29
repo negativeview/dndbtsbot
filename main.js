@@ -1,22 +1,16 @@
-var mongoose = require('mongoose');
-var bot = require('./authenticate.js');
-var async = require('async');
-var handlers = require('./handler-registry.js');
-var block = require('./execution-block.js');
-var stateHolderClass = require('./state-holder.js');	
-var markov = require('./markov.js');
+var mongoose         = require('mongoose');
+var bot              = require('./authenticate.js');
+var async            = require('async');
+var handlers         = require('./handler-registry.js');
+var block            = require('./execution-block.js');
+var stateHolderClass = require('./state-holder.js');
 
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	if (user == bot.username || user == bot.id) return;
+	if (message[0] != '!') return;
 
 	var stateHolder = stateHolderClass(user, userID, channelID, rawEvent);
 	var b = block.create(mongoose, bot, stateHolder);
-
-	if (message[0] != '!') {
-		var splitMessages = message.split(/[\n ]/);
-		//markov.parse(splitMessages, stateHolder);
-		return;
-	}
 
 	b.setHandlers(handlers);
 
@@ -58,21 +52,24 @@ function globalHandlerMiddle(message, block) {
 	block.execute();
 }
 
-mongoose.connect('mongodb://127.0.0.1/test', function(err) {
+function onBotReady() {
+	console.log(bot.username + " - (" + bot.id + ")");
+	bot.setPresence({game: '#synthlivesmatter'});
+}
+
+function onBotDisconnected() {
+	console.log('disconnected...');
+	bot.connect();
+}
+
+function onMongoose(err) {
 	if (err) throw err;
 
 	handlers.init(mongoose, bot);
 
-	bot.on('ready', function() {
-		bot.setPresence({game: {name: 'with hippo\'s heart.'}});
-		console.log(bot.username + " - (" + bot.id + ")");
-		markov.init(mongoose, bot);
-	});
-
+	bot.on('ready', onBotReady);
 	bot.on('message', globalHandlerWrap);
+	bot.on('disconnected', onBotDisconnected);
+}
 
-	bot.on('disconnected', function() {
-		console.log('disconnected...');
-		bot.connect();
-	});
-});
+mongoose.connect('mongodb://127.0.0.1/test', onMongoose);

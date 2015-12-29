@@ -513,8 +513,12 @@ ret.debug = function(pieces, stateHolder, next) {
 		command += pieces[i];
 	}
 
-	var commands = tokenize(command);
-	stateHolder.simpleAddMessage(stateHolder.username, JSON.stringify(commands, ['rawValue', 'type'], "      "));
+	try {
+		var commands = tokenize(command);
+		stateHolder.simpleAddMessage(stateHolder.username, JSON.stringify(commands, ['rawValue', 'type'], "      "));
+	} catch (e) {
+		stateHolder.simpleAddMessage(stateHolder.username, e);
+	}
 	return next();
 }
 

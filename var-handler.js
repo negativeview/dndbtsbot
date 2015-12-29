@@ -202,11 +202,6 @@ function varSet(pieces, stateHolder, next) {
 	);
 }
 
-ret.dm = function(pieces, stateHolder, next) {
-	stateHolder.officialVar = true;
-	ret.handle(['!var', 'set', 'channel', '_dm', stateHolder.username], stateHolder, next);
-};
-
 ret.handle = function(pieces, stateHolder, next) {
 	var allowedOperators = ['set', 'get', 'inc', 'del', 'dec'];
 	var allowedNamespaces = ['me', 'channel', 'user'];

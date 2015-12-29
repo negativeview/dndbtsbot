@@ -1,3 +1,8 @@
+#synthlivesmatter
+	* Use Login Token
 
-server.tableName["key"] should work. I need to make server.tableName turn into a 'TABLE' node and have things work on table nodes.
-error list for !! commands
+Still to do:
+	* Invesgitate bot being able to change colors of people. Only needed on Discord5E server.
+	* Remove DM macro
+	* Turn a command array back into just a string, to use for debugging output.
+	* Add server configuration.
