@@ -22,7 +22,7 @@ module.exports = {
 		}
 
 		if (command[index+2].rawValue == 'true') {
-			execute(command[index + 4].internal, stateHolder, function() {
+			execute(command[index + 4].internal, state, function() {
 				for (var i = index + 5; i < command.length; i++) {
 					tmpCommand.push(command[i]);
 				}
