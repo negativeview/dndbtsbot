@@ -25,6 +25,7 @@ module.exports = {
 			if (state.variables && state.variables[variableName]) {
 				variableValue = state.variables[variableName];
 			} else {
+				console.log('Could not find varaible ' + variableName, state);
 				stateHolder.real.errorList.push(variableName + ' looks like a variable, but does not seem to be defined.');
 				variableValue = '';
 			}
