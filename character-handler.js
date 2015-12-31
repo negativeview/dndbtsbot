@@ -505,7 +505,7 @@ function doProficiency(pieces, stateHolder, activeCharacter, next) {
 		return next();		
 	}
 
-	if (!activeCharacter.newProficiencies)
+	if (activeCharacter.newProficiencies == null)
 		activeCharacter.newProficiencies = {};
 
 	if (pieces[3] == 'off' || pieces[3] == '0') {
@@ -514,8 +514,10 @@ function doProficiency(pieces, stateHolder, activeCharacter, next) {
 			activeCharacter.proficiencies.splice(indexOf, 1);
 		}
 		delete activeCharacter.newProficiencies[pieces[2]];
-		activeCharacter.save(function(err) {
+		activeCharacter.markModified('newProficiencies');
+		activeCharacter.save(function(err, postSave) {
 			if (err) console.log(err);
+			//console.log(postSave);
 			return next();
 		});
 	} else if (pieces[3] == 'on' || pieces[3] == '1') {
@@ -523,10 +525,11 @@ function doProficiency(pieces, stateHolder, activeCharacter, next) {
 		if (indexOf != -1) {
 			activeCharacter.proficiencies.splice(indexOf, 1);
 		}
-
 		activeCharacter.newProficiencies[pieces[2]] = 1;
-		activeCharacter.save(function(err) {
+		activeCharacter.markModified('newProficiencies');
+		activeCharacter.save(function(err, postSave) {
 			if (err) console.log(err);
+			//console.log(postSave);
 			return next();
 		});
 	} else if (pieces[3] == '2') {
@@ -534,10 +537,11 @@ function doProficiency(pieces, stateHolder, activeCharacter, next) {
 		if (indexOf != -1) {
 			activeCharacter.proficiencies.splice(indexOf, 1);
 		}
-
 		activeCharacter.newProficiencies[pieces[2]] = 2;
-		activeCharacter.save(function(err) {
+		activeCharacter.markModified('newProficiencies');
+		activeCharacter.save(function(err, postSave) {
 			if (err) console.log(err);
+			//console.log(postSave);
 			return next();
 		});
 	}
