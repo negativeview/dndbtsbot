@@ -9,6 +9,7 @@ ret.echo = function(pieces, stateHandler, next) {
 		message += pieces[i] + ' ';
 	}
 
+	stateHandler.verified = false;
 	stateHandler.simpleAddMessage(stateHandler.channelID, message);
 	next();
 };
