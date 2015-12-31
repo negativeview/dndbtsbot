@@ -102,7 +102,7 @@ function handleSaveRoll(pieces, stateHolder, next) {
 		roll +=  '+' + scoreToModifier(activeCharacter[save]);
 
 		var proficiency = 0;
-		if (activeCharacter.newProficiencies[skill]) {
+		if (activeCharacter.newProficiencies && activeCharacter.newProficiencies[skill]) {
 			proficiency = activeCharacter.newProficiencies[skill];
 		} else if (activeCharacter.proficiencies.indexOf(skill) !== -1) {
 			proficiency = 1;
@@ -151,7 +151,7 @@ function handleSkillRoll(pieces, stateHolder, next) {
 		}
 		roll +=  '+' + scoreToModifier(activeCharacter[skills[skill]]);
 		var proficiency = 0;
-		if (activeCharacter.newProficiencies[skill]) {
+		if (activeCharacter.newProficiencies && activeCharacter.newProficiencies[skill]) {
 			proficiency = activeCharacter.newProficiencies[skill];
 		} else if (activeCharacter.proficiencies.indexOf(skill) !== -1) {
 			proficiency = 1;
