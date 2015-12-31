@@ -16,28 +16,29 @@ module.exports = {
 			tmpCommand.push(command[i]);
 		}
 
-		var matches = command[index].rawValue.match(/\{([0-9]*)\}/);
+		var matches = command[index].rawValue.match(/\{([0-9]*)(\+?)\}/);
+		var args = state.args ? state.args : state.originalArgs;
+		var stringValue = '';
 
-		if (matches.length >= 2) {
-			var args = state.args ? state.args : state.originalArgs;
-
+		if (matches.length == 2) {
 			if (args) {
-				tmpCommand.push({
-					type: 'QUOTED_STRING',
-					rawValue: args[matches[1]]
-				});
-			} else {
-				tmpCommand.push({
-					type: 'QUOTED_STRING',
-					rawValue: ''
-				});				
+				stringValue = args[matches[1]];
 			}
-		} else {
-			tmpCommand.push({
-				type: 'QUOTED_STRING',
-				rawValue: ''
-			});			
+		} else if (matches.length == 3) {
+			var startingIndex = parseInt(matches[1]);
+
+			for (var i = startingIndex; i < args.length; i++) {
+				if (i != startingIndex) {
+					stringValue += ' ';
+				}
+				stringValue += args[i];
+			}
 		}
+		tmpCommand.push({
+			type: 'QUOTED_STRING',
+			rawValue: stringValue
+		});
+
 		for (var i = index + 1; i < command.length; i++) {
 			tmpCommand.push(command[i]);
 		}

@@ -1,8 +1,17 @@
 #synthlivesmatter
 	* Use Login Token
+	* Remove DM macro
+
+Never Gonna Give You Up
+	* {n+} is the macro input from n to the end
+	* && / ||
+	* !<ability score>
+	* Add a "verified" symbol to the beginning of a roll command
 
 Still to do:
 	* Invesgitate bot being able to change colors of people. Only needed on Discord5E server.
-	* Remove DM macro
 	* Turn a command array back into just a string, to use for debugging output.
 	* Add server configuration.
+	* Move the !2, !2a, and !2d macros into the bot so that they can be verified as well
+	* Double check channel variable permissions handling
+	* A way to make the bot delete its last command(s)

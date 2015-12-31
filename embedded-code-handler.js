@@ -284,7 +284,7 @@ function tokenize(command) {
 
 	var tokens = [];
 
-	lex.addRule(/\{[0-9]+\}/gm, function(lexeme) {
+	lex.addRule(/\{[0-9]+\+?\}/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
 			type: 'MACRO_ARGUMENT'
