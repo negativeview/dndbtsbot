@@ -20,11 +20,11 @@ module.exports = {
 		var args = state.args ? state.args : state.originalArgs;
 		var stringValue = '';
 
-		if (matches.length == 2) {
+		if (matches.length == 3) {
 			if (args) {
 				stringValue = args[matches[1]];
 			}
-		} else if (matches.length == 3) {
+		} else if (matches.length == 4) {
 			var startingIndex = parseInt(matches[1]);
 
 			for (var i = startingIndex; i < args.length; i++) {
