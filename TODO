@@ -16,3 +16,4 @@ Still to do:
 	* Move the !2, !2a, and !2d macros into the bot so that they can be verified as well
 	* Double check channel variable permissions handling
 	* A way to make the bot delete its last command(s)
+	* A way to make admin macros verified

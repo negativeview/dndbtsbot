@@ -426,6 +426,8 @@ function doView(pieces, stateHolder, next) {
 							var skillValue = scoreToModifier(character[skills[skillKeys[i]]]);
 							if (character.proficiencies.indexOf(skillKeys[i]) !== -1) {
 								skillValue += character.proficiencyBonus;
+							} else if (character.newProficiencies && character.newProficiencies[skillKeys[i]]) {
+								skillValue += (character.proficiencyBonus * parseInt(character.newProficiencies[skillKeys[i]]));
 							}
 							stateHolder.squashAddMessage(stateHolder.username, "__" + skillKeys[i] + "__: " + skillValue);
 						}
@@ -439,8 +441,6 @@ function doView(pieces, stateHolder, next) {
 								if (i != 0) outputString += ', ';
 								outputString += character.proficiencies[i] + '[1]';
 							}
-
-							console.log(character);
 
 							var keys = [];
 							if (character.newProficiencies) {

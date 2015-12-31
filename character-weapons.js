@@ -188,6 +188,26 @@ ret.attack = function(pieces, stateHolder, next) {
 			if (activeCharacter.weapons[i].isCurrent) {
 				var weapon = activeCharacter.weapons[i];
 
+				if (!weapon.abilityScore) {
+					stateHolder.simpleAddMessage(stateHolder.username, "Need an abilityScore set for this weapon to be able to attack.");
+					return next();
+				}
+
+				if (!activeCharacter.proficiencyBonus) {
+					stateHolder.simpleAddMessage(stateHolder.username, "Character proficiencyBonus must be set to attack.");
+					return next();
+				}
+
+				if (!weapon.normalRoll) {
+					stateHolder.simpleAddMessage(stateHolder.username, "Weapon needs a normalRoll set to be able to attack.");
+					return next();					
+				}
+
+				if (!weapon.critRoll) {
+					stateHolder.simpleAddMessage(stateHolder.username, "Weapon needs a critRoll set to be able to attack.");
+					return next();					
+				}
+
 				stateHolder.simpleAddMessage(stateHolder.channelID, "```" + activeCharacter.name + " Attacking With " + weapon.name + "```");
 
 				var min = 1;
