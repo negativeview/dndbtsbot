@@ -11,6 +11,15 @@ function scoreToModifier(score) {
 	return Math.floor((score - 10) / 2)
 }
 
+var saves = [
+	'strength',
+	'dexterity',
+	'constitution',
+	'intelligence',
+	'wisdom',
+	'charisma'
+];
+
 var keys = [
 	'name',
 	'strength',
@@ -73,6 +82,57 @@ function getActiveCharacter(stateHolder, fail, pass) {
 	);
 }
 
+function handleSaveRoll(pieces, stateHolder, next) {
+	var save = pieces[0].replace(/^!/, '');
+	if (saves.indexOf(save) == -1) {
+		stateHolder.simpleAddMessage(stateHolder.username, 'No such save: ' + save + '.');
+		return next();
+	}
+
+	getActiveCharacter(stateHolder, next, function(activeCharacter) {
+		stateHolder.simpleAddMessage(stateHolder.channelID, "```" + activeCharacter.name + " Rolling " + save + "```");
+
+		var roll = '1d20';
+		if (pieces.length > 1 && pieces[1] == 'advantage') {
+			roll = '2d20kh1';
+		} else if (pieces.length > 1 && pieces[1] == 'disadvantage') {
+			roll = '2d20-L';
+		}
+
+		roll +=  '+' + scoreToModifier(activeCharacter[save]);
+
+		var proficiency = 0;
+		if (activeCharacter.newProficiencies[skill]) {
+			proficiency = activeCharacter.newProficiencies[skill];
+		} else if (activeCharacter.proficiencies.indexOf(skill) !== -1) {
+			proficiency = 1;
+		}
+
+		if (proficiency) {
+			roll += '+' + (activeCharacter.proficiencyBonus * parseInt(proficiency));
+		}
+		
+		var fakeStateHolder = Object.create(stateHolder);
+		fakeStateHolder.simpleAddMessage = function(to, message) {
+			fakeStateHolder.result = message;
+		};
+
+		ret.handlers.execute(
+			'!roll',
+			[
+				'!roll',
+				roll
+			],
+			fakeStateHolder,
+			function() {
+				var skillResult = fakeStateHolder.result;
+				stateHolder.simpleAddMessage(stateHolder.channelID, skillResult);
+				return next();
+			}
+		);
+	});	
+}
+
 function handleSkillRoll(pieces, stateHolder, next) {
 	var skill = pieces[0].replace(/^!/, '');
 	if (!(skills[skill])) {
@@ -90,9 +150,15 @@ function handleSkillRoll(pieces, stateHolder, next) {
 			roll = '2d20-L';
 		}
 		roll +=  '+' + scoreToModifier(activeCharacter[skills[skill]]);
-		var skillKeys = Object.keys(skills).sort();
-		if (activeCharacter.proficiencies.indexOf(skill) !== -1) {
-			roll += '+' + activeCharacter.proficiencyBonus;
+		var proficiency = 0;
+		if (activeCharacter.newProficiencies[skill]) {
+			proficiency = activeCharacter.newProficiencies[skill];
+		} else if (activeCharacter.proficiencies.indexOf(skill) !== -1) {
+			proficiency = 1;
+		}
+
+		if (proficiency) {
+			roll += '+' + (activeCharacter.proficiencyBonus * parseInt(proficiency));
 		}
 		
 		var fakeStateHolder = Object.create(stateHolder);
@@ -144,6 +210,7 @@ ret.init = function(mongoose, handlers) {
 				magicModifier: Number
 			}
 		],
+		newProficiencies: {},
 		proficiencies: [String]
 	});
 	mongoose.model('Character', CharacterSchema);
@@ -156,6 +223,10 @@ ret.init = function(mongoose, handlers) {
 	var skillKeys = Object.keys(skills).sort();
 	for (var i = 0; i < skillKeys.length; i++) {
 		handlers.addHandler('!' + skillKeys[i], handleSkillRoll);
+	}
+
+	for (var i = 0; i < saves.length; i++) {
+		handlers.addHandler('!' + saves[i], handleSaveRoll);
 	}
 
 };
@@ -363,7 +434,26 @@ function doView(pieces, stateHolder, next) {
 						if (character.proficiencies.length == 0) {
 							stateHolder.simpleAddMessage(stateHolder.username, "\nSadly, none.");
 						} else {
-							stateHolder.squashAddMessage(stateHolder.username, character.proficiencies.join(', ') + "\n");
+							var outputString = '';
+							for (var i = 0; i < character.proficiencies.length; i++) {
+								if (i != 0) outputString += ', ';
+								outputString += character.proficiencies[i] + '[1]';
+							}
+
+							console.log(character);
+
+							var keys = [];
+							if (character.newProficiencies) {
+								keys = Object.keys(character.newProficiencies);
+							}
+							for (var i = 0; i < keys.length; i++) {
+								if (!(i == 0 && character.proficiencies.length == 0)) {
+									outputString += ', ';
+								}
+								outputString += keys[i] + '[' + character.newProficiencies[keys[i]] + ']';
+							}
+
+							stateHolder.squashAddMessage(stateHolder.username, outputString);
 						}
 
 						return next();
@@ -415,24 +505,41 @@ function doProficiency(pieces, stateHolder, activeCharacter, next) {
 		return next();		
 	}
 
-	if (pieces[3] == 'off') {
+	if (!activeCharacter.newProficiencies)
+		activeCharacter.newProficiencies = {};
+
+	if (pieces[3] == 'off' || pieces[3] == '0') {
 		var indexOf = activeCharacter.proficiencies.indexOf(pieces[2]);
 		if (indexOf != -1) {
 			activeCharacter.proficiencies.splice(indexOf, 1);
-			activeCharacter.save(function(err) {
-				if (err) console.log(err);
-				return next();
-			});
 		}
-	} else if (pieces[3] == 'on') {
+		delete activeCharacter.newProficiencies[pieces[2]];
+		activeCharacter.save(function(err) {
+			if (err) console.log(err);
+			return next();
+		});
+	} else if (pieces[3] == 'on' || pieces[3] == '1') {
 		var indexOf = activeCharacter.proficiencies.indexOf(pieces[2]);
-		if (indexOf == -1) {
-			activeCharacter.proficiencies.push(pieces[2]);
-			activeCharacter.save(function(err) {
-				if (err) console.log(err);
-				return next();
-			});
+		if (indexOf != -1) {
+			activeCharacter.proficiencies.splice(indexOf, 1);
 		}
+
+		activeCharacter.newProficiencies[pieces[2]] = 1;
+		activeCharacter.save(function(err) {
+			if (err) console.log(err);
+			return next();
+		});
+	} else if (pieces[3] == '2') {
+		var indexOf = activeCharacter.proficiencies.indexOf(pieces[2]);
+		if (indexOf != -1) {
+			activeCharacter.proficiencies.splice(indexOf, 1);
+		}
+
+		activeCharacter.newProficiencies[pieces[2]] = 2;
+		activeCharacter.save(function(err) {
+			if (err) console.log(err);
+			return next();
+		});
 	}
 }
 

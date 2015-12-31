@@ -10,6 +10,8 @@ var character = require('./embedded-code-handlers/character.js');
 
 var ret = {
 	patterns: [
+		patterns.booleanOr,
+		patterns.booleanAnd,
 		patterns.tableActualSet,
 		patterns.doForeach,
 		patterns.doIfElse,
@@ -457,6 +459,18 @@ function tokenize(command) {
 			type: 'RIGHT_CURLY'
 		});
 	});
+	lex.addRule(/\&\&/, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'BOOLEAN_AND'
+		});
+	});
+	lex.addRule(/\|\|/, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'BOOLEAN_OR'
+		});
+	});
 	lex.addRule(/'/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
@@ -525,6 +539,7 @@ ret.debug = function(pieces, stateHolder, next) {
 ret.handle = function(pieces, stateHolder, next) {
 	ret.stateHolder = stateHolder;
 	ret.stateHolder.errorList = [];
+	ret.stateHolder.verified = false;
 
 	var state = {
 		variables: {},

@@ -7,7 +7,7 @@ module.exports = {
 			command,
 			[
 				['ECHO'],
-				['QUOTED_STRING', 'NUMBER'],
+				['QUOTED_STRING', 'NUMBER', 'BOOLEAN'],
 				['SEMICOLON']
 			]
 		);

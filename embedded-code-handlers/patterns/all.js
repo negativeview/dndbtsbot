@@ -19,5 +19,7 @@ module.exports = {
 	doForeach: require('./do-foreach.js'),
 	doIf: require('./do-if.js'),
 	doIfElse: require('./do-if-else.js'),
-	pm: require('./pm.js')
+	pm: require('./pm.js'),
+	booleanAnd: require('./boolean-and.js'),
+	booleanOr: require('./boolean-or.js')
 };

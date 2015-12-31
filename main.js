@@ -10,6 +10,7 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	if (message[0] != '!') return;
 
 	var stateHolder = stateHolderClass(user, userID, channelID, rawEvent);
+	stateHolder.verified = true;
 	var b = block.create(mongoose, bot, stateHolder);
 
 	b.setHandlers(handlers);
@@ -54,7 +55,7 @@ function globalHandlerMiddle(message, block) {
 
 function onBotReady() {
 	console.log(bot.username + " - (" + bot.id + ")");
-	bot.setPresence({game: '#synthlivesmatter'});
+	bot.setPresence({game: 'Never Gonna Give You Up'});
 }
 
 function onBotDisconnected() {

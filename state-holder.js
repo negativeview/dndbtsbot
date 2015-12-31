@@ -72,7 +72,11 @@ module.exports = function(user, userID, channelID, rawEvent) {
 			if (channelID) {
 				var serverID = ret.findServerID(channelID);
 				if (serverID) {
-					outputType.message = ret.memberNumberToName(serverID, ret.username) + ': ' + outputType.message;
+					outputType.message =
+						(this.verified ? ':game_die: ' : '') +
+						ret.memberNumberToName(serverID, ret.username) +
+						': ' +
+						outputType.message;
 				}
 			}
 			ret.bot.sendMessage(outputType);

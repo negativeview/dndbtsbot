@@ -6,6 +6,7 @@ Never Gonna Give You Up
 	* {n+} is the macro input from n to the end
 	* && / ||
 	* !<ability score>
+	* Double proficiency
 	* Add a "verified" symbol to the beginning of a roll command
 
 Still to do:
