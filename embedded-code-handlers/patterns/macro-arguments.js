@@ -21,17 +21,19 @@ module.exports = {
 		var stringValue = '';
 
 		if (matches.length == 3) {
-			if (args) {
-				stringValue = args[matches[1]];
-			}
-		} else if (matches.length == 4) {
-			var startingIndex = parseInt(matches[1]);
+			if (matches[2] == '+') {
+				var startingIndex = parseInt(matches[1]);
 
-			for (var i = startingIndex; i < args.length; i++) {
-				if (i != startingIndex) {
-					stringValue += ' ';
+				for (var i = startingIndex; i < args.length; i++) {
+					if (i != startingIndex) {
+						stringValue += ' ';
+					}
+					stringValue += args[i];
 				}
-				stringValue += args[i];
+			} else {
+				if (args) {
+					stringValue = args[matches[1]];
+				}
 			}
 		}
 		tmpCommand.push({

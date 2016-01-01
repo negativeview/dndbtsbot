@@ -17,3 +17,4 @@ Still to do:
 	* Double check channel variable permissions handling
 	* A way to make the bot delete its last command(s)
 	* A way to make admin macros verified
+	* Foreach working on arguments
