@@ -21,5 +21,7 @@ module.exports = {
 	doIfElse: require('./do-if-else.js'),
 	pm: require('./pm.js'),
 	booleanAnd: require('./boolean-and.js'),
-	booleanOr: require('./boolean-or.js')
+	booleanOr: require('./boolean-or.js'),
+	deleteTableKey: require('./delete-table-key.js'),
+	deleteTable: require('./delete-table.js')
 };

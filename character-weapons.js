@@ -1,3 +1,4 @@
+var Dice = require('./dice.js');
 var ret = {};
 
 var weaponKeys = [
@@ -184,91 +185,107 @@ ret.doWeapon = function(pieces, stateHolder, activeCharacter, next) {
 
 ret.attack = function(pieces, stateHolder, next) {
 	getActiveCharacter(stateHolder, next, function(activeCharacter) {
-		for (var i = 0; i < activeCharacter.weapons.length; i++) {
-			if (activeCharacter.weapons[i].isCurrent) {
+		var activeWeapon = null;
+
+		if (pieces.length >= 2) {
+			for (var i = 0; i < activeCharacter.weapons.length; i++) {
 				var weapon = activeCharacter.weapons[i];
-
-				if (!weapon.abilityScore) {
-					stateHolder.simpleAddMessage(stateHolder.username, "Need an abilityScore set for this weapon to be able to attack.");
-					return next();
+				if (weapon.name == pieces[1]) {
+					activeWeapon = weapon;
+					break;
 				}
-
-				if (!activeCharacter.proficiencyBonus) {
-					stateHolder.simpleAddMessage(stateHolder.username, "Character proficiencyBonus must be set to attack.");
-					return next();
-				}
-
-				if (!weapon.normalRoll) {
-					stateHolder.simpleAddMessage(stateHolder.username, "Weapon needs a normalRoll set to be able to attack.");
-					return next();					
-				}
-
-				if (!weapon.critRoll) {
-					stateHolder.simpleAddMessage(stateHolder.username, "Weapon needs a critRoll set to be able to attack.");
-					return next();					
-				}
-
-				stateHolder.simpleAddMessage(stateHolder.channelID, "```" + activeCharacter.name + " Attacking With " + weapon.name + "```");
-
-				var min = 1;
-				var max = 20;
-				var toHit = Math.floor(Math.random() * (max - min + 1)) + min;
-				var modifier = scoreToModifier(activeCharacter[weapon.abilityScore]);
-				var isCrit = false;
-				if (toHit == 1) {
-					toHit = "**Critical Miss**";
-				} else if (toHit == 20) {
-					isCrit = true;
-					toHit = "**Critical**";
-				} else {
-					var actualToHit = parseInt(toHit) + parseInt(modifier) + parseInt(activeCharacter.proficiencyBonus);
-
-					toHit = "1d20 (" + toHit + ") + " + modifier + " + " + activeCharacter.proficiencyBonus;
-					if (weapon.magicModifier) {
-						toHit += " + " + parseInt(weapon.magicModifier);
-						actualToHit += parseInt(weapon.magicModifier);
-					}
-					toHit += " = **" + actualToHit + "**";
-				}
-
-				max = weapon.damageDie;
-
-				var diceToRoll = '';
-				if (isCrit) {
-					diceToRoll = weapon.critRoll || '2d' + weapon.damageDie;
-				} else {
-					diceToRoll = weapon.normalRoll || '1d' + weapon.damageDie;
-				}
-
-				diceToRoll += '+' + modifier;
-
-				if (weapon.magicModifier)
-					diceToRoll += "+" + weapon.magicModifier;
-
-				var fakeStateHolder = Object.create(stateHolder);
-				fakeStateHolder.simpleAddMessage = function(to, message) {
-					fakeStateHolder.result = message;
-				};
-
-				ret.handlers.execute(
-					'!roll',
-					[
-						'!roll',
-						diceToRoll
-					],
-					fakeStateHolder,
-					function() {
-						var damageResult = fakeStateHolder.result;
-
-						stateHolder.simpleAddMessage(stateHolder.channelID, "\nTo Hit: " + toHit + "\n");
-						stateHolder.simpleAddMessage(stateHolder.channelID, "Damage: " + damageResult + "\n");
-						stateHolder.simpleAddMessage(stateHolder.channelID, "Type: " + weapon.damageType + "\n");
-
-						return next();
-					}
-				);
-				return;
 			}
+		} else {
+			for (var i = 0; i < activeCharacter.weapons.length; i++) {
+				var weapon = activeCharacter.weapons[i];
+				if (weapon.isCurrent) {
+					activeWeapon = weapon;
+					break;
+				}
+			}
+		}
+
+		if (activeWeapon) {
+			weapon = activeWeapon;
+			if (!weapon.abilityScore) {
+				stateHolder.simpleAddMessage(stateHolder.username, "Need an abilityScore set for this weapon to be able to attack.");
+				return next();
+			}
+
+			if (!activeCharacter.proficiencyBonus) {
+				stateHolder.simpleAddMessage(stateHolder.username, "Character proficiencyBonus must be set to attack.");
+				return next();
+			}
+
+			if (!weapon.normalRoll) {
+				stateHolder.simpleAddMessage(stateHolder.username, "Weapon needs a normalRoll set to be able to attack.");
+				return next();					
+			}
+
+			if (!weapon.critRoll) {
+				stateHolder.simpleAddMessage(stateHolder.username, "Weapon needs a critRoll set to be able to attack.");
+				return next();					
+			}
+
+			var headerString = 
+				"\n**" + activeCharacter.name + "** Attacking With **" + weapon.name + "**" +
+				"```" + weapon.abilityScore + ": " + scoreToModifier(activeCharacter[weapon.abilityScore]) + 
+				" | proficiency: " + activeCharacter.proficiencyBonus +
+				" | damage type: " + weapon.damageType;
+
+			if (weapon.magicModifier) {
+				headerString += " | magic: " + weapon.magicModifier;
+			}
+
+			var min = 1;
+			var max = 20;
+			var toHit = Math.floor(Math.random() * (max - min + 1)) + min;
+			var modifier = scoreToModifier(activeCharacter[weapon.abilityScore]);
+			var isCrit = false;
+			if (toHit == 1) {
+				toHit = "CRITICAL MISS";
+			} else if (toHit == 20) {
+				isCrit = true;
+				toHit = "CRITICAL HIT";
+			} else {
+				headerString += " | attack roll (on die): " + toHit;
+				var actualToHit = parseInt(toHit) + parseInt(modifier) + parseInt(activeCharacter.proficiencyBonus);
+				if (weapon.magicModifier) {
+					actualToHit += parseInt(weapon.magicModifier);
+				}
+				toHit = actualToHit;
+			}
+
+			max = weapon.damageDie;
+
+			var diceToRoll = 'plain ';
+			if (isCrit) {
+				headerString += " | damage roll: " + weapon.critRoll;
+				diceToRoll += weapon.critRoll || '2d' + weapon.damageDie;
+			} else {
+				headerString += " | damage roll: " + weapon.normalRoll;
+				diceToRoll += weapon.normalRoll || '1d' + weapon.damageDie;
+			}
+
+			diceToRoll += '+' + modifier;
+
+			if (weapon.magicModifier)
+				diceToRoll += "+" + weapon.magicModifier;
+
+			var dice = new Dice();
+			dice.execute(diceToRoll, function(result) {
+				stateHolder.simpleAddMessage(
+					stateHolder.channelID,
+					headerString
+				);
+
+				stateHolder.simpleAddMessage(stateHolder.channelID, "\n\nTo Hit: " + toHit + "\n");
+				stateHolder.simpleAddMessage(stateHolder.channelID, "Damage: " + result.output);
+				stateHolder.simpleAddMessage(stateHolder.channelID, "```");
+
+				return next();				
+			});
+			return;
 		}
 		stateHolder.simpleAddMessage(stateHolder.username, "No active weapon.");
 		return next();

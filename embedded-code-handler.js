@@ -10,6 +10,8 @@ var character = require('./embedded-code-handlers/character.js');
 
 var ret = {
 	patterns: [
+		patterns.deleteTableKey,
+		patterns.deleteTable,
 		patterns.booleanOr,
 		patterns.booleanAnd,
 		patterns.tableActualSet,

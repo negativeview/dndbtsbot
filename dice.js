@@ -187,6 +187,9 @@ Dice.prototype.execute = function execute(command, callback) {
   var isSimple = false;
   var isPlain = false;
 
+  lex.addRule(/ /, function(lexeme) {
+    // Ignore spaces.
+  });
   lex.addRule(/\+\-/, function (lexeme) {
     tokens.push({
       type: '-',
@@ -254,6 +257,7 @@ Dice.prototype.execute = function execute(command, callback) {
   try {
     lex.lex();
   } catch (e) {
+    console.log(e);
     return {
       command: command,
       output: command + '::' + e
