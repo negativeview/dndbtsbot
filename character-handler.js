@@ -547,6 +547,35 @@ function doProficiency(pieces, stateHolder, activeCharacter, next) {
 	}
 }
 
+function doDelete(pieces, stateHolder, next) {
+	var characterName = pieces[2];
+	var parameters = {
+		name: characterName,
+		user: stateHolder.username
+	};
+
+	ret.characterModel.find(parameters).exec(
+		function(err, res) {
+			if (err) {
+				stateHolder.simpleAddMessage(stateHolder.username, err);
+				return next();
+			}
+
+			if (res.length == 0) {
+				stateHolder.simpleAddMessage(stateHolder.username, 'No such character ' + characterName);
+				return next();
+			}
+
+			var character = res[0];
+
+			character.remove(function() {
+				stateHolder.simpleAddMessage(stateHolder.username, 'Deleted ' + characterName);
+				return next();
+			});
+		}
+	);
+}
+
 function doCreate(pieces, stateHolder, next) {
 	if (pieces.length == 2) {
 		stateHolder.simpleAddMessage(stateHolder.username, 'Usage: !character create <character name>');
