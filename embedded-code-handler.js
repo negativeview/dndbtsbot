@@ -339,6 +339,12 @@ function tokenize(command) {
 			type: 'FOREACH'
 		});
 	});
+	lex.addRule(/delete/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'DELETE'
+		});
+	});
 	lex.addRule(/if/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
