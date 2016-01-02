@@ -1,3 +1,5 @@
+var messageQueue = require('./message-queue.js');
+
 module.exports = function(user, userID, channelID, rawEvent) {
 	var ret = {
 		messages: {},
@@ -79,7 +81,11 @@ module.exports = function(user, userID, channelID, rawEvent) {
 						outputType.message;
 				}
 			}
-			ret.bot.sendMessage(outputType);
+
+			var priority = 1;
+			if (ret.priority) priority = ret.priority;
+
+			messageQueue.addMessage(priority, outputType);
 		}
 	};
 

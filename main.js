@@ -4,6 +4,7 @@ var async            = require('async');
 var handlers         = require('./handler-registry.js');
 var block            = require('./execution-block.js');
 var stateHolderClass = require('./state-holder.js');
+var messageQueue     = require('./message-queue.js');
 
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	if (user == bot.username || user == bot.id) return;
@@ -15,12 +16,16 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 
 	b.setHandlers(handlers);
 
-	globalHandlerMiddle(message, b);
-
-	bot.deleteMessage({channel: rawEvent.d.channel_id, messageID: rawEvent.d.id});
+	globalHandlerMiddle(message, b, function(err) {
+		stateHolder.doFinalOutput();
+		forcePump();
+		if (err) return;
+		console.log('deleting message');
+		bot.deleteMessage({channel: rawEvent.d.channel_id, messageID: rawEvent.d.id});
+	});
 }
 
-function globalHandlerMiddle(message, block) {
+function globalHandlerMiddle(message, block, cb) {
 	var splitMessages = message.split("\n");
 
 	/**
@@ -33,7 +38,7 @@ function globalHandlerMiddle(message, block) {
 	) {
 		block.addStatement(message);
 		block.execute();
-		return;
+		return cb();
 	}
 
 	/**
@@ -49,7 +54,7 @@ function globalHandlerMiddle(message, block) {
 		}
 	}
 	block.addStatement(currentMessage);
-
+	block.setNext(cb);
 	block.execute();
 }
 
@@ -63,6 +68,25 @@ function onBotDisconnected() {
 	bot.connect();
 }
 
+var timeoutID = null;
+function pump() {
+	console.log('pump()');
+	timeoutID = null;
+	messageQueue.pump(bot, function(timeout) {
+		console.log('pump().callback');
+		if (timeout && timeoutID == null) {
+			console.log('actually setting timeout');
+			timeoutID = setTimeout(pump, timeout);
+		}
+	});
+}
+
+function forcePump() {
+	console.log('forcePump');
+	if (timeoutID) return;
+	pump();
+}
+
 function onMongoose(err) {
 	if (err) throw err;
 
@@ -71,6 +95,7 @@ function onMongoose(err) {
 	bot.on('ready', onBotReady);
 	bot.on('message', globalHandlerWrap);
 	bot.on('disconnected', onBotDisconnected);
+	setTimeout(pump, 1000);
 }
 
 mongoose.connect('mongodb://127.0.0.1/test', onMongoose);
