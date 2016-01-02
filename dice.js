@@ -257,7 +257,7 @@ Dice.prototype.execute = function execute(command, callback) {
   try {
     lex.lex();
   } catch (e) {
-    console.log(e);
+    console.log(e, command);
     return {
       command: command,
       output: command + '::' + e
@@ -269,10 +269,12 @@ Dice.prototype.execute = function execute(command, callback) {
 
   applyModifiers(tokens, function(tokens) {
     doDiceRolling(tokens, self, function(tokens) {
+      var rawResults = tokens;
       createNumberEquivalents(tokens, function(tokens) {
         doMath(tokens, function(result) {
           var data = {
             command: command,
+            rawResults: rawResults,
             output: ''
           };
 

@@ -242,13 +242,13 @@ ret.attack = function(pieces, stateHolder, next) {
 			var toHit = Math.floor(Math.random() * (max - min + 1)) + min;
 			var modifier = scoreToModifier(activeCharacter[weapon.abilityScore]);
 			var isCrit = false;
+			headerString += " | attack roll (on die): " + toHit;
 			if (toHit == 1) {
 				toHit = "CRITICAL MISS";
 			} else if (toHit == 20) {
 				isCrit = true;
 				toHit = "CRITICAL HIT";
 			} else {
-				headerString += " | attack roll (on die): " + toHit;
 				var actualToHit = parseInt(toHit) + parseInt(modifier) + parseInt(activeCharacter.proficiencyBonus);
 				if (weapon.magicModifier) {
 					actualToHit += parseInt(weapon.magicModifier);
@@ -274,6 +274,22 @@ ret.attack = function(pieces, stateHolder, next) {
 
 			var dice = new Dice();
 			dice.execute(diceToRoll, function(result) {
+				var dieResults = [];
+				for (var i = 0; i < result.rawResults.length; i++) {
+					if (result.rawResults[i].type == 'die') {
+						for (var m = 0; m < result.rawResults[i].results.length; m++) {
+							dieResults[dieResults.length] = result.rawResults[i].results[m];
+						}
+					}
+				}
+				switch (dieResults.length) {
+					case 0:
+						break;
+					default:
+						headerString += ' [' + dieResults.join(', ') + ']';
+						break;
+				}
+
 				stateHolder.simpleAddMessage(
 					stateHolder.channelID,
 					headerString
