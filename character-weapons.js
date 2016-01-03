@@ -219,9 +219,14 @@ ret.attack = function(pieces, stateHolder, next) {
 		var activeWeapon = null;
 
 		if (pieces.length >= 2) {
+			var weaponName = pieces[1];
+			for (var i = 2; i < pieces.length; i++) {
+				weaponName += ' ' + pieces[i];
+			}
+
 			for (var i = 0; i < activeCharacter.weapons.length; i++) {
 				var weapon = activeCharacter.weapons[i];
-				if (weapon.name == pieces[1]) {
+				if (weapon.name == weaponname) {
 					activeWeapon = weapon;
 					break;
 				}
