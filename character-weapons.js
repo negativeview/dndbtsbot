@@ -183,6 +183,37 @@ ret.doWeapon = function(pieces, stateHolder, activeCharacter, next) {
 	}
 }
 
+function attackFormat(stateHolder, activeCharacter, weapon, toHit, toHitString, damageRoll, damageValue) {
+	var headerString = 
+		"\n**" + activeCharacter.name + "** Attacking With **" + weapon.name + "**" +
+		"```" + weapon.abilityScore + ": " + scoreToModifier(activeCharacter[weapon.abilityScore]) + 
+		" | proficiency: " + activeCharacter.proficiencyBonus +
+		" | damage type: " + weapon.damageType;
+	headerString += " | attack roll (on die): " + toHit;
+	headerString += " | damage roll: " + damageRoll;
+
+	if (weapon.magicModifier) {
+		headerString += " | magic: " + weapon.magicModifier;
+	}
+
+	stateHolder.simpleAddMessage(
+		stateHolder.channelID,
+		headerString
+	);
+
+	stateHolder.simpleAddMessage(stateHolder.channelID, "\n\nTo Hit: " + toHitString + "\n");
+	stateHolder.simpleAddMessage(stateHolder.channelID, "Damage: " + damageValue);
+	stateHolder.simpleAddMessage(stateHolder.channelID, "```");
+}
+
+function attackFormat2(stateHolder, activeCharacter, weapon, toHit, toHitString, damageRoll, damageValue) {
+	var output = "\n*" + activeCharacter.name + " attacks with " + weapon.name + " (" + weapon.damageType + ")*";
+	output    += "\n**To Hit:** " + toHitString;
+	output    += "\n**Damage:** " + damageValue;
+
+	stateHolder.simpleAddMessage(stateHolder.channelID, output);
+}
+
 ret.attack = function(pieces, stateHolder, next) {
 	getActiveCharacter(stateHolder, next, function(activeCharacter) {
 		var activeWeapon = null;
@@ -227,79 +258,47 @@ ret.attack = function(pieces, stateHolder, next) {
 				return next();					
 			}
 
-			var headerString = 
-				"\n**" + activeCharacter.name + "** Attacking With **" + weapon.name + "**" +
-				"```" + weapon.abilityScore + ": " + scoreToModifier(activeCharacter[weapon.abilityScore]) + 
-				" | proficiency: " + activeCharacter.proficiencyBonus +
-				" | damage type: " + weapon.damageType;
-
-			if (weapon.magicModifier) {
-				headerString += " | magic: " + weapon.magicModifier;
-			}
-
-			var min = 1;
-			var max = 20;
-			var toHit = Math.floor(Math.random() * (max - min + 1)) + min;
-			var modifier = scoreToModifier(activeCharacter[weapon.abilityScore]);
-			var isCrit = false;
-			headerString += " | attack roll (on die): " + toHit;
-			if (toHit == 1) {
-				toHit = "CRITICAL MISS";
-			} else if (toHit == 20) {
-				isCrit = true;
-				toHit = "CRITICAL HIT";
-			} else {
-				var actualToHit = parseInt(toHit) + parseInt(modifier) + parseInt(activeCharacter.proficiencyBonus);
-				if (weapon.magicModifier) {
-					actualToHit += parseInt(weapon.magicModifier);
-				}
-				toHit = actualToHit;
-			}
-
-			max = weapon.damageDie;
-
-			var diceToRoll = 'plain ';
-			if (isCrit) {
-				headerString += " | damage roll: " + weapon.critRoll;
-				diceToRoll += weapon.critRoll || '2d' + weapon.damageDie;
-			} else {
-				headerString += " | damage roll: " + weapon.normalRoll;
-				diceToRoll += weapon.normalRoll || '1d' + weapon.damageDie;
-			}
-
-			diceToRoll += '+' + modifier;
-
-			if (weapon.magicModifier)
-				diceToRoll += "+" + weapon.magicModifier;
-
 			var dice = new Dice();
-			dice.execute(diceToRoll, function(result) {
-				var dieResults = [];
-				for (var i = 0; i < result.rawResults.length; i++) {
-					if (result.rawResults[i].type == 'die') {
-						for (var m = 0; m < result.rawResults[i].results.length; m++) {
-							dieResults[dieResults.length] = result.rawResults[i].results[m];
+
+			var roll = '1d20 + ' + scoreToModifier(activeCharacter[weapon.abilityScore]) + ' + ' + parseInt(activeCharacter.proficiencyBonus);
+			if (weapon.magicModifier) {
+				roll += ' + ' + weapon.magicModifier;
+			}
+			dice.execute(roll, function(result) {
+				var toHitOnDie = result.totalResult;
+				var toHit = result.output;
+
+				var isCrit = (toHitOnDie == 20);
+
+				var diceToRoll = '';
+				var damageRoll;
+				if (isCrit) {
+					damageRoll = weapon.critRoll;
+					diceToRoll += weapon.critRoll || '2d' + weapon.damageDie;
+				} else {
+					damageRoll = weapon.normalRoll;
+					diceToRoll += weapon.normalRoll || '1d' + weapon.damageDie;
+				}
+
+				diceToRoll += '+' + scoreToModifier(activeCharacter[weapon.abilityScore]);
+
+				if (weapon.magicModifier)
+					diceToRoll += "+" + weapon.magicModifier;
+
+				dice.execute(diceToRoll, function(result) {
+					var dieResults = [];
+					for (var i = 0; i < result.rawResults.length; i++) {
+						if (result.rawResults[i].type == 'die') {
+							for (var m = 0; m < result.rawResults[i].results.length; m++) {
+								dieResults[dieResults.length] = result.rawResults[i].results[m];
+							}
 						}
 					}
-				}
-				switch (dieResults.length) {
-					case 0:
-						break;
-					default:
-						headerString += ' [' + dieResults.join(', ') + ']';
-						break;
-				}
 
-				stateHolder.simpleAddMessage(
-					stateHolder.channelID,
-					headerString
-				);
+					attackFormat2(stateHolder, activeCharacter, weapon, toHitOnDie, toHit, damageRoll, result.output);
 
-				stateHolder.simpleAddMessage(stateHolder.channelID, "\n\nTo Hit: " + toHit + "\n");
-				stateHolder.simpleAddMessage(stateHolder.channelID, "Damage: " + result.output);
-				stateHolder.simpleAddMessage(stateHolder.channelID, "```");
-
-				return next();				
+					return next();				
+				});
 			});
 			return;
 		}

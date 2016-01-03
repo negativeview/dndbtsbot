@@ -322,6 +322,7 @@ Dice.prototype.execute = function execute(command, callback) {
               }
             }
             data.output += ' = `' + result + '`';
+            data.totalResult = result;
           }
           return cb(data);
         });

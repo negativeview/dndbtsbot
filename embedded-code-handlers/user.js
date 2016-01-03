@@ -47,6 +47,14 @@ function newUser(stateHolder, varModel, tableModel, tableRowModel) {
 			);
 		},
 		getSub: function(key, next) {
+			if (key == 'name') {
+				return next(stateHolder.actualUsername);
+			}
+
+			if (key == 'id') {
+				return next(stateHolder.username);
+			}
+
 			var parameters = {};
 			parameters.name = key;
 			parameters.user = stateHolder.username;

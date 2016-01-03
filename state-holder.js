@@ -85,7 +85,7 @@ module.exports = function(user, userID, channelID, rawEvent) {
 			var priority = 1;
 			if (ret.priority) priority = ret.priority;
 
-			messageQueue.addMessage(priority, outputType);
+			messageQueue.addAction(priority, 'sendMessage', outputType);
 		}
 	};
 

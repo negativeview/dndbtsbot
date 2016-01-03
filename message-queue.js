@@ -17,9 +17,13 @@ ret.queue = [
 	}
 ];
 
-ret.addMessage = function(priority, message) {
-	console.log('Put message in queue');
-	ret.queue[priority].messages.push(message);
+ret.addAction = function(priority, method, message) {
+	ret.queue[priority].messages.push(
+		{
+			method: method,
+			arguments: message
+		}
+	);
 };
 
 ret.pump = function(bot, cb) {
@@ -34,8 +38,6 @@ ret.pump = function(bot, cb) {
 
 	if (totalMessages == 0) return cb(0);
 
-	console.log('Pumping', queueSizes);
-
 	async.eachSeries(
 		ret.queue,
 		function(queue, cb1) {
@@ -45,14 +47,31 @@ ret.pump = function(bot, cb) {
 				},
 				function(cb2) {
 					var message = queue.messages.shift();
-					bot.sendMessage(message, function(a) {
-						console.log(a);
+
+					bot[message.method](message.arguments, function(err, msg) {
+						if (err) {
+							if (err.message == 'You are being rate limited') {
+								queue.messages.push(message);
+								return cb(err.retry_after);
+							}
+						}
+						return cb2();
 					});
 				},
 				function(err) {
 					cb1();
 				}
 			)
+		}, function() {
+			var totalMessages = 0;
+			for (var i = 0; i < ret.queue.length; i++) {
+				totalMessages += ret.queue[i].messages.length;
+				queueSizes.push(i + ': ' + ret.queue[i].messages.length);
+			}
+
+			if (totalMessages == 0) return cb(0);
+
+			return cb(100);
 		}
 	);
 };

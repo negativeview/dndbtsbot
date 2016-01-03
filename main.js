@@ -20,7 +20,6 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 		stateHolder.doFinalOutput();
 		forcePump();
 		if (err) return;
-		console.log('deleting message');
 		bot.deleteMessage({channel: rawEvent.d.channel_id, messageID: rawEvent.d.id});
 	});
 }
@@ -70,19 +69,15 @@ function onBotDisconnected() {
 
 var timeoutID = null;
 function pump() {
-	console.log('pump()');
 	timeoutID = null;
 	messageQueue.pump(bot, function(timeout) {
-		console.log('pump().callback');
 		if (timeout && timeoutID == null) {
-			console.log('actually setting timeout');
 			timeoutID = setTimeout(pump, timeout);
 		}
 	});
 }
 
 function forcePump() {
-	console.log('forcePump');
 	if (timeoutID) return;
 	pump();
 }
@@ -95,7 +90,6 @@ function onMongoose(err) {
 	bot.on('ready', onBotReady);
 	bot.on('message', globalHandlerWrap);
 	bot.on('disconnected', onBotDisconnected);
-	setTimeout(pump, 1000);
 }
 
 mongoose.connect('mongodb://127.0.0.1/test', onMongoose);
