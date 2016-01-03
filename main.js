@@ -59,7 +59,7 @@ function globalHandlerMiddle(message, block, cb) {
 
 function onBotReady() {
 	console.log(bot.username + " - (" + bot.id + ")");
-	bot.setPresence({game: '#UrsineArePeopleToo'});
+	bot.setPresence({game: 'PseuPseuPseudeo'});
 }
 
 function onBotDisconnected() {
