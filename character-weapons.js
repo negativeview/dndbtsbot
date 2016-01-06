@@ -164,6 +164,83 @@ function doWeaponDrop(pieces, stateHolder, activeCharacter, next) {
 	}
 }
 
+function doWeaponGrab(pieces, stateHolder, activeCharacter, next) {
+	if (pieces.length < 4) {
+		stateHolder.simpleAddMessage(stateHolder.username, "`!character weapon grab <weapon-id> <optional|your name for it>`");
+		return next();
+	}
+
+	var weaponStoreModel = ret.mongoose.model('WeaponStore');
+	var server = stateHolder.findServerID(stateHolder.channelID);
+	if (!server) {
+		stateHolder.simpleAddMessage(stateHolder.username, "This command must be run from a channel.");
+		return next();
+	}
+	var params = {
+		server: server,
+		shortName: pieces[3]
+	};
+	weaponStoreModel.find(params).exec(function(err, results) {
+		if (err) {
+			stateHolder.simpleAddMessage(stateHolder.username, err);
+			console.log(err);
+			return next();
+		}
+
+		if (results.length == 0) {
+			stateHolder.simpleAddMessage(stateHolder.username, 'No weapon found.');
+			return next();
+		}
+
+		var weapon = results[0];
+
+		var weaponName = '';
+		for (var i = 4; i < pieces.length; i++) {
+			if (weaponName != '') weaponName += ' ';
+			weaponName += pieces[i];
+		}
+		if (weaponName == '') weaponName = weapon.name;
+
+		var abilityScore = 'strength';
+		if (weapon.properties.indexOf('versatile') != -1) {
+			if (activeCharacter.dexterity > activeCharacter.strength) {
+				abilityScore = 'dexterity';
+			}
+		}
+
+		var isCurrent = (activeCharacter.weapons.length == 0);
+		var re = new RegExp("([0-9]+)d([0-9]+)");
+		var criticalRoll = weapon.damageRoll.match(re);
+		if (criticalRoll) {
+			criticalRoll = (parseInt(criticalRoll[1]) * 2) + 'd' + criticalRoll[2];
+		}
+		activeCharacter.weapons.push(
+			{
+				name: weaponName,
+				abilityScore: abilityScore,
+				damageType: weapon.damageType,
+				critRoll: criticalRoll,
+				normalRoll: weapon.damageRoll,
+				magicModifier: 0,
+				isCurrent: isCurrent,
+				complexity: weapon.complexity,
+				range: weapon.ragnge,
+				cost: weapon.cost,
+				weight: weapon.weight,
+				properties: weapon.properties
+			}
+		);
+		activeCharacter.markModified('weapons');
+		activeCharacter.save(function(err) {
+			stateHolder.simpleAddMessage(stateHolder.username, 'Saved.');
+			return next();
+		});
+
+
+
+	});
+}
+
 ret.doWeapon = function(pieces, stateHolder, activeCharacter, next) {
 	if (pieces.length == 2) {
 		stateHolder.simpleAddMessage(stateHolder.username, 'Wrong number of paramters to character weapon.');
@@ -177,6 +254,8 @@ ret.doWeapon = function(pieces, stateHolder, activeCharacter, next) {
 			return doWeaponDrop(pieces, stateHolder, activeCharacter, next);
 		case 'set':
 			return doWeaponSet(pieces, stateHolder, activeCharacter, next);
+		case 'grab':
+			return doWeaponGrab(pieces, stateHolder, activeCharacter, next);
 		default:
 			stateHolder.simpleAddMessage(stateHolder.username, 'Invalid key: ' + pieces[2]);
 			return next();

@@ -207,7 +207,13 @@ ret.init = function(mongoose, handlers) {
 				isCurrent: Boolean,
 				critRoll: String,
 				normalRoll: String,
-				magicModifier: Number
+				magicModifier: Number,
+
+				complexity: String,
+				range: String,
+				cost: Number,
+				weight: Number,
+				properties: [String]
 			}
 		],
 		newProficiencies: {},
