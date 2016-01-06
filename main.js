@@ -2,7 +2,6 @@ var mongoose         = require('mongoose');
 var bot              = require('./authenticate.js');
 var async            = require('async');
 var handlers         = require('./handler-registry.js');
-var block            = require('./execution-block.js');
 var stateHolderClass = require('./state-holder.js');
 var messageQueue     = require('./message-queue.js');
 
@@ -21,16 +20,13 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	// Now that we're actually comitting to processing the message, set up a
 	// state holder.
 	var stateHolder = stateHolderClass(user, userID, channelID, rawEvent);
+	stateHolder.init(mongoose, bot);
 
 	// Default to verified. It's easier to un-verify when we run user-provided
 	// code than it is to verify all input.
 	stateHolder.verified = true;
-	
-	var b = block.create(mongoose, bot, stateHolder);
 
-	b.setHandlers(handlers);
-
-	globalHandlerMiddle(message, b, function(err) {
+	globalHandlerMiddle(message, stateHolder, function(err) {
 		stateHolder.doFinalOutput();
 		forcePump();
 		if (err) return;
@@ -38,7 +34,9 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	});
 }
 
-function globalHandlerMiddle(message, block, cb) {
+
+
+function globalHandlerMiddle(message, stateHolder, cb) {
 	var splitMessages = message.split("\n");
 
 	/**
@@ -49,26 +47,50 @@ function globalHandlerMiddle(message, block, cb) {
 	if (
 		(message.indexOf("!macro") === 0)
 	) {
-		block.addStatement(message);
-		block.execute();
-		return cb();
+		var pieces = message.split(" ");
+		var command = pieces[0];
+		handlers.execute(
+			command,
+			pieces,
+			stateHolder,
+			cb
+		);
+		return;
 	}
 
 	/**
 	 * If it's not one of those special commands, split commands up and run them individually.
 	 **/
+	var statements = [];
 	var currentMessage = splitMessages[0];
 	for (var i = 1; i < splitMessages.length; i++) {
 		if (splitMessages[i][0] != '!') {
 			currentMessage += "\n" + splitMessages[i]
 		} else {
-			block.addStatement(currentMessage);
+			statements[statements.length] = currentMessage;
 			currentMessage = splitMessages[i];
 		}
 	}
-	block.addStatement(currentMessage);
-	block.setNext(cb);
-	block.execute();
+	statements[statements.length] = currentMessage;
+
+	async.eachSeries(
+		statements,
+		function(statement, next) {
+			var pieces = statement.split(" ");
+			var command = pieces[0];
+
+			handlers.execute(
+				command,
+				pieces,
+				stateHolder,
+				next
+			);
+		},
+		function(err) {
+			if (err) console.log(err);
+			return cb();
+		}
+	);
 }
 
 function onBotReady() {

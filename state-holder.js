@@ -9,10 +9,9 @@ module.exports = function(user, userID, channelID, rawEvent) {
 		actualUsername: user
 	};
 
-	ret.init = function(mongoose, bot, block) {
+	ret.init = function(mongoose, bot) {
 		ret.mongoose = mongoose;
 		ret.bot = bot;
-		ret.block = block;
 	}
 
 	ret.clone = function() {
