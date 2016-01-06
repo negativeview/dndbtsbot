@@ -439,7 +439,7 @@ function doView(pieces, stateHolder, next) {
 						}
 
 						stateHolder.simpleAddMessage(stateHolder.username, "\n\n```Proficiencies```");
-						if (character.proficiencies.length == 0 && character.newProficiencies.length == 0) {
+						if (character.proficiencies.length == 0 && (!character.newProficiencies || character.newProficiencies.length == 0)) {
 							stateHolder.simpleAddMessage(stateHolder.username, "\nSadly, none.");
 						} else {
 							var outputString = '';
