@@ -1,14 +1,15 @@
-var diceHandler = require('./dice-handler.js');
-var echoHandler = require('./echo-handler.js');
-var helpHandler = require('./help-handler.js');
-var macroHandler = require('./macro-handler.js');
-var rollstatsHandler = require('./roll-stats.js');
-var varHandler = require('./var-handler.js');
-var gameHandler = require('./game-handler.js');
-var tableHandler = require('./table-handler.js');
+var characterHandler    = require('./character-handler.js');
+var diceHandler         = require('./dice-handler.js');
+var echoHandler         = require('./echo-handler.js');
 var embeddedCodeHandler = require('./embedded-code-handler.js');
-var characterHandler = require('./character-handler.js');
-var shortRollHandler = require('./shorthand-dice-rolls.js');
+var gameHandler         = require('./game-handler.js');
+var helpHandler         = require('./help-handler.js');
+var macroHandler        = require('./macro-handler.js');
+var rollstatsHandler    = require('./roll-stats.js');
+var tableHandler        = require('./table-handler.js');
+var varHandler          = require('./var-handler.js');
+var weaponsStore        = require('./weapons-store.js');
+var shortRollHandler    = require('./shorthand-dice-rolls.js');
 
 var handlers = {
 	'!2': shortRollHandler.normal,
@@ -28,6 +29,7 @@ var handlers = {
 	'!<': embeddedCodeHandler.debug,
 	'!character': characterHandler.handle,
 	'!attack': characterHandler.attack,
+	'!weaponstore': weaponsStore.handle
 }
 
 var ret = {};
@@ -42,6 +44,7 @@ ret.init = function(mongoose, bot) {
 	embeddedCodeHandler.setHandlers(ret);
 	characterHandler.init(mongoose, ret);
 	embeddedCodeHandler.setMongoose(mongoose);
+	weaponsStore.init(mongoose);
 }
 
 ret.addHandler = function(command, handler) {
