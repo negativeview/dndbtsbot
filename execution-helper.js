@@ -9,17 +9,30 @@ ret.handle = function(message, stateHolder, cb) {
 
 	var messages = [];
 
+	var message = '';
 	for (var i = 0; i < splitMessages.length; i++) {
-		var message = splitMessages[i];
-		if (message.indexOf("!macro") === 0 || message.indexOf("!!") === 0) {
+		var newLine = splitMessages[i];
+
+		if (newLine.indexOf("!macro") === 0 || message.indexOf("!!") === 0) {
 			for (var m = i + 1; m < splitMessages.length; m++) {
 				message += "\n" + splitMessages[m];
 			}
 			messages[messages.length] = message;
-			break;
-		} else {
-			messages[messages.length] = message;
+			break;			
 		}
+
+		if (newLine[0] == '!') {
+			if (message.length != 0) {
+				messages[messages.length] = message;
+				message = '';
+			}
+		}
+
+		if (message.length != 0) message += " \n";
+		message += newLine;
+	}
+	if (message.length != 0) {
+		messages[messages.length] = message;
 	}
 
 	async.eachSeries(

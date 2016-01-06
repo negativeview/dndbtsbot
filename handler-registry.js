@@ -9,6 +9,7 @@ var tableHandler        = require('./table-handler.js');
 var varHandler          = require('./var-handler.js');
 var weaponsStore        = require('./weapons-store.js');
 var shortRollHandler    = require('./shorthand-dice-rolls.js');
+var liarsDice           = require('./liars-dice.js');
 
 var handlers = {
 	'!2': shortRollHandler.normal,
@@ -28,7 +29,8 @@ var handlers = {
 	'!<': embeddedCodeHandler.debug,
 	'!character': characterHandler.handle,
 	'!attack': characterHandler.attack,
-	'!weaponstore': weaponsStore.handle
+	'!weaponstore': weaponsStore.handle,
+	'!liarsdice': liarsDice.handle
 }
 
 var ret = {};

@@ -6,7 +6,9 @@ module.exports = function(user, userID, channelID, rawEvent) {
 		contextUser: null,
 		channelID: channelID,
 		username: rawEvent.d.author.id,
-		actualUsername: user
+		actualUsername: user,
+		adminDetermined: false,
+		isAdmin: false
 	};
 
 	ret.init = function(mongoose, bot) {
@@ -38,7 +40,8 @@ module.exports = function(user, userID, channelID, rawEvent) {
 	}
 
 	ret.isAdmin = function(serverID, username) {
-		var isAdmin = false;
+		if (ret.adminDetermined) return ret.isAdmin;
+
 		var server = ret.bot.servers[serverID];
 		if (!server) {
 			return false;
@@ -53,11 +56,13 @@ module.exports = function(user, userID, channelID, rawEvent) {
 			var roleID = theUser.roles[i];
 			var role = ret.bot.servers[serverID].roles[roleID].name;
 			if (role.toLocaleLowerCase() == 'moderator') {
-				isAdmin = true;
+				ret.isAdmin = true;
 				break;
 			}
 		}
-		return isAdmin;
+
+		ret.adminDetermined = true;
+		return ret.isAdmin;
 	}
 
 	ret.findServerID = function(channelID) {

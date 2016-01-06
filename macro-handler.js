@@ -189,6 +189,7 @@ ret.handle = function(pieces, stateHolder, next) {
 
 	switch (action) {
 		case 'get':
+		case 'view':
 			ret.get(isAdmin, massagedPieces, stateHolder, next);
 			break;
 		case 'set':
@@ -218,6 +219,8 @@ ret.attempted = function(pieces, stateHolder, next) {
 
 		if (res.length) {
 			command = res[0].macro;
+			stateHolder.adminDetermined = true;
+			stateHolder.isAdmin = true;
 			executionHelper.handle(command, stateHolder, next);
 		} else {
 			var parameters = {
