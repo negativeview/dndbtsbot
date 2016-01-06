@@ -1,5 +1,4 @@
 var Dice = require('./dice.js');
-var _ = require('lodash');
 
 var ret = {
 
@@ -10,12 +9,25 @@ ret.init = function(diceHandler) {
 }
 
 ret.roll = function(pieces, stateHolder, next) {
-	for (var i = 0; i < 6; i++) {
-		stateHolder.block.addStatement('!roll 4d6kh3');
-		if (i != 5)
-			stateHolder.block.addStatement('!echon');
-	}
-	return next();
+	stateHolder.simpleAddMessage(stateHolder.channelID, "\n");
+	ret.diceHandler(['!roll', '4d6kh3'], stateHolder, function() {
+		stateHolder.simpleAddMessage(stateHolder.channelID, "\n");
+		ret.diceHandler(['!roll', '4d6kh3'], stateHolder, function() {
+			stateHolder.simpleAddMessage(stateHolder.channelID, "\n");
+			ret.diceHandler(['!roll', '4d6kh3'], stateHolder, function() {
+				stateHolder.simpleAddMessage(stateHolder.channelID, "\n");
+				ret.diceHandler(['!roll', '4d6kh3'], stateHolder, function() {
+					stateHolder.simpleAddMessage(stateHolder.channelID, "\n");
+					ret.diceHandler(['!roll', '4d6kh3'], stateHolder, function() {
+						stateHolder.simpleAddMessage(stateHolder.channelID, "\n");
+						ret.diceHandler(['!roll', '4d6kh3'], stateHolder, function() {
+							next();
+						});
+					});
+				});
+			});
+		});
+	})
 }
 
 module.exports = ret;

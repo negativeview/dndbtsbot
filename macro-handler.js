@@ -1,3 +1,5 @@
+var executionHelper = require('./execution-helper.js');
+
 var ret = {
 	macroModel: null
 };
@@ -200,7 +202,7 @@ ret.handle = function(pieces, stateHolder, next) {
 
 ret.attempted = function(pieces, stateHolder, next) {
 	console.log(pieces);
-	
+
 	if (!stateHolder.originalArgs)
 		stateHolder.originalArgs = pieces;
 	
@@ -216,20 +218,7 @@ ret.attempted = function(pieces, stateHolder, next) {
 
 		if (res.length) {
 			command = res[0].macro;
-
-			var splitMessages = command.split("\n");
-			var currentMessage = splitMessages[0];
-			for (var i = 1; i < splitMessages.length; i++) {
-				if (splitMessages[i][0] != '!') {
-					currentMessage += "\n" + splitMessages[i]
-				} else {
-					stateHolder.block.addStatement(currentMessage);
-					currentMessage = splitMessages[i];
-				}
-			}
-			stateHolder.block.addStatement(currentMessage);
-
-			return next();
+			executionHelper.handle(command, stateHolder, next);
 		} else {
 			var parameters = {
 				name: pieces[0],
@@ -244,19 +233,8 @@ ret.attempted = function(pieces, stateHolder, next) {
 
 				if (res.length) {
 					command = res[0].macro;
-
-					var splitMessages = command.split("\n");
-					var currentMessage = splitMessages[0];
-					for (var i = 1; i < splitMessages.length; i++) {
-						if (splitMessages[i][0] != '!') {
-							currentMessage += "\n" + splitMessages[i]
-						} else {
-							stateHolder.block.addStatement(currentMessage);
-							currentMessage = splitMessages[i];
-						}
-					}
-					stateHolder.block.addStatement(currentMessage);
-					return next();
+					console.log(executionHelper);
+					executionHelper.handle(command, stateHolder, next);
 				} else {
 					return next();
 				}

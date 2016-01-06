@@ -16,7 +16,7 @@ module.exports = function(user, userID, channelID, rawEvent) {
 
 	ret.clone = function() {
 		var ret2 = module.exports(user, userID, channelID, rawEvent);
-		ret2.init(ret.mongoose, ret.bot, ret.block);
+		ret2.init(ret.mongoose, ret.bot);
 		return ret2;
 	}
 

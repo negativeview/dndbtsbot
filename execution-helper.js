@@ -1,9 +1,10 @@
 var async    = require('async');
-var handlers = require('./handler-registry.js');
 
 var ret = {};
 
 ret.handle = function(message, stateHolder, cb) {
+	var handlers = require('./handler-registry.js');
+
 	var splitMessages = message.split("\n");
 
 	var messages = [];

@@ -11,6 +11,7 @@ var messageQueue     = require('./message-queue.js');
  * If we do, it passes the message to globalHandlerMiddle.
  */
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
+
 	// Ignore messages from ourselves, so that we don't accidentally
 	// send ourselves into an infinite loop.
 	if (user == bot.username || user == bot.id) return;
