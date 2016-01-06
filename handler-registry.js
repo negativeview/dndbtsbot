@@ -44,7 +44,6 @@ ret.addHandler = function(command, handler) {
 };
 
 ret.findCommand = function(command) {
-	console.log('findCommand:' + command);
 	if (command[0] != '!') {
 		command = '!' + command;
 	}
@@ -53,7 +52,6 @@ ret.findCommand = function(command) {
 };
 
 ret.execute = function(command, pieces, stateHolder, next) {
-	console.log('execute:' + command);
 	var c = handlers[command];
 	if (!c) {
 		return next('Not a function: ' + command);
@@ -62,13 +60,6 @@ ret.execute = function(command, pieces, stateHolder, next) {
 };
 
 ret.macro = function(command, pieces, stateHolder, next) {
-	console.log('macro:' + command);
-	if (stateHolder.real) {
-		console.log('is Fake:' + command);
-	} else {
-		console.log('is not fake:' + command);
-	}
-
 	macroHandler.attempted(pieces, stateHolder, next);
 };
 

@@ -1,3 +1,4 @@
+var executionHelper  = require('./execution-helper.js');
 var mongoose         = require('mongoose');
 var bot              = require('./authenticate.js');
 var async            = require('async');
@@ -26,60 +27,12 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	// code than it is to verify all input.
 	stateHolder.verified = true;
 
-	globalHandlerMiddle(message, stateHolder, function(err) {
+	executionHelper.handle(message, stateHolder, function(err) {
 		stateHolder.doFinalOutput();
 		forcePump();
 		if (err) return;
 		bot.deleteMessage({channel: rawEvent.d.channel_id, messageID: rawEvent.d.id});
 	});
-}
-
-function globalHandlerMiddle(message, stateHolder, cb) {
-	var splitMessages = message.split("\n");
-
-	var messages = [];
-
-	for (var i = 0; i < splitMessages.length; i++) {
-		var message = splitMessages[i];
-		if (message.indexOf("!macro") === 0 || message.indexOf("!!") === 0) {
-			for (var m = i + 1; m < splitMessages.length; m++) {
-				message += "\n" + splitMessages[m];
-			}
-			messages[messages.length] = message;
-			break;
-		} else {
-			messages[messages.length] = message;
-		}
-	}
-
-	async.eachSeries(
-		messages,
-		function(statement, next) {
-			var pieces = statement.split(" ");
-			var command = pieces[0];
-
-			var commandFound = handlers.findCommand(command);
-			if (commandFound) {
-				handlers.execute(
-					command,
-					pieces,
-					stateHolder,
-					next
-				);
-			} else {
-				handlers.macro(
-					command,
-					pieces,
-					stateHolder,
-					next
-				);
-			}
-		},
-		function(err) {
-			if (err) console.log(err);
-			return cb();
-		}
-	);
 }
 
 function onBotReady() {
