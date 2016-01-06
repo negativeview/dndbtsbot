@@ -1,7 +1,6 @@
 var Dice = require('./dice.js');
 var _ = require('lodash');
 
-
 function fancyFormatting(pruned, full, diceSize) {
 	if (!full) {
 		var result = '[';

@@ -8,8 +8,12 @@ var gameHandler = require('./game-handler.js');
 var tableHandler = require('./table-handler.js');
 var embeddedCodeHandler = require('./embedded-code-handler.js');
 var characterHandler = require('./character-handler.js');
+var shortRollHandler = require('./shorthand-dice-rolls.js');
 
 var handlers = {
+	'!2': shortRollHandler.normal,
+	'!2a': shortRollHandler.advantage,
+	'!2d': shortRollHandler.disadvantage,
 	'!r': diceHandler,
 	'!roll': diceHandler,
 	'!rollstats': rollstatsHandler.roll,
@@ -30,6 +34,7 @@ var ret = {};
 ret.init = function(mongoose, bot) {
 	macroHandler.init(mongoose);
 	rollstatsHandler.init(diceHandler);
+	shortRollHandler.init(diceHandler);
 	helpHandler.init(mongoose);
 	varHandler.init(mongoose);
 	gameHandler.init(mongoose);
