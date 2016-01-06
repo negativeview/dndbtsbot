@@ -2,7 +2,6 @@ var characterHandler    = require('./character-handler.js');
 var diceHandler         = require('./dice-handler.js');
 var echoHandler         = require('./echo-handler.js');
 var embeddedCodeHandler = require('./embedded-code-handler.js');
-var gameHandler         = require('./game-handler.js');
 var helpHandler         = require('./help-handler.js');
 var macroHandler        = require('./macro-handler.js');
 var rollstatsHandler    = require('./roll-stats.js');
