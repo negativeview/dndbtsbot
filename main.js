@@ -38,7 +38,7 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 
 function onBotReady() {
 	console.log(bot.username + " - (" + bot.id + ")");
-	bot.setPresence({game: 'PseuPseuPseudeo'});
+	bot.setPresence({game: 'Boogie Woogie'});
 }
 
 function onBotDisconnected() {
