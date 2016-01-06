@@ -134,7 +134,13 @@ function decideStringOrVariable(command) {
 	for (var m = 0; m < command.length; m++) {
 		var token = command[m];
 		if (token.type == 'STRING') {
-			if (ret.handlers.findCommand(token.rawValue)) {
+			if (command.length >= m && command[m+1].type == 'LEFT_PAREN') {
+				token = {
+					rawValue: token.rawValue,
+					type: 'FUNCTION'
+				};
+				workingCommand.push(token);
+			} else if (ret.handlers.findCommand(token.rawValue)) {
 				token = {
 					rawValue: token.rawValue,
 					type: 'FUNCTION'
@@ -283,7 +289,7 @@ function breakIntoStatementsAndBlocks(tokens) {
 	return tokens;
 }
 
-function tokenize(command) {
+function tokenize(command, cb) {
 	var lex = new lexer();
 
 	var tokens = [];
@@ -524,7 +530,7 @@ function tokenize(command) {
 	tokens = decideStringOrVariable(tokens);
 	statements = breakIntoStatementsAndBlocks(tokens);
 
-	return statements;
+	return cb(statements);
 }
 
 ret.debug = function(pieces, stateHolder, next) {
@@ -536,8 +542,11 @@ ret.debug = function(pieces, stateHolder, next) {
 	}
 
 	try {
-		var commands = tokenize(command);
-		stateHolder.simpleAddMessage(stateHolder.username, JSON.stringify(commands, ['rawValue', 'type'], "      "));
+		tokenize(command, function(commands) {
+			stateHolder.simpleAddMessage(stateHolder.username, JSON.stringify(commands, ['rawValue', 'type'], "      "));
+			return next();
+		});
+		return;
 	} catch (e) {
 		stateHolder.simpleAddMessage(stateHolder.username, e);
 	}
@@ -563,18 +572,19 @@ ret.handle = function(pieces, stateHolder, next) {
 	}
 
 	try {
-		var commands = tokenize(command);
+		tokenize(command, function(commands) {
+			executeCommands(commands, state, function() {
+				if (ret.stateHolder.errorList.length) {
+					stateHolder.simpleAddMessage(stateHolder.username, ret.stateHolder.errorList.join("\n"));
+				}
+				next();
+			});
+		});
+		return;
 	} catch (e) {
 		stateHolder.simpleAddMessage(stateHolder.username, e);
 		return next();
 	}
-
-	executeCommands(commands, state, function() {
-		if (ret.stateHolder.errorList.length) {
-			stateHolder.simpleAddMessage(stateHolder.username, ret.stateHolder.errorList.join("\n"));
-		}
-		next();
-	});
 }
 
 module.exports = ret;

@@ -1,3 +1,5 @@
+var block = require('../execution-block.js');
+
 var ret = {};
 
 ret.filterInt = function(value) {
@@ -10,8 +12,18 @@ ret.fakeStateHolder = function(stateHolder) {
 	var fakeStateHolder = Object.create(stateHolder);
 	fakeStateHolder.result = '';
 	fakeStateHolder.real = stateHolder;
+	var b = block.create(stateHolder.mongoose, stateHolder.bot, fakeStateHolder);
+	fakeStateHolder.block = b;
+
 	fakeStateHolder.simpleAddMessage = function(to, message) {
+		console.log('adding message ' + message + ' to a fake state holder.');
 		fakeStateHolder.result += message;
+	};
+	fakeStateHolder.squashAddMessage = function(to, message) {
+		console.log('squash add message');
+	};
+	fakeStateHolder.doFinalOutput = function() {
+		console.log('doFinalOutput of a fake state holder!');
 	};
 	return fakeStateHolder;
 };

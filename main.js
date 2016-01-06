@@ -6,12 +6,26 @@ var block            = require('./execution-block.js');
 var stateHolderClass = require('./state-holder.js');
 var messageQueue     = require('./message-queue.js');
 
+/**
+ * Highest-level validation that we even want to process this message further.
+ * If we do, it passes the message to globalHandlerMiddle.
+ */
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
+	// Ignore messages from ourselves, so that we don't accidentally
+	// send ourselves into an infinite loop.
 	if (user == bot.username || user == bot.id) return;
+
+	// We early return if the message doesn't start with an exclamation point.
 	if (message[0] != '!') return;
 
+	// Now that we're actually comitting to processing the message, set up a
+	// state holder.
 	var stateHolder = stateHolderClass(user, userID, channelID, rawEvent);
+
+	// Default to verified. It's easier to un-verify when we run user-provided
+	// code than it is to verify all input.
 	stateHolder.verified = true;
+	
 	var b = block.create(mongoose, bot, stateHolder);
 
 	b.setHandlers(handlers);
@@ -82,6 +96,10 @@ function forcePump() {
 	pump();
 }
 
+/**
+ * onMongoose is called when mongoose (our data store) is ready. It handles initializing all our other
+ * callbacks and actually connects to discord.
+ */
 function onMongoose(err) {
 	if (err) throw err;
 
@@ -90,6 +108,7 @@ function onMongoose(err) {
 	bot.on('ready', onBotReady);
 	bot.on('message', globalHandlerWrap);
 	bot.on('disconnected', onBotDisconnected);
+	bot.connect();
 }
 
 mongoose.connect('mongodb://127.0.0.1/test', onMongoose);

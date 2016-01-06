@@ -55,10 +55,19 @@ ret.findCommand = function(command) {
 
 ret.execute = function(command, pieces, stateHolder, next) {
 	var c = handlers[command];
+	if (!c) {
+		return next('Not a function');
+	}
 	c(pieces, stateHolder, next);
 };
 
 ret.macro = function(command, pieces, stateHolder, next) {
+	if (stateHolder.real) {
+		console.log('is Fake:' + command);
+	} else {
+		console.log('is not fake:' + command);
+	}
+
 	macroHandler.attempted(pieces, stateHolder, next);
 };
 

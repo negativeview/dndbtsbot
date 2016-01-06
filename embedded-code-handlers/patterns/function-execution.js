@@ -37,7 +37,27 @@ module.exports = {
 			'!' + commandName,
 			internalCommand,
 			fakeStateHolder,
-			function() {
+			function(e) {
+				if (e && e == 'Not a function') {
+					helper.handlers.macro(
+						'!' + commandName,
+						internalCommand,
+						fakeStateHolder,
+						function() {
+							tmpCommand.push({
+								type: 'QUOTED_STRING',
+								rawValue: fakeStateHolder.result
+							});
+
+							for (var i = index + 4; i < command.length; i++) {
+								tmpCommand.push(command[i]);
+							}
+
+							return cb(tmpCommand);							
+						}
+					);
+					return;
+				}
 				tmpCommand.push({
 					type: 'QUOTED_STRING',
 					rawValue: fakeStateHolder.result
