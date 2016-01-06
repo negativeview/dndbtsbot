@@ -199,6 +199,8 @@ ret.handle = function(pieces, stateHolder, next) {
 };
 
 ret.attempted = function(pieces, stateHolder, next) {
+	console.log(pieces);
+	
 	if (!stateHolder.originalArgs)
 		stateHolder.originalArgs = pieces;
 	

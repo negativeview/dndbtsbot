@@ -4,7 +4,6 @@ var helpHandler = require('./help-handler.js');
 var macroHandler = require('./macro-handler.js');
 var rollstatsHandler = require('./roll-stats.js');
 var varHandler = require('./var-handler.js');
-var evaluateHandler = require('./evaluate-handler.js');
 var gameHandler = require('./game-handler.js');
 var tableHandler = require('./table-handler.js');
 var embeddedCodeHandler = require('./embedded-code-handler.js');
@@ -20,7 +19,6 @@ var handlers = {
 	'!help': helpHandler.run,
 	'!macro': macroHandler.handle,
 	'!var': varHandler.handle,
-	'!evaluate': evaluateHandler.evaluate,
 	'!table': tableHandler.handle,
 	'!!': embeddedCodeHandler.handle,
 	'!<': embeddedCodeHandler.debug,
@@ -46,6 +44,7 @@ ret.addHandler = function(command, handler) {
 };
 
 ret.findCommand = function(command) {
+	console.log('findCommand:' + command);
 	if (command[0] != '!') {
 		command = '!' + command;
 	}
@@ -54,14 +53,16 @@ ret.findCommand = function(command) {
 };
 
 ret.execute = function(command, pieces, stateHolder, next) {
+	console.log('execute:' + command);
 	var c = handlers[command];
 	if (!c) {
-		return next('Not a function');
+		return next('Not a function: ' + command);
 	}
 	c(pieces, stateHolder, next);
 };
 
 ret.macro = function(command, pieces, stateHolder, next) {
+	console.log('macro:' + command);
 	if (stateHolder.real) {
 		console.log('is Fake:' + command);
 	} else {

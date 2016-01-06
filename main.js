@@ -34,57 +34,46 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	});
 }
 
-
-
 function globalHandlerMiddle(message, stateHolder, cb) {
 	var splitMessages = message.split("\n");
 
-	/**
-	 * If our first command is setmacro or adminsetmacro, we need to treat things specially.
-	 * Instead of being able to process multiple commands in a message, we must gobble the whole
-	 * thing up.
-	 **/
-	if (
-		(message.indexOf("!macro") === 0)
-	) {
-		var pieces = message.split(" ");
-		var command = pieces[0];
-		handlers.execute(
-			command,
-			pieces,
-			stateHolder,
-			cb
-		);
-		return;
-	}
+	var messages = [];
 
-	/**
-	 * If it's not one of those special commands, split commands up and run them individually.
-	 **/
-	var statements = [];
-	var currentMessage = splitMessages[0];
-	for (var i = 1; i < splitMessages.length; i++) {
-		if (splitMessages[i][0] != '!') {
-			currentMessage += "\n" + splitMessages[i]
+	for (var i = 0; i < splitMessages.length; i++) {
+		var message = splitMessages[i];
+		if (message.indexOf("!macro") === 0 || message.indexOf("!!") === 0) {
+			for (var m = i + 1; m < splitMessages.length; m++) {
+				message += "\n" + splitMessages[m];
+			}
+			messages[messages.length] = message;
+			break;
 		} else {
-			statements[statements.length] = currentMessage;
-			currentMessage = splitMessages[i];
+			messages[messages.length] = message;
 		}
 	}
-	statements[statements.length] = currentMessage;
 
 	async.eachSeries(
-		statements,
+		messages,
 		function(statement, next) {
 			var pieces = statement.split(" ");
 			var command = pieces[0];
 
-			handlers.execute(
-				command,
-				pieces,
-				stateHolder,
-				next
-			);
+			var commandFound = handlers.findCommand(command);
+			if (commandFound) {
+				handlers.execute(
+					command,
+					pieces,
+					stateHolder,
+					next
+				);
+			} else {
+				handlers.macro(
+					command,
+					pieces,
+					stateHolder,
+					next
+				);
+			}
 		},
 		function(err) {
 			if (err) console.log(err);
@@ -127,8 +116,8 @@ function onMongoose(err) {
 
 	handlers.init(mongoose, bot);
 
-	bot.on('ready', onBotReady);
-	bot.on('message', globalHandlerWrap);
+	bot.on('ready',        onBotReady);
+	bot.on('message',      globalHandlerWrap);
 	bot.on('disconnected', onBotDisconnected);
 	bot.connect();
 }
