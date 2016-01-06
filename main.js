@@ -11,10 +11,11 @@ var messageQueue     = require('./message-queue.js');
  * If we do, it passes the message to globalHandlerMiddle.
  */
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
-
 	// Ignore messages from ourselves, so that we don't accidentally
 	// send ourselves into an infinite loop.
 	if (user == bot.username || user == bot.id) return;
+
+	updateChannelTitles();
 
 	// We early return if the message doesn't start with an exclamation point.
 	if (message[0] != '!') return;
@@ -36,9 +37,57 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	});
 }
 
+var lastUpdate = '';
+
+function updateChannelTitles() {
+	var announcementChannelID = '123184695289577474';
+	//var announcementChannelID = '132594342954139648';
+
+	var moment = require('moment');
+	var m = moment().utc();
+	m.subtract(7, 'hours');
+
+	var hours = m.hours();
+
+	var amPM = 'AM';
+	if (hours > 12) {
+		hours = hours - 12;
+		amPM = 'PM';
+	}
+
+	var shouldBeTopic = 'Time: ' + hours + ':XX ' + amPM;
+
+	if (lastUpdate != shouldBeTopic) {
+		lastUpdate = shouldBeTopic;
+
+		var toSend = {to: announcementChannelID, message: lastUpdate};
+		console.log(toSend);
+		bot.sendMessage(toSend, function(err) {
+			if (err) console.log(err);
+		});
+	}
+
+	/*
+	if (shouldBeTopic != topic) {
+		bot.editChannelInfo(
+			{
+				channel: '132594342954139648',
+				topic: shouldBeTopic
+			}
+		);
+	}
+	*/
+}
+
 function onBotReady() {
+	var currentRelease = 'Boogie Woogie';
+
 	console.log(bot.username + " - (" + bot.id + ")");
-	bot.setPresence({game: 'Boogie Woogie'});
+	bot.setPresence({game: currentRelease});
+}
+
+function updateRoomTopic() {
+
 }
 
 function onBotDisconnected() {
