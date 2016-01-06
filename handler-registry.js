@@ -38,7 +38,6 @@ ret.init = function(mongoose, bot) {
 	shortRollHandler.init(diceHandler);
 	helpHandler.init(mongoose);
 	varHandler.init(mongoose);
-	gameHandler.init(mongoose);
 	tableHandler.init(mongoose);
 	embeddedCodeHandler.setHandlers(ret);
 	characterHandler.init(mongoose, ret);
