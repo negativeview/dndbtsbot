@@ -61,7 +61,7 @@ function ldCallHandle(game, stateHolder, next) {
 	}
 
 	var message = '';
-	message += "You lost!\n";
+	message += "You lost! You begin the next game.\n";
 	if (won) {
 		message += "Your dice: " + theirDice.join(', ') + "\n";
 		message += "Their dice: " + myDice.join(', ') + "\n";
@@ -74,14 +74,18 @@ function ldCallHandle(game, stateHolder, next) {
 
 	if (won) {
 		if (game.activePlayer == 1) {
+			game.activePlayer = 2;
 			game.userBDiceNumber--;	
 		} else {
+			game.activePlayer = 1;
 			game.userADiceNumber--;
 		}
 	} else {
 		if (game.activePlayer == 1) {
+			game.activePlayer = 1;
 			game.userADiceNumber--;
 		} else {
+			game.activePlayer = 2;
 			game.userBDiceNumber--;
 		}
 	}
@@ -102,7 +106,30 @@ function ldCallHandle(game, stateHolder, next) {
 		}
 	}
 
-	return next();
+	var dice = new Dice();
+	setupDice(dice, game, stateHolder, next);
+}
+
+function setupDice(dice, game, stateHolder, next) {
+	game.latestBetNumber = 0;
+	game.latestBetSize = 0;
+	dice.execute(game.userADiceNumber + 'd' + game.diceSize, function(data) {
+		game.userAResults = data.rawResults[0].results;
+		stateHolder.simpleAddMessage(
+			game.userA,
+			game.userAResults.join(', ')
+		);
+
+		dice.execute(game.userBDiceNumber + 'd' + game.diceSize, function(data) {
+			game.userBResults = data.rawResults[0].results;
+			stateHolder.simpleAddMessage(
+				game.userB,
+				game.userBResults.join(', ')
+			);
+
+			return next();
+		});
+	});
 }
 
 function ldStart(pieces, stateHolder, next) {
@@ -161,23 +188,7 @@ function ldStart(pieces, stateHolder, next) {
 			startingPlayer + ' starts. DMing the players their dice.'
 		);
 
-		dice.execute(game.userADiceNumber + 'd' + game.diceSize, function(data) {
-			game.userAResults = data.rawResults[0].results;
-			stateHolder.simpleAddMessage(
-				game.userA,
-				game.userAResults.join(', ')
-			);
-
-			dice.execute(game.userBDiceNumber + 'd' + game.diceSize, function(data) {
-				game.userBResults = data.rawResults[0].results;
-				stateHolder.simpleAddMessage(
-					game.userB,
-					game.userBResults.join(', ')
-				);
-
-				return next();
-			});
-		});
+		setupDice(dice, game, stateHolder, next);
 	});
 }
 
@@ -205,7 +216,6 @@ function ldBetHandle(diceInfo, game, stateHolder, next) {
 		stateHolder.simpleAddMessage(inactiveUser, 'The other user bet ' + diceInfo[1] + 'x' + diceInfo[2]);
 		return next();
 	} else {
-		console.log(diceInfo);
 		stateHolder.simpleAddMessage(stateHolder.username, 'Invalid bet.' + diceInfo.join(', '));
 		return next();
 	}

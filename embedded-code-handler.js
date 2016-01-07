@@ -1,12 +1,11 @@
-var lexer = require('lex');
-var async = require('async');
-var helper   = require('./embedded-code-handlers/helper.js');
-var patterns = require('./embedded-code-handlers/patterns/all.js');
-
-var channel = require('./embedded-code-handlers/channel.js');
-var user = require('./embedded-code-handlers/user.js');
-var server = require('./embedded-code-handlers/server.js');
+var async     = require('async');
+var channel   = require('./embedded-code-handlers/channel.js');
 var character = require('./embedded-code-handlers/character.js');
+var helper    = require('./embedded-code-handlers/helper.js');
+var patterns  = require('./embedded-code-handlers/patterns/all.js');
+var server    = require('./embedded-code-handlers/server.js');
+var tokenizer = require('./embedded-code-handlers/base/tokenizer.js');
+var user      = require('./embedded-code-handlers/user.js');
 
 var ret = {
 	patterns: [
@@ -74,128 +73,6 @@ function handleSingleCommand(stateHolder, command, state, callback) {
 	return callback(command);
 }
 
-function fixStrings(command) {
-	var workingCommand = [];
-	var inString = false;
-	var workingString = '';
-	var stringType = null;
-	for (var m = 0; m < command.length; m++) {
-		var token = command[m];
-		if (!inString) {
-			if (token.type == 'SINGLE_QUOTE') {
-				inString = true;
-				stringType = 'SINGLE_QUOTE';
-			} else if (token.type == 'DOUBLE_QUOTE') {
-				inString = true;
-				stringType = 'DOUBLE_QUOTE';
-			} else {
-				workingCommand.push(token);
-			}
-		} else {
-			if (token.type == stringType) {
-				stringType = null;
-				inString = false;
-				token = {
-					type: 'QUOTED_STRING',
-					rawValue: workingString
-				};
-				workingString = '';
-				workingCommand.push(token);
-			} else {
-				workingString += token.rawValue;
-			}
-		}
-	}
-
-	if (inString) {
-		var erroredLine = '';
-		for (var i = 0; i < command.length; i++) {
-			if (i != 0) erroredLine += ' ';
-			erroredLine += command[i].rawValue;
-		}
-		throw "Missing closing " + stringType + " in line `" + erroredLine + "`";
-	}
-	return workingCommand;
-}
-
-function removeWhitespace(command) {
-	var workingCommand = [];
-	for (var m = 0; m < command.length; m++) {
-		var token = command[m];
-		if (token.type != 'WHITESPACE') {
-			workingCommand.push(token);
-		}
-	}
-	return workingCommand;
-}
-
-function decideStringOrVariable(command) {
-	var workingCommand = [];
-	for (var m = 0; m < command.length; m++) {
-		var token = command[m];
-		if (token.type == 'STRING') {
-			if (command.length >= m && command[m+1].type == 'LEFT_PAREN') {
-				token = {
-					rawValue: token.rawValue,
-					type: 'FUNCTION'
-				};
-				workingCommand.push(token);
-			} else if (ret.handlers.findCommand(token.rawValue)) {
-				token = {
-					rawValue: token.rawValue,
-					type: 'FUNCTION'
-				};
-				workingCommand.push(token);
-			} else {
-				var pieces = token.rawValue.split(".");
-				for (var n = 0; n < pieces.length; n++) {
-					if (n != 0) {
-						token = {
-							rawValue: '.',
-							type: 'DOT'
-						}
-						workingCommand.push(token);
-					}
-					if (n == 0 && pieces[n] == 'channel') {
-						token = {
-							rawValue: 'channel',
-							object: channel(ret.stateHolder, ret.varModel, ret.tableModel, ret.tableRowModel),
-							type: 'CHANNEL'
-						};
-					} else if (n == 0 && pieces[n] == 'user') {
-						token = {
-							rawValue: 'user',
-							object: user(ret.stateHolder, ret.varModel, ret.tableModel, ret.tableRowModel),
-							type: 'USER'
-						};
-					} else if (n == 0 && pieces[n] == 'character') {
-						token = {
-							rawValue: 'character',
-							object: character(ret.stateHolder, ret.characterModel, ret.tableModel, ret.tableRowModel, ret.varModel),
-							type: 'CHARACTER'
-						};
-					} else if (n == 0 && pieces[n] == 'server') {
-						token = {
-							rawValue: 'server',
-							object: server(ret.stateHolder, ret.varModel, ret.tableModel, ret.tableRowModel),
-							type: 'SERVER'
-						};
-					} else {
-						token = {
-							rawValue: pieces[n],
-							type: 'VARIABLE',
-						};
-					}
-					workingCommand.push(token);
-				}
-			}
-		} else {
-			workingCommand.push(token);
-		}
-	}
-	return workingCommand;
-}
-
 function executeCommands(commands, state, next) {
 	var totalCommands = [];
 	var currentCommands = [];
@@ -238,301 +115,6 @@ function executeCommands(commands, state, next) {
 	);
 }
 
-function breakIntoStatementsAndBlocks(tokens) {
-	while (true) {
-		var createdBlock = false;
-		var blockStartIndex = 0;
-		var inBlock = false;
-
-		for (var i = 0; i < tokens.length; i++) {
-			var token = tokens[i];
-			if (token.type == 'LEFT_CURLY') {
-				blockStartIndex = i;
-				inBlock = true;
-			}
-			if (token.type == 'RIGHT_CURLY') {
-				if (inBlock) {
-					createdBlock = true;
-					break;
-				}
-			}
-		}
-
-		if (createdBlock) {
-			var endLocation = i;
-			var tmpTokens = [];
-			for (var i = 0; i < blockStartIndex; i++) {
-				tmpTokens.push(tokens[i]);
-			}
-
-			var blockContents = [];
-			for (var i = blockStartIndex + 1; i < endLocation; i++) {
-				blockContents.push(tokens[i]);
-			}
-
-			var blockToken = {
-				type: 'BLOCK',
-				rawValue: '...',
-				internal: blockContents
-			};
-			tmpTokens.push(blockToken);
-
-			for (var i = endLocation + 1; i < tokens.length; i++) {
-				tmpTokens.push(tokens[i]);
-			}
-			tokens = tmpTokens;
-		} else {
-			break;
-		}
-	}
-
-	return tokens;
-}
-
-function tokenize(command, cb) {
-	var lex = new lexer();
-
-	var tokens = [];
-
-	lex.addRule(/\{[0-9]+\+?\}/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'MACRO_ARGUMENT'
-		});
-	});
-
-	lex.addRule(/[ \t\n\r]/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'WHITESPACE'
-		});
-	});
-	lex.addRule(/username/gm, function(lexeme) {
-		tokens.push({
-			rawValue: stateHolder.actualUsername,
-			type: 'QUOTED_STRING'
-		});
-	});
-	lex.addRule(/echo/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'ECHO'
-		});
-	});
-	lex.addRule(/pm/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'PM'
-		});
-	});
-	lex.addRule(/ignore/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'IGNORE'
-		});
-	});
-	lex.addRule(/var\(/gm, function(lexeme) {
-		tokens.push({
-			rawValue: 'var',
-			type: 'FUNCTION'
-		});
-		tokens.push({
-			rawValue: '(',
-			type: 'LEFT_PAREN'
-		});
-	});
-	lex.addRule(/foreach/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'FOREACH'
-		});
-	});
-	lex.addRule(/delete/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'DELETE'
-		});
-	});
-	lex.addRule(/if/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'IF'
-		});
-	});
-	lex.addRule(/else/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'ELSE'
-		});
-	});
-	lex.addRule(/\+/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'PLUS'
-		});
-	});
-	lex.addRule(/\-/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'MINUS'
-		});
-	});
-	lex.addRule(/\*/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'ASTERISK'
-		});
-	});
-	lex.addRule(/\//, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'FORWARDSLASH'
-		});
-	});
-	lex.addRule(/\?/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'QUESTION_MARK'
-		});
-	});
-	lex.addRule(/:/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'COLON'
-		});
-	});
-	lex.addRule(/==/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'DOUBLE_EQUALS'
-		});
-	});
-	lex.addRule(/</gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'LEFT_ANGLE'
-		});
-	});
-	lex.addRule(/>/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'RIGHT_ANGLE'
-		});
-	});
-	lex.addRule(/\!/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'EXCLAMATION'
-		});
-	});
-	lex.addRule(/=/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'EQUALS'
-		});
-	});
-	lex.addRule(/;/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'SEMICOLON'
-		});
-	});
-	lex.addRule(/\(/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'LEFT_PAREN'
-		});
-	});
-	lex.addRule(/\)/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'RIGHT_PAREN'
-		});
-	});
-	lex.addRule(/\[/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'LEFT_BRACKET'
-		});
-	});
-	lex.addRule(/\]/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'RIGHT_BRACKET'
-		});
-	});
-	lex.addRule(/\{/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'LEFT_CURLY'
-		});
-	});
-	lex.addRule(/\}/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'RIGHT_CURLY'
-		});
-	});
-	lex.addRule(/\&\&/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'BOOLEAN_AND'
-		});
-	});
-	lex.addRule(/\|\|/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'BOOLEAN_OR'
-		});
-	});
-	lex.addRule(/'/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'SINGLE_QUOTE'
-		});
-	});
-	lex.addRule(/["“]/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'DOUBLE_QUOTE'
-		});
-	});
-	lex.addRule(/[0-9]+/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'NUMBER',
-			value: lexeme
-		});
-	});
-	lex.addRule(/::/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'DOUBLECOLON'
-		});
-	});
-	lex.addRule(/[^ '"\[\]\(\)\t\n;]+/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'STRING'
-		});
-	});
-
-	lex.setInput(command);
-
-	try {
-		lex.lex();
-	} catch (e) {
-		console.log(e);
-	}
-
-	tokens = fixStrings(tokens);
-	tokens = removeWhitespace(tokens);
-	tokens = decideStringOrVariable(tokens);
-	statements = breakIntoStatementsAndBlocks(tokens);
-
-	return cb(statements);
-}
-
 ret.debug = function(pieces, stateHolder, next) {
 	var command = '';
 	for (var i = 1; i < pieces.length; i++) {
@@ -542,7 +124,7 @@ ret.debug = function(pieces, stateHolder, next) {
 	}
 
 	try {
-		tokenize(command, function(commands) {
+		tokenizer(command, ret, function(commands) {
 			stateHolder.simpleAddMessage(stateHolder.username, JSON.stringify(commands, ['rawValue', 'type'], "      "));
 			return next();
 		});
@@ -560,7 +142,6 @@ ret.handle = function(pieces, stateHolder, next) {
 
 	var state = {
 		variables: {},
-		blockVariables: {},
 		args: ('originalArgs' in stateHolder) ? stateHolder.originalArgs : pieces
 	};
 
@@ -572,7 +153,7 @@ ret.handle = function(pieces, stateHolder, next) {
 	}
 
 	try {
-		tokenize(command, function(commands) {
+		tokenizer(command, ret, function(commands) {
 			executeCommands(commands, state, function() {
 				if (ret.stateHolder.errorList.length) {
 					stateHolder.simpleAddMessage(stateHolder.username, ret.stateHolder.errorList.join("\n"));

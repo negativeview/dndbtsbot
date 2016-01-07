@@ -19,8 +19,8 @@ module.exports = {
 		var variableName = command[index].rawValue;
 		var variableValue = '';
 
-		if (state.blockVariables && state.blockVariables[variableName]) {
-			variableValue = state.blockVariables[variableName];
+		if (state.variables && state.variables[variableName]) {
+			variableValue = state.variables[variableName];
 		} else {
 			if (state.variables && state.variables[variableName]) {
 				variableValue = state.variables[variableName];

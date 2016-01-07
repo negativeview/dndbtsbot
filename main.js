@@ -61,7 +61,6 @@ function updateChannelTitles() {
 		lastUpdate = shouldBeTopic;
 
 		var toSend = {to: announcementChannelID, message: lastUpdate};
-		console.log(toSend);
 		bot.sendMessage(toSend, function(err) {
 			if (err) console.log(err);
 		});

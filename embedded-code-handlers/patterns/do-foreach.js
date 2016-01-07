@@ -29,8 +29,8 @@ module.exports = {
 				async.eachSeries(
 					result,
 					function(iterator, callback) {
-						state.blockVariables.key   = iterator.key;
-						state.blockVariables.value = iterator.value;
+						state.variables.key   = iterator.key;
+						state.variables.value = iterator.value;
 
 						execute(command[index + 6].internal, state, function() {
 							callback();

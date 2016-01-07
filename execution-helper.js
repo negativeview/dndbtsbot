@@ -40,7 +40,6 @@ ret.handle = function(message, stateHolder, cb) {
 	async.eachSeries(
 		messages,
 		function(statement, next) {
-			console.log('incoming statement', statement);
 			var pieces = statement.split(" ");
 			var command = pieces[0];
 

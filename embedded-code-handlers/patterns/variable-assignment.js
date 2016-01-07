@@ -18,8 +18,8 @@ module.exports = {
 		state.variables[command[index + 0].rawValue] =
 			command[index + 2].type == 'VARIABLE' ?
 				(
-					state.blockVariables[command[index + 2].rawValue] ?
-						state.blockVariables[command[index + 2].rawValue] :
+					state.variables[command[index + 2].rawValue] ?
+						state.variables[command[index + 2].rawValue] :
 						state.variables[command[index + 2].rawValue]
 				) :
 				command[index + 2].rawValue;
