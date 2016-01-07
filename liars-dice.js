@@ -57,7 +57,7 @@ function ldCallHandle(game, stateHolder, next) {
 	} else {
 		message += "Your dice: " + theirDice.join(', ') + "\n";
 		message += "Their dice: " + myDice.join(', ') + "\n";
-		stateholder.simpleAddMessage(activeUser, message);
+		stateHolder.simpleAddMessage(activeUser, message);
 	}
 
 	var message = '';
@@ -69,7 +69,37 @@ function ldCallHandle(game, stateHolder, next) {
 	} else {
 		message += "Your dice: " + myDice.join(', ') + "\n";
 		message += "Their dice: " + theirDice.join(', ') + "\n";
-		stateholder.simpleAddMessage(inactiveUser, message);
+		stateHolder.simpleAddMessage(inactiveUser, message);
+	}
+
+	if (won) {
+		if (game.activePlayer == 1) {
+			game.userBDiceNumber--;	
+		} else {
+			game.userADiceNumber--;
+		}
+	} else {
+		if (game.activePlayer == 1) {
+			game.userADiceNumber--;
+		} else {
+			game.userBDiceNumber--;
+		}
+	}
+
+	if (game.userADiceNumber <= 0) {
+		stateHolder.simpleAddMessage(game.userA, 'You have lost the game.');
+		stateHolder.simpleAddMessage(game.userB, 'You have won the game.');
+		var index = games.indexOf(game);
+		if (index != -1) {
+			games.splice(index, 1);
+		}
+	} else if (game.userBDiceNumber <= 0) {
+		stateHolder.simpleAddMessage(game.userB, 'You have lost the game.');
+		stateHolder.simpleAddMessage(game.userA, 'You have won the game.');
+		var index = games.indexOf(game);
+		if (index != -1) {
+			games.splice(index, 1);
+		}
 	}
 
 	return next();

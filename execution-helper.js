@@ -14,16 +14,18 @@ ret.handle = function(message, stateHolder, cb) {
 		var newLine = splitMessages[i];
 
 		if (newLine.indexOf("!macro") === 0 || message.indexOf("!!") === 0) {
+			message += newLine + "\n";
 			for (var m = i + 1; m < splitMessages.length; m++) {
 				message += "\n" + splitMessages[m];
 			}
-			messages[messages.length] = message;
+			messages[messages.length] = message.replace("\n", '');
+			message = '';
 			break;			
 		}
 
 		if (newLine[0] == '!') {
 			if (message.length != 0) {
-				messages[messages.length] = message;
+				messages[messages.length] = message.replace("\n", '');
 				message = '';
 			}
 		}
@@ -32,7 +34,7 @@ ret.handle = function(message, stateHolder, cb) {
 		message += newLine;
 	}
 	if (message.length != 0) {
-		messages[messages.length] = message;
+		messages[messages.length] = message.replace("\n", '');
 	}
 
 	async.eachSeries(

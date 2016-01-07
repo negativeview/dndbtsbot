@@ -35,6 +35,8 @@ ret.get = function(isAdmin, pieces, stateHolder, next) {
 		params.name = pieces[0];
 	}
 
+	console.log(params);
+
 	model.find(params).exec(function(err, res) {
 		if (err) {
 			stateHolder.simpleAddMessage(stateHolder.username, err);
@@ -103,6 +105,8 @@ ret.set = function(isAdmin, pieces, stateHolder, next) {
 		}
 
 		params.macro = macroBody;
+
+		console.log('saving macro', macroBody);
 
 		var newMacro = new model(params);
 		newMacro.save(function(err) {
@@ -202,7 +206,7 @@ ret.handle = function(pieces, stateHolder, next) {
 };
 
 ret.attempted = function(pieces, stateHolder, next) {
-	console.log(pieces);
+	console.log('attempted', pieces);
 
 	if (!stateHolder.originalArgs)
 		stateHolder.originalArgs = pieces;
