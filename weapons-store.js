@@ -444,7 +444,7 @@ var bookWeapons = [
 		normalRange: 5,
 		maximumRange: 15
 	}
-]
+];
 
 ret.init = function(mongoose) {
 	ret.mongoose = mongoose;

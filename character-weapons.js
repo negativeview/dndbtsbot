@@ -293,6 +293,73 @@ function attackFormat2(stateHolder, activeCharacter, weapon, toHit, toHitString,
 	stateHolder.simpleAddMessage(stateHolder.channelID, output);
 }
 
+function doAttack(activeCharacter, weapon, stateHolder, next) {
+	if (!weapon.abilityScore) {
+		stateHolder.simpleAddMessage(stateHolder.username, "Need an abilityScore set for this weapon to be able to attack.");
+		return next();
+	}
+
+	if (!activeCharacter.proficiencyBonus) {
+		stateHolder.simpleAddMessage(stateHolder.username, "Character proficiencyBonus must be set to attack.");
+		return next();
+	}
+
+	if (!weapon.normalRoll) {
+		stateHolder.simpleAddMessage(stateHolder.username, "Weapon needs a normalRoll set to be able to attack.");
+		return next();					
+	}
+
+	if (!weapon.critRoll) {
+		stateHolder.simpleAddMessage(stateHolder.username, "Weapon needs a critRoll set to be able to attack.");
+		return next();					
+	}
+
+	var dice = new Dice();
+
+	var roll = '1d20 + ' + scoreToModifier(activeCharacter[weapon.abilityScore]) + ' + ' + parseInt(activeCharacter.proficiencyBonus);
+
+	if (weapon.magicModifier) {
+		roll += ' + ' + weapon.magicModifier;
+	}
+
+	dice.execute(roll, function(result) {
+		var toHitOnDie = result.totalResult;
+		var toHit = result.output;
+
+		var isCrit = (toHitOnDie == 20);
+
+		var diceToRoll = '';
+		var damageRoll;
+		if (isCrit) {
+			damageRoll = weapon.critRoll;
+			diceToRoll += weapon.critRoll || '2d' + weapon.damageDie;
+		} else {
+			damageRoll = weapon.normalRoll;
+			diceToRoll += weapon.normalRoll || '1d' + weapon.damageDie;
+		}
+
+		diceToRoll += '+' + scoreToModifier(activeCharacter[weapon.abilityScore]);
+
+		if (weapon.magicModifier)
+			diceToRoll += "+" + weapon.magicModifier;
+
+		dice.execute(diceToRoll, function(result) {
+			var dieResults = [];
+			for (var i = 0; i < result.rawResults.length; i++) {
+				if (result.rawResults[i].type == 'die') {
+					for (var m = 0; m < result.rawResults[i].results.length; m++) {
+						dieResults[dieResults.length] = result.rawResults[i].results[m];
+					}
+				}
+			}
+
+			attackFormat2(stateHolder, activeCharacter, weapon, toHitOnDie, toHit, damageRoll, result.output);
+
+			return next();				
+		});
+	});
+}
+
 ret.attack = function(pieces, stateHolder, next) {
 	getActiveCharacter(stateHolder, next, function(activeCharacter) {
 		var activeWeapon = null;
@@ -321,70 +388,7 @@ ret.attack = function(pieces, stateHolder, next) {
 		}
 
 		if (activeWeapon) {
-			weapon = activeWeapon;
-			if (!weapon.abilityScore) {
-				stateHolder.simpleAddMessage(stateHolder.username, "Need an abilityScore set for this weapon to be able to attack.");
-				return next();
-			}
-
-			if (!activeCharacter.proficiencyBonus) {
-				stateHolder.simpleAddMessage(stateHolder.username, "Character proficiencyBonus must be set to attack.");
-				return next();
-			}
-
-			if (!weapon.normalRoll) {
-				stateHolder.simpleAddMessage(stateHolder.username, "Weapon needs a normalRoll set to be able to attack.");
-				return next();					
-			}
-
-			if (!weapon.critRoll) {
-				stateHolder.simpleAddMessage(stateHolder.username, "Weapon needs a critRoll set to be able to attack.");
-				return next();					
-			}
-
-			var dice = new Dice();
-
-			var roll = '1d20 + ' + scoreToModifier(activeCharacter[weapon.abilityScore]) + ' + ' + parseInt(activeCharacter.proficiencyBonus);
-			if (weapon.magicModifier) {
-				roll += ' + ' + weapon.magicModifier;
-			}
-			dice.execute(roll, function(result) {
-				var toHitOnDie = result.totalResult;
-				var toHit = result.output;
-
-				var isCrit = (toHitOnDie == 20);
-
-				var diceToRoll = '';
-				var damageRoll;
-				if (isCrit) {
-					damageRoll = weapon.critRoll;
-					diceToRoll += weapon.critRoll || '2d' + weapon.damageDie;
-				} else {
-					damageRoll = weapon.normalRoll;
-					diceToRoll += weapon.normalRoll || '1d' + weapon.damageDie;
-				}
-
-				diceToRoll += '+' + scoreToModifier(activeCharacter[weapon.abilityScore]);
-
-				if (weapon.magicModifier)
-					diceToRoll += "+" + weapon.magicModifier;
-
-				dice.execute(diceToRoll, function(result) {
-					var dieResults = [];
-					for (var i = 0; i < result.rawResults.length; i++) {
-						if (result.rawResults[i].type == 'die') {
-							for (var m = 0; m < result.rawResults[i].results.length; m++) {
-								dieResults[dieResults.length] = result.rawResults[i].results[m];
-							}
-						}
-					}
-
-					attackFormat2(stateHolder, activeCharacter, weapon, toHitOnDie, toHit, damageRoll, result.output);
-
-					return next();				
-				});
-			});
-			return;
+			return doAttack(activeCharacter, activeWeapon, stateHolder, next);
 		}
 		stateHolder.simpleAddMessage(stateHolder.username, "No active weapon.");
 		return next();

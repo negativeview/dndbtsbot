@@ -48,11 +48,13 @@ ret.pump = function(bot, cb) {
 				function(cb2) {
 					var message = queue.messages.shift();
 
-					bot[message.method](message.arguments, function(err, msg) {
+					bot[message.method](message.arguments, function(err) {
 						if (err) {
 							if (err.message == 'You are being rate limited') {
 								queue.messages.push(message);
 								return cb(err.retry_after);
+							} else {
+								console.log(err);
 							}
 						}
 						return cb2();
