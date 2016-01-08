@@ -13,7 +13,7 @@ module.exports = function(ret, command) {
 	for (var m = 0; m < command.length; m++) {
 		var token = command[m];
 		if (token.type == 'STRING') {
-			if (command.length >= m && command[m+1].type == 'LEFT_PAREN') {
+			if (command.length > m + 1 && command[m+1].type == 'LEFT_PAREN') {
 				token = {
 					rawValue: token.rawValue,
 					type: 'FUNCTION'
