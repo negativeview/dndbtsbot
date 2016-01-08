@@ -5,6 +5,8 @@ var ret = {};
 ret.handle = function(message, stateHolder, cb) {
 	var handlers = require('./handler-registry.js');
 
+	console.log(message);
+
 	var splitMessages = message.split("\n");
 
 	var messages = [];
@@ -52,14 +54,15 @@ ret.handle = function(message, stateHolder, cb) {
 					next
 				);
 			} else {
-				if (!stateHolder.real) {
-					handlers.macro(
-						command,
-						pieces,
-						stateHolder,
-						next
-					);
+				if (stateHolder.inMacro) {
+					return next();
 				}
+				handlers.macro(
+					command,
+					pieces,
+					stateHolder,
+					next
+				);
 			}
 		},
 		function(err) {

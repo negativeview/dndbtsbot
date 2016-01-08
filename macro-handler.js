@@ -204,6 +204,8 @@ ret.handle = function(pieces, stateHolder, next) {
 ret.attempted = function(pieces, stateHolder, next) {
 	if (!stateHolder.originalArgs)
 		stateHolder.originalArgs = pieces;
+
+	stateHolder.inMacro = true;
 	
 	ret.adminMacroModel.find({
 		name: pieces[0],

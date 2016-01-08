@@ -427,6 +427,8 @@ ret.create = function(pieces, stateHolder, next) {
 }
 
 ret.handle = function(pieces, stateHolder, next) {
+	console.log(pieces);
+	
 	if (pieces.length < 2) {
 		stateHolder.simpleAddMessage(stateHolder.username, 'What should I do with tables?');
 		return next();

@@ -17,6 +17,8 @@ module.exports = {
 		var commandName = command[index].rawValue;
 		var argument = command[index + 2].rawValue;
 
+		console.log(commandName + '::' + argument);
+
 		var tmpCommand = [];
 		for (var i = 0; i < index; i++) {
 			tmpCommand.push(command[i]);
