@@ -3,7 +3,6 @@ var messageQueue = require('./message-queue.js');
 module.exports = function(user, userID, channelID, rawEvent) {
 	var ret = {
 		messages: {},
-		contextUser: null,
 		channelID: channelID,
 		username: rawEvent.d.author.id,
 		actualUsername: user,

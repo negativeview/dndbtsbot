@@ -40,8 +40,10 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 var lastUpdate = '';
 
 function updateChannelTitles() {
-	var announcementChannelID = '123184695289577474';
-	//var announcementChannelID = '132594342954139648';
+	var announcementChannels = [
+		'123184695289577474',
+		'132594342954139648'
+	];
 
 	var moment = require('moment');
 	var m = moment().utc();
@@ -55,15 +57,19 @@ function updateChannelTitles() {
 		amPM = 'PM';
 	}
 
+	if (hours == 0) hours = 12;
+
 	var shouldBeTopic = 'Time: ' + hours + ':XX ' + amPM;
 
 	if (lastUpdate != shouldBeTopic) {
 		lastUpdate = shouldBeTopic;
 
-		var toSend = {to: announcementChannelID, message: lastUpdate};
-		bot.sendMessage(toSend, function(err) {
-			if (err) console.log(err);
-		});
+		for (var i = 0; i < announcementChannels.length; i++) {
+			var toSend = {to: announcementChannels[i], message: lastUpdate};
+			bot.sendMessage(toSend, function(err) {
+				if (err) console.log(err);
+			});
+		}
 	}
 
 	/*

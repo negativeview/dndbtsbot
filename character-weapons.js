@@ -1,5 +1,6 @@
 var Dice = require('./dice.js');
 var ret = {};
+var embeddedCodeHandler = require('./embedded-code-handler.js');
 
 var weaponKeys = [
 	'name',
@@ -127,7 +128,6 @@ function doWeaponSet(pieces, stateHolder, activeCharacter, next) {
 				} else {
 					stateHolder.simpleAddMessage(stateHolder.username, 'Saved weapon variable.');
 				}
-
 				return next();
 			});
 
@@ -293,7 +293,86 @@ function attackFormat2(stateHolder, activeCharacter, weapon, toHit, toHitString,
 	stateHolder.simpleAddMessage(stateHolder.channelID, output);
 }
 
+function modifyAttackRoll(roll, activeCharacter, stateHolder, next) {
+	var mongoose = stateHolder.mongoose;
+	var varModel = mongoose.model('Var');
+
+	var params = {
+		character: activeCharacter.id,
+		name: 'modifyAttackRoll'
+	};
+
+	varModel.find(params).exec(function(err, res) {
+		if (err) {
+			stateHolder.simpleAddMessage(stateHolder.username, err);
+			res = [];
+		}
+
+		if (res.length) {
+			var code = res[0].value;
+
+			var pieces = code.split(" ");
+			pieces.unshift("!!");
+
+			stateHolder.incomingVariables = {
+				rollString: roll
+			};
+
+			embeddedCodeHandler.handle(pieces, stateHolder, function(err, res) {
+				return next(res.variables.rollString);
+			});
+		} else {
+			return next(roll);
+		}
+	});
+}
+
+function modifyDamageRoll(roll, attackRoll, activeCharacter, stateHolder, next) {
+	var mongoose = stateHolder.mongoose;
+	var varModel = mongoose.model('Var');
+
+	var params = {
+		character: activeCharacter.id,
+		name: 'modifyDamageRoll'
+	};
+
+	varModel.find(params).exec(function(err, res) {
+		if (err) {
+			stateHolder.simpleAddMessage(stateHolder.username, err);
+			res = [];
+		}
+
+		if (res.length) {
+			var code = res[0].value;
+
+			var pieces = code.split(" ");
+			pieces.unshift("!!");
+
+			var dieResult = 0;
+			for (var i = 0; i < attackRoll.rawResults.length; i++) {
+				if (attackRoll.rawResults[i].type == 'die') {
+					dieResults = attackRoll.rawResults[i].results[0];
+					break;
+				}
+			}
+
+			stateHolder.incomingVariables = {
+				rollString: roll,
+				attackOnDie: dieResult
+			};
+
+			embeddedCodeHandler.handle(pieces, stateHolder, function(err, res) {
+				return next(res.variables.rollString);
+			});
+		} else {
+			return next(roll);
+		}
+	});
+}
+
 function doAttack(activeCharacter, weapon, stateHolder, next) {
+	var verified = stateHolder.verified;
+
 	if (!weapon.abilityScore) {
 		stateHolder.simpleAddMessage(stateHolder.username, "Need an abilityScore set for this weapon to be able to attack.");
 		return next();
@@ -322,46 +401,54 @@ function doAttack(activeCharacter, weapon, stateHolder, next) {
 		roll += ' + ' + weapon.magicModifier;
 	}
 
-	dice.execute(roll, function(result) {
-		var toHitOnDie = result.totalResult;
-		var toHit = result.output;
+	modifyAttackRoll(roll, activeCharacter, stateHolder, function(modifiedAttackRoll) {
+		dice.execute(modifiedAttackRoll, function(result) {
+			var toHitOnDie = result.totalResult;
+			var toHit = result.output;
 
-		var isCrit = (toHitOnDie == 20);
+			var isCrit = (toHitOnDie == 20);
 
-		var diceToRoll = '';
-		var damageRoll;
-		if (isCrit) {
-			damageRoll = weapon.critRoll;
-			diceToRoll += weapon.critRoll || '2d' + weapon.damageDie;
-		} else {
-			damageRoll = weapon.normalRoll;
-			diceToRoll += weapon.normalRoll || '1d' + weapon.damageDie;
-		}
-
-		diceToRoll += '+' + scoreToModifier(activeCharacter[weapon.abilityScore]);
-
-		if (weapon.magicModifier)
-			diceToRoll += "+" + weapon.magicModifier;
-
-		dice.execute(diceToRoll, function(result) {
-			var dieResults = [];
-			for (var i = 0; i < result.rawResults.length; i++) {
-				if (result.rawResults[i].type == 'die') {
-					for (var m = 0; m < result.rawResults[i].results.length; m++) {
-						dieResults[dieResults.length] = result.rawResults[i].results[m];
-					}
-				}
+			var diceToRoll = '';
+			var damageRoll;
+			if (isCrit) {
+				damageRoll = weapon.critRoll;
+				diceToRoll += weapon.critRoll || '2d' + weapon.damageDie;
+			} else {
+				damageRoll = weapon.normalRoll;
+				diceToRoll += weapon.normalRoll || '1d' + weapon.damageDie;
 			}
 
-			attackFormat2(stateHolder, activeCharacter, weapon, toHitOnDie, toHit, damageRoll, result.output);
+			diceToRoll += '+' + scoreToModifier(activeCharacter[weapon.abilityScore]);
 
-			return next();				
+			if (weapon.magicModifier)
+				diceToRoll += "+" + weapon.magicModifier;
+
+			modifyDamageRoll(diceToRoll, result, activeCharacter, stateHolder, function(modifiedDamageRoll) {
+				dice.execute(modifiedDamageRoll, function(result) {
+					var dieResults = [];
+					for (var i = 0; i < result.rawResults.length; i++) {
+						if (result.rawResults[i].type == 'die') {
+							for (var m = 0; m < result.rawResults[i].results.length; m++) {
+								dieResults[dieResults.length] = result.rawResults[i].results[m];
+							}
+						}
+					}
+
+					attackFormat2(stateHolder, activeCharacter, weapon, toHitOnDie, toHit, damageRoll, result.output);
+
+					stateHolder.verified = verified;
+					return next();
+				});
+			});
 		});
 	});
 }
 
 ret.attack = function(pieces, stateHolder, next) {
 	getActiveCharacter(stateHolder, next, function(activeCharacter) {
+		console.log(pieces);
+		console.log(activeCharacter);
+
 		var activeWeapon = null;
 
 		if (pieces.length >= 2) {
@@ -377,7 +464,9 @@ ret.attack = function(pieces, stateHolder, next) {
 					break;
 				}
 			}
-		} else {
+		}
+
+		if (!activeWeapon) {
 			for (var i = 0; i < activeCharacter.weapons.length; i++) {
 				var weapon = activeCharacter.weapons[i];
 				if (weapon.isCurrent) {

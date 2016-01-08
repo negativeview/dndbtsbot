@@ -21,18 +21,8 @@ function varGetAll(pieces, stateHolder, next) {
 	var parameters = {};
 
 	var namespace = pieces[2];
-	if (namespace == 'me') {
-		if (stateHolder.contextUser) {
-			parameters.user = stateHolder.contextUser;
-		} else {
-			parameters.user = stateHolder.username;
-		}
-	} else if (namespace == 'channel') {
-		parameters.channel = stateHolder.channelID;
-	}
-
-	ret.varModel.find(parameters).exec(
-		function(err, res) {
+	setupVarParameters(parameters, namespace, stateHolder, function(err) {
+		ret.varModel.find(parameters).exec(function(err, res) {
 			if (err) {
 				console.log(err);
 				next();
@@ -45,8 +35,8 @@ function varGetAll(pieces, stateHolder, next) {
 			}
 
 			return next();
-		}
-	);
+		});
+	});
 }
 
 /**
@@ -68,34 +58,24 @@ function varGet(pieces, stateHolder, next) {
 	}
 
 	var parameters = {};
+	parameters.name = pieces[3];
 
 	var namespace = pieces[2];
-	var index = 4;
-	if (namespace == 'me') {
-		if (stateHolder.contextUser) {
-			parameters.user = stateHolder.contextUser;
-		} else {
-			parameters.user = stateHolder.username;
-		}
-		parameters.name = pieces[3];
-	} else if (namespace == 'channel') {
-		parameters.channel = stateHolder.channelID;
-		parameters.name = pieces[3];
-	} else if (namespace == 'user') {
-		var serverID = stateHolder.findServerID(stateHolder.channelID);
-		parameters.user = stateHolder.memberNameToNumber(stateHolder.serverID, pieces[3]);
-		parameters.name = pieces[4];
-		index = 5;
-	}
 
 	var value = '';
-	for (var i = index; i < pieces.length; i++) {
-		if (i != index) value += ' ';
+	for (var i = 4; i < pieces.length; i++) {
+		if (i != 4) value += ' ';
 		value += pieces[i];
 	}
 
-	ret.varModel.find(parameters).exec(
-		function(err, res) {
+	setupVarParameters(parameters, namespace, stateHolder, function(err) {
+		if (err) {
+			console.log(err);
+			stateHolder.simpleAddMessage(stateHolder.username, err);
+			return next();
+		}
+
+		ret.varModel.find(parameters).exec(function(err, res) {
 			if (err) {
 				console.log(err);
 				next();
@@ -107,8 +87,8 @@ function varGet(pieces, stateHolder, next) {
 				stateHolder.simpleAddMessage(stateHolder.username, 'No such variable ' + parameters.name + '.');
 			}
 			next();
-		}
-	);
+		});
+	});
 }
 
 function varDel(pieces, stateHolder, next) {
@@ -118,22 +98,18 @@ function varDel(pieces, stateHolder, next) {
 	}
 
 	var parameters = {};
+	parameters.name = pieces[3];
 
 	var namespace = pieces[2];
-	if (namespace == 'me') {
-		parameters.user = stateHolder.username;
-		parameters.name = pieces[3];
-	} else if (namespace == 'channel') {
-		parameters.channel = stateHolder.channelID;
-		parameters.name = pieces[3];
-	} else if (namespace == 'user') {
-		var serverID = stateHolder.findServerID(stateHolder.channelID);
-		parameters.user = stateHolder.memberNameToNumber(stateHolder.serverID, pieces[3]);
-		parameters.name = pieces[4];
-	}
 
-	ret.varModel.find(parameters).exec(
-		function(err, res) {
+	setupVarParameters(parameters, namespace, stateHolder, function(err) {
+		if (err) {
+			console.log(err);
+			stateHolder.simpleAddMessage(stateHolder.username, err);
+			return next();
+		}
+
+		ret.varModel.find(parameters).exec(function(err, res) {
 			if (err) {
 				console.log(err);
 				return next();
@@ -142,8 +118,34 @@ function varDel(pieces, stateHolder, next) {
 			for (var i = 0; i < res.length; i++) {
 				res[i].remove();
 			}
-		}
-	);
+		});
+	});
+}
+
+function setupVarParameters(parameters, namespace, stateHolder, next) {
+	if (namespace == 'me') {
+		parameters.user = stateHolder.username;
+		return next();
+	} else if (namespace == 'channel') {
+		parameters.channel = stateHolder.channelID;
+		return next();
+	} else if (namespace == 'character') {
+		var characterModel = stateHolder.mongoose.model('Character');
+		var p2 = {
+			user: stateHolder.username,
+			isCurrent: true
+		};
+		characterModel.find(p2).exec(function(err, res) {
+			if (err) return next(err);
+
+			if (res.length == 0) {
+				return next('No current character.');
+			}
+
+			parameters.character = res[0].id;
+			return next();
+		});
+	}
 }
 
 function varSet(pieces, stateHolder, next) {
@@ -153,30 +155,22 @@ function varSet(pieces, stateHolder, next) {
 	}
 
 	var parameters = {};
-
 	var namespace = pieces[2];
-	var index = 4;
-	if (namespace == 'me') {
-		parameters.user = stateHolder.username;
-		parameters.name = pieces[3];
-	} else if (namespace == 'channel') {
-		parameters.channel = stateHolder.channelID;
-		parameters.name = pieces[3];
-	} else if (namespace == 'user') {
-		var serverID = stateHolder.findServerID(stateHolder.channelID);
-		parameters.user = stateHolder.memberNameToNumber(stateHolder.serverID, pieces[3]);
-		parameters.name = pieces[4];
-		index = 5;
-	}
-
 	var value = '';
-	for (var i = index; i < pieces.length; i++) {
-		if (i != index) value += ' ';
+	for (var i = 4; i < pieces.length; i++) {
+		if (i != 4) value += ' ';
 		value += pieces[i];
 	}
+	parameters.name = pieces[3];
 
-	ret.varModel.find(parameters).exec(
-		function(err, res) {
+	setupVarParameters(parameters, namespace, stateHolder, function(err) {
+		if (err) {
+			console.log(err);
+			stateHolder.simpleAddMessage(stateHolder.username, err);
+			return next();
+		}
+
+		ret.varModel.find(parameters).exec(function(err, res) {
 			if (err) {
 				console.log(err);
 				return next();
@@ -198,13 +192,13 @@ function varSet(pieces, stateHolder, next) {
 				stateHolder.simpleAddMessage(stateHolder.username, 'Saved var ' + parameters.name);
 				next();
 			});
-		}
-	);
+		});
+	});
 }
 
 ret.handle = function(pieces, stateHolder, next) {
 	var allowedOperators = ['set', 'get', 'inc', 'del', 'dec'];
-	var allowedNamespaces = ['me', 'channel', 'user'];
+	var allowedNamespaces = ['me', 'channel', 'character'];
 
 	if (allowedOperators.indexOf(pieces[1]) == -1) {
 		stateHolder.simpleAddMessage(stateHolder.username, pieces[1] + ' is not a valid var operator.');

@@ -3,6 +3,11 @@
  * actually a variable. This file is basically those heuristics.
  */
 
+var character = require('../character.js');
+var channel   = require('../channel.js');
+var server    = require('../server.js');
+var user      = require('../user.js');
+
 module.exports = function(ret, command) {
 	var workingCommand = [];
 	for (var m = 0; m < command.length; m++) {

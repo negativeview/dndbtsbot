@@ -52,12 +52,14 @@ ret.handle = function(message, stateHolder, cb) {
 					next
 				);
 			} else {
-				handlers.macro(
-					command,
-					pieces,
-					stateHolder,
-					next
-				);
+				if (!stateHolder.real) {
+					handlers.macro(
+						command,
+						pieces,
+						stateHolder,
+						next
+					);
+				}
 			}
 		},
 		function(err) {

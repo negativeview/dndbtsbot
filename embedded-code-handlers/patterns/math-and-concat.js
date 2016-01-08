@@ -6,15 +6,26 @@ module.exports = {
 		return helper.doesMatch(
 			command,
 			[
-				['QUOTED_STRING', 'NUMBER'],
+				['QUOTED_STRING', 'NUMBER', 'VARIABLE'],
 				['PLUS', 'MINUS', 'ASTERISK', 'FORWARDSLASH'],
-				['QUOTED_STRING', 'NUMBER']
+				['QUOTED_STRING', 'NUMBER', 'VARIABLE']
 			]
 		);
 	},
 	work: function(stateHolder, index, command, state, handlers, execute, cb) {
-		var val1 = command[index].rawValue;
-		var val2 = command[index + 2].rawValue;
+		var val1 =
+			command[index].type == 'VARIABLE' ?
+				(
+					(state.variables && state.variables[command[index].rawValue]) ?
+						state.variables[command[index].rawValue] : ''
+				) : command[index].rawValue;
+
+		var val2 =
+			command[index+2].type == 'VARIABLE' ?
+				(
+					(state.variables && state.variables[command[index+2].rawValue]) ?
+						state.variables[command[index+2].rawValue] : ''
+				) : command[index+2].rawValue;
 
 		var tmpCommand = [];
 		for (var i = 0; i < index; i++) {

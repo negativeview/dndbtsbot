@@ -54,7 +54,7 @@ ret.pump = function(bot, cb) {
 								queue.messages.push(message);
 								return cb(err.retry_after);
 							} else {
-								console.log(err);
+								//console.log(err);
 							}
 						}
 						return cb2();

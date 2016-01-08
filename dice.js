@@ -376,10 +376,6 @@ Dice.prototype.parse = function parse(command) {
   var modifier = command.match(/(\+\d+\)?|-\d+)\)?/);
   parsed.modifier = modifier && modifier[1] && parseInt(modifier[1]) || 0;
 
-  // determine if we need to repeat at all
-  var repeat = command.match(/^(\d+)x\(|\)x(\d+)$/);
-  parsed.repeat = repeat && repeat[1] && parseInt(repeat[1]) || repeat && repeat[2] && parseInt(repeat[2]) || 1;
-
   return parsed;
 }
 
@@ -420,11 +416,6 @@ Dice.prototype.format = function format(parsed) {
     command += '+' + parsed.modifier;
   } else if (parsed.modifier) {
     command += parsed.modifier;
-  }
-
-  // add the repeat and add command
-  if (parsed.repeat) {
-    command = parsed.repeat + '(' + command + ')';
   }
 
   return command || undefined;

@@ -1,11 +1,7 @@
 var async     = require('async');
-var channel   = require('./embedded-code-handlers/channel.js');
-var character = require('./embedded-code-handlers/character.js');
 var helper    = require('./embedded-code-handlers/helper.js');
 var patterns  = require('./embedded-code-handlers/patterns/all.js');
-var server    = require('./embedded-code-handlers/server.js');
 var tokenizer = require('./embedded-code-handlers/base/tokenizer.js');
-var user      = require('./embedded-code-handlers/user.js');
 
 var ret = {
 	patterns: [
@@ -52,7 +48,7 @@ ret.setMongoose = function(mongoose) {
 
 function handleSingleCommand(stateHolder, command, state, callback) {
 	if (command.length == 0) return callback(command);
-	
+
 	for (var i = 0; i < ret.patterns.length; i++) {
 		var pattern = ret.patterns[i];
 		var found = pattern.matches(command);
@@ -141,7 +137,7 @@ ret.handle = function(pieces, stateHolder, next) {
 	ret.stateHolder.verified = false;
 
 	var state = {
-		variables: {},
+		variables: stateHolder.incomingVariables ? stateHolder.incomingVariables : {},
 		args: ('originalArgs' in stateHolder) ? stateHolder.originalArgs : pieces
 	};
 
@@ -152,20 +148,15 @@ ret.handle = function(pieces, stateHolder, next) {
 		command += pieces[i];
 	}
 
-	try {
-		tokenizer(command, ret, function(commands) {
-			executeCommands(commands, state, function() {
-				if (ret.stateHolder.errorList.length) {
-					stateHolder.simpleAddMessage(stateHolder.username, ret.stateHolder.errorList.join("\n"));
-				}
-				next();
-			});
+	tokenizer(command, ret, function(commands) {
+		executeCommands(commands, state, function() {
+			if (ret.stateHolder.errorList.length) {
+				stateHolder.simpleAddMessage(stateHolder.username, ret.stateHolder.errorList.join("\n"));
+			}
+			next(null, state);
 		});
-		return;
-	} catch (e) {
-		stateHolder.simpleAddMessage(stateHolder.username, e);
-		return next();
-	}
+	});
+	return;
 }
 
 module.exports = ret;
