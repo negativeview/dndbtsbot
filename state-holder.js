@@ -39,7 +39,7 @@ module.exports = function(user, userID, channelID, rawEvent) {
 	}
 
 	ret.isAdmin = function(serverID, username) {
-		if (ret.adminDetermined) return ret.isAdmin;
+		if (ret.adminDetermined) return ret._isAdmin;
 
 		var server = ret.bot.servers[serverID];
 		if (!server) {
@@ -55,13 +55,13 @@ module.exports = function(user, userID, channelID, rawEvent) {
 			var roleID = theUser.roles[i];
 			var role = ret.bot.servers[serverID].roles[roleID].name;
 			if (role.toLocaleLowerCase() == 'moderator') {
-				ret.isAdmin = true;
+				ret._isAdmin = true;
 				break;
 			}
 		}
 
 		ret.adminDetermined = true;
-		return ret.isAdmin;
+		return ret._isAdmin;
 	}
 
 	ret.findServerID = function(channelID) {
