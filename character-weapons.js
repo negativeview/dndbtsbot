@@ -403,9 +403,16 @@ function doAttack(activeCharacter, weapon, stateHolder, next) {
 
 	modifyAttackRoll(roll, activeCharacter, stateHolder, function(modifiedAttackRoll) {
 		dice.execute(modifiedAttackRoll, function(result) {
-			var toHitOnDie = result.totalResult;
+			var toHitOnDie = 0;
+			for (var i = 0; i < result.rawResults.length; i++) {
+				if (result.rawResults[i].type == 'die') {
+					toHitOnDie = result.rawResults[i].results[0];
+					break;
+				} else {
+					console.log('type', result.rawResults[i].type);
+				}
+			}
 			var toHit = result.output;
-
 			var isCrit = (toHitOnDie == 20);
 
 			var diceToRoll = '';
@@ -446,9 +453,6 @@ function doAttack(activeCharacter, weapon, stateHolder, next) {
 
 ret.attack = function(pieces, stateHolder, next) {
 	getActiveCharacter(stateHolder, next, function(activeCharacter) {
-		console.log(pieces);
-		console.log(activeCharacter);
-
 		var activeWeapon = null;
 
 		if (pieces.length >= 2) {
