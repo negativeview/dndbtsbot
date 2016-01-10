@@ -148,14 +148,18 @@ ret.handle = function(pieces, stateHolder, next) {
 		command += pieces[i];
 	}
 
-	tokenizer(command, ret, function(commands) {
-		executeCommands(commands, state, function() {
-			if (ret.stateHolder.errorList.length) {
-				stateHolder.simpleAddMessage(stateHolder.username, ret.stateHolder.errorList.join("\n"));
-			}
-			next(null, state);
+	try {
+		tokenizer(command, ret, function(commands) {
+			executeCommands(commands, state, function() {
+				if (ret.stateHolder.errorList.length) {
+					stateHolder.simpleAddMessage(stateHolder.username, ret.stateHolder.errorList.join("\n"));
+				}
+				next(null, state);
+			});
 		});
-	});
+	} catch (e) {
+		stateHolder.simpleAddMessage(stateHolder.username, e);
+	}
 	return;
 }
 
