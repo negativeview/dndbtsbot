@@ -3,15 +3,17 @@ var helper = require('../helper.js');
 module.exports = {
 	name: 'Table actual lookup',
 	matches: function(command) {
-		return helper.doesMatch(
+		var index = helper.doesMatch(
 			command,
 			[
 				['TABLE'],
 				['LEFT_BRACKET'],
-				['QUOTED_STRING', 'NUMBER'],
+				['QUOTED_STRING'],
 				['RIGHT_BRACKET']
-			]
+			],
+			['EQUALS']
 		);
+		return index;
 	},
 	work: function(stateHolder, index, command, state, handlers, execute, cb) {
 		var tmpCommand = [];

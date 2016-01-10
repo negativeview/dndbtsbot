@@ -9,7 +9,7 @@ module.exports = {
 				['DELETE'],
 				['TABLE'],
 				['LEFT_BRACKET'],
-				['QUOTED_STRING', 'NUMBER'],
+				['QUOTED_STRING'],
 				['RIGHT_BRACKET'],
 				['SEMICOLON']
 			]

@@ -3,7 +3,7 @@ var helper = require('../helper.js');
 module.exports = {
 	name: 'Variable Dot Bracket',
 	matches: function(command) {
-		return helper.doesMatch(
+		var index = helper.doesMatch(
 			command,
 			[
 				['SERVER', 'CHANNEL', 'USER', 'CHARACTER'],
@@ -12,6 +12,7 @@ module.exports = {
 				['LEFT_BRACKET']
 			]
 		);
+		return index;
 	},
 	work: function(stateHolder, index, command, state, handlers, execute, cb) {
 		var tmpCommand = [];

@@ -7,7 +7,7 @@ module.exports = {
 			command,
 			[
 				['LEFT_PAREN'],
-				['CHANNEL_VARIABLE', 'QUOTED_STRING', 'NUMBER', 'BOOLEAN'],
+				['CHANNEL_VARIABLE', 'QUOTED_STRING', 'BOOLEAN'],
 				['RIGHT_PAREN']
 			]
 		);

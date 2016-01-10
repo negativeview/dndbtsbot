@@ -8,9 +8,9 @@ module.exports = {
 			[
 				['BOOLEAN'],
 				['QUESTION_MARK'],
-				['QUOTED_STRING', 'NUMBER'],
+				['QUOTED_STRING'],
 				['COLON'],
-				['QUOTED_STRING', 'NUMBER']
+				['QUOTED_STRING']
 			]
 		)
 	},

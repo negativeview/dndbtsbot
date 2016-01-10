@@ -6,9 +6,9 @@ module.exports = {
 		return helper.doesMatch(
 			command,
 			[
-				['QUOTED_STRING', 'NUMBER', 'VARIABLE'],
+				['QUOTED_STRING', 'VARIABLE'],
 				['PLUS', 'MINUS', 'ASTERISK', 'FORWARDSLASH'],
-				['QUOTED_STRING', 'NUMBER', 'VARIABLE']
+				['QUOTED_STRING', 'VARIABLE']
 			]
 		);
 	},
@@ -39,21 +39,21 @@ module.exports = {
 			case 'ASTERISK':						
 				tmpCommand.push(
 				{
-					type: 'NUMBER',
+					type: 'QUOTED_STRING',
 					rawValue: num1 * num2
 				});
 				break;
 			case 'FORWARDSLASH':
 				tmpCommand.push(
 				{
-					type: 'NUMBER',
+					type: 'QUOTED_STRING',
 					rawValue: Math.floor(num1 / num2)
 				});
 				break;
 			case 'MINUS':						
 				tmpCommand.push(
 				{
-					type: 'NUMBER',
+					type: 'QUOTED_STRING',
 					rawValue: num1 - num2
 				});
 				break;
@@ -61,7 +61,7 @@ module.exports = {
 				if (!isNaN(helper.filterInt(val1)) && !isNaN(helper.filterInt(val2))) {
 					tmpCommand.push(
 					{
-						type: 'NUMBER',
+						type: 'QUOTED_STRING',
 						rawValue: helper.filterInt(val1) + helper.filterInt(val2)
 					});
 				} else {

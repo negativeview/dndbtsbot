@@ -28,8 +28,9 @@ ret.setHandlers = function(handlers) {
 	ret.handlers = handlers;
 }
 
-ret.doesMatch = function(command, matchDefinition) {
-	for (var i = 0; i <= command.length - matchDefinition.length; i++) {
+ret.doesMatch = function(command, matchDefinition, notEnding) {
+	var length = command.length - matchDefinition.length;
+	for (var i = 0; i <= length; i++) {
 		var found = true;
 
 		for (var m = 0; m < matchDefinition.length; m++) {
@@ -39,7 +40,21 @@ ret.doesMatch = function(command, matchDefinition) {
 			} 
 		}
 
-		if (found) return i;
+		if (found) {
+			if (notEnding) {
+				var found2 = false;
+				for (var m = 0; m < notEnding.length; m++) {
+					if (notEnding[m].indexOf(command[i + 1].type) == -1) {
+						found2 = true;
+						break;
+					}
+				}
+				if (found2) {
+					continue;
+				}
+			}
+			return i;
+		}
 	}
 
 	return false;

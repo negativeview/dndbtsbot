@@ -7,21 +7,22 @@ var ret = {
 	patterns: [
 		patterns.deleteTableKey,
 		patterns.deleteTable,
-		patterns.booleanOr,
-		patterns.booleanAnd,
+		patterns.variableDotEquals,
 		patterns.tableActualSet,
 		patterns.doForeach,
 		patterns.doIfElse,
 		patterns.doIf,
-		patterns.variableDotEquals,
-		patterns.comparison,
 		patterns.variableAssignment,
-		patterns.mathAndConcat,
-		patterns.equality,
-		patterns.ternary,
 		patterns.echo,
 		patterns.pm,
 		patterns.ignore,
+
+		patterns.booleanOr,
+		patterns.booleanAnd,
+		patterns.comparison,
+		patterns.mathAndConcat,
+		patterns.equality,
+		patterns.ternary,
 		patterns.functionExecution,
 		patterns.squashParens,
 		patterns.macroArguments,
@@ -49,16 +50,21 @@ ret.setMongoose = function(mongoose) {
 function handleSingleCommand(stateHolder, command, state, callback) {
 	if (command.length == 0) return callback(command);
 
+	console.log(command);
+
 	for (var i = 0; i < ret.patterns.length; i++) {
 		var pattern = ret.patterns[i];
 		var found = pattern.matches(command);
 		if (found !== false) {
+			console.log('Found ' + pattern.name);
 			pattern.work(stateHolder, found, command, state, ret.handlers, executeCommands, function(newCommand) {
 				handleSingleCommand(stateHolder, newCommand, state, callback);
 			});
 			return;
 		}
 	};
+
+	console.log('fell through');
 
 	ret.stateHolder.simpleAddMessage(ret.stateHolder.username, 'Got to end of command without being able to process it completely. Here\'s what\'s left:');
 	for (var i = 0; i < command.length; i++) {
@@ -93,6 +99,8 @@ function executeCommands(commands, state, next) {
 		totalCommands.push(currentCommands);
 	}
 
+	console.log('totalCommands', totalCommands);
+
 	async.eachSeries(
 		totalCommands,
 		function(iterator, callback) {
@@ -101,6 +109,7 @@ function executeCommands(commands, state, next) {
 			temporaryStateHolder.real = ret.stateHolder;
 
 			handleSingleCommand(temporaryStateHolder, iterator, state, function(result) {
+				console.log('done handling');
 				temporaryStateHolder.clearMessages(ret.stateHolder.channelID);
 				callback();
 			});

@@ -8,10 +8,10 @@ module.exports = {
 			[
 				['TABLE'],
 				['LEFT_BRACKET'],
-				['QUOTED_STRING', 'NUMBER'],
+				['QUOTED_STRING'],
 				['RIGHT_BRACKET'],
 				['EQUALS'],
-				['QUOTED_STRING', 'NUMBER'],
+				['QUOTED_STRING'],
 				['SEMICOLON']
 			]
 		);

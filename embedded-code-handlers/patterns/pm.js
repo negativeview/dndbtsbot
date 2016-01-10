@@ -7,7 +7,7 @@ module.exports = {
 			command,
 			[
 				['PM'],
-				['QUOTED_STRING', 'NUMBER'],
+				['QUOTED_STRING'],
 				['SEMICOLON']
 			]
 		);

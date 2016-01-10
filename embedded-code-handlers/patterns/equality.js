@@ -6,9 +6,9 @@ module.exports = {
 		return helper.doesMatch(
 			command,
 			[
-				['QUOTED_STRING', 'NUMBER'],
+				['QUOTED_STRING'],
 				['DOUBLE_EQUALS', 'NE', 'LTE', 'GTE', 'RIGHT_ANGLE', 'LEFT_ANGLE'],
-				['QUOTED_STRING', 'NUMBER']
+				['QUOTED_STRING']
 			]
 		)
 	},

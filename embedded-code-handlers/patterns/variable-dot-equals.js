@@ -10,7 +10,7 @@ module.exports = {
 				['DOT'],
 				['VARIABLE'],
 				['EQUALS'],
-				['QUOTED_STRING', 'NUMBER'],
+				['QUOTED_STRING'],
 				['SEMICOLON']
 			]
 		);

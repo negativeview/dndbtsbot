@@ -8,7 +8,7 @@ module.exports = {
 			[
 				['VARIABLE'],
 				['LEFT_BRACKET'],
-				['QUOTED_STRING', 'NUMBER'],
+				['QUOTED_STRING'],
 				['RIGHT_BRACKET']
 			]
 		);

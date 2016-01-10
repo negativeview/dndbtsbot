@@ -223,7 +223,7 @@ module.exports = function(command, ret, cb) {
 	lex.addRule(/[0-9]+/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
-			type: 'NUMBER',
+			type: 'QUOTED_STRING',
 			value: lexeme
 		});
 	});
