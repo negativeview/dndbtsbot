@@ -41,15 +41,17 @@ ret.doesMatch = function(command, matchDefinition, notEnding) {
 		}
 
 		if (found) {
+			console.log('found', command, matchDefinition);
 			if (notEnding) {
 				var found2 = false;
-				for (var m = 0; m < notEnding.length; m++) {
-					if (notEnding[m].indexOf(command[i + 1].type) == -1) {
+				for (var n = 0; n < notEnding.length; n++) {
+					if (notEnding[n].indexOf(command[i + m].type) == -1) {
 						found2 = true;
 						break;
 					}
 				}
-				if (found2) {
+				if (!found2) {
+					console.log('unfound', command, matchDefinition, notEnding, command[i + m + 1]);
 					continue;
 				}
 			}
