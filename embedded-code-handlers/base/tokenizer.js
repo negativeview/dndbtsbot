@@ -6,13 +6,11 @@
  * token a name.
  */
 
-var breakIntoStatementsAndBlocks = require('./break-into-statements-and-blocks.js');
-var decideStringOrVariable       = require('./decide-string-or-variable.js');
-var fixStrings                   = require('./fix-strings.js');
-var lexer                        = require('lex');
-var removeWhitespace             = require('./remove-whitespace.js');
+var fixStrings       = require('./fix-strings.js');
+var lexer            = require('lex');
+var removeWhitespace = require('./remove-whitespace.js');
 
-module.exports = function(command, ret, cb) {
+module.exports = function(command, cb) {
 	var lex = new lexer();
 
 	var tokens = [];
@@ -24,6 +22,12 @@ module.exports = function(command, ret, cb) {
 		});
 	});
 
+	lex.addRule(/\./gm, function(lexeme) {
+		tokens.push({
+			rawValue: '.',
+			type: 'DOT'
+		});
+	});
 	lex.addRule(/[ \t\n\r]/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
@@ -34,6 +38,12 @@ module.exports = function(command, ret, cb) {
 		tokens.push({
 			rawValue: stateHolder.actualUsername,
 			type: 'QUOTED_STRING'
+		});
+	});
+	lex.addRule(/table/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'TABLE'
 		});
 	});
 	lex.addRule(/echo/gm, function(lexeme) {
@@ -122,6 +132,12 @@ module.exports = function(command, ret, cb) {
 		tokens.push({
 			rawValue: lexeme,
 			type: 'COLON'
+		});
+	});
+	lex.addRule(/!=/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			type: 'NOT_EQUALS'
 		});
 	});
 	lex.addRule(/==/gm, function(lexeme) {
@@ -233,7 +249,7 @@ module.exports = function(command, ret, cb) {
 			type: 'DOUBLECOLON'
 		});
 	});
-	lex.addRule(/[^ '"\[\]\(\)\t\n;]+/gm, function(lexeme) {
+	lex.addRule(/[^ '"\[\]\.\(\)\t\n;]+/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
 			type: 'STRING'
@@ -244,14 +260,27 @@ module.exports = function(command, ret, cb) {
 
 	try {
 		lex.lex();
+
+		fixStrings(
+			tokens,
+			function(error, tokensWithQuotedStrings) {
+				if (error) {
+					return cb(error);
+				}
+
+				removeWhitespace(
+					tokensWithQuotedStrings,
+					function(error, finalizedTokens) {
+						if (error) {
+							return cb(error);
+						}
+
+						return cb(null, finalizedTokens);
+					}
+				);
+			}
+		);
 	} catch (e) {
-		console.log(e);
+		return cb(e.stack);
 	}
-
-	tokens = fixStrings(tokens);
-	tokens = removeWhitespace(tokens);
-	tokens = decideStringOrVariable(ret, tokens);
-	statements = breakIntoStatementsAndBlocks(tokens);
-
-	return cb(statements);
 }

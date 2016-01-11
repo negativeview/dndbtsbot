@@ -4,9 +4,11 @@
  * don't care about whitespace AT ALL anymore, so we just remove them.
  */
 
-module.exports = function(command) {
-	return command.filter(function(token) {
+module.exports = function(command, callback) {
+	var res = command.filter(function(token) {
 		return (token.type != 'WHITESPACE');
 	});
+
+	return callback(null, res);
 }
 

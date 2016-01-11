@@ -1,0 +1,73 @@
+var helper = require('../helper.js');
+var SyntaxTreeNode = require('../base/syntax-tree-node.js');
+
+function work(stateHolder, state, node, cb) {
+	if (node.nodes.length != 2) {
+		return cb('[] excepts two sub-nodes. How did this even happen??');
+	}
+
+	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
+		if (error) return cb(error);
+
+		var leftHandSide = value;
+		if (leftHandSide.type != 'variable') {
+			return cb('square-brackets: Expecting variable, got ', leftHandSide);
+		}
+
+		node.nodes[1].work(stateHolder, state, node.nodes[1], function(error, value) {
+			var rightHandSide = value;
+
+			if (leftHandSide.type == 'variable') {
+				if (typeof(rightHandSide) == 'string') {
+					leftHandSide.setIndex(rightHandSide);
+					return cb(null, leftHandSide);
+				} else {
+					return cb('square-brackets: Do not know what to do with type ' + typeof(rightHandSide) + ' on the right');
+				}
+			} else {
+				return cb('square-brackets: Do not know what to do with ' + typeof(leftHandSide) + ' on the left');
+			}
+		});
+	});
+}
+
+module.exports = {
+	name: 'Square Brackets',
+	matches: function(command) {
+		for (var i = command.length - 1; i >= 0; i--) {
+			if (command[i].type == 'LEFT_BRACKET') {
+				return i;
+			}
+		}
+		return false;
+	},
+	process: function(command, state, index, cb) {
+		var left = [];
+		var right = [];
+
+		for (var i = 0; i < index; i++) {
+			left.push(command[i]);
+		}
+
+		for (var i = index + 1; i < command.length; i++) {
+			if (command[i].type != 'RIGHT_BRACKET') {
+				right.push(command[i]);
+			} else {
+				break;
+			}
+		}
+
+		if (i != (command.length - 1)) {
+			console.log('Could not finish command', i, (command.length - 1), command);
+			return cb('Could not finish command')
+		}
+
+		var stn = new SyntaxTreeNode();
+		stn.strRep = '[]';
+		stn.work = work;
+		stn.addSubTree(left);
+		stn.addSubTree(right);
+
+		return cb('', stn);
+	}
+};

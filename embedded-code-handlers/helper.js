@@ -6,6 +6,18 @@ ret.filterInt = function(value) {
   return NaN;
 }
 
+ret.flatten = function(tokens) {
+	var flat = '';
+	for (var i = 0; i < tokens.length; i++) {
+		if (i != 0) flat += ' ';
+		flat += tokens[i].rawValue;
+	}
+
+	console.log('flat: ' + flat);
+
+	return flat;
+}
+
 ret.fakeStateHolder = function(stateHolder) {
 	var fakeStateHolder = Object.create(stateHolder);
 	fakeStateHolder.result = '';

@@ -42,7 +42,7 @@ var lastUpdate = '';
 function updateChannelTitles() {
 	var announcementChannels = [
 		'123184695289577474',
-		'132594342954139648'
+		//'132594342954139648'
 	];
 
 	var moment = require('moment');
@@ -61,6 +61,7 @@ function updateChannelTitles() {
 
 	var shouldBeTopic = 'Time: ' + hours + ':XX ' + amPM;
 
+	/*
 	if (lastUpdate != shouldBeTopic) {
 		lastUpdate = shouldBeTopic;
 
@@ -71,6 +72,7 @@ function updateChannelTitles() {
 			});
 		}
 	}
+	*/
 
 	/*
 	if (shouldBeTopic != topic) {

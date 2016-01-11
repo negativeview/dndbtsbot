@@ -2,35 +2,21 @@ var async     = require('async');
 var helper    = require('./embedded-code-handlers/helper.js');
 var patterns  = require('./embedded-code-handlers/patterns/all.js');
 var tokenizer = require('./embedded-code-handlers/base/tokenizer.js');
+var SyntaxTreeNode = require('./embedded-code-handlers/base/syntax-tree-node.js');
 
 var ret = {
 	patterns: [
-		patterns.deleteTableKey,
-		patterns.deleteTable,
-		patterns.variableDotEquals,
-		patterns.tableActualSet,
-		patterns.doForeach,
-		patterns.doIfElse,
-		patterns.doIf,
-		patterns.variableAssignment,
+		patterns.ifElse,
+		patterns.curlyBraces,
+		patterns.semicolon,
+		patterns.parenthesis,
+		patterns.assignment,
 		patterns.echo,
-		patterns.pm,
 		patterns.ignore,
-
-		patterns.booleanOr,
-		patterns.booleanAnd,
-		patterns.comparison,
-		patterns.mathAndConcat,
-		patterns.equality,
-		patterns.ternary,
-		patterns.functionExecution,
-		patterns.squashParens,
-		patterns.macroArguments,
-		patterns.variableDotBracket,
-		patterns.tableLookups,
-		patterns.variableDot,
-		patterns.normalVariable,
-		patterns.tableActualLookup
+		patterns.squareBrackets,
+		patterns.dot,
+		patterns.table,
+		patterns.doubleEquals
 	]
 };
 
@@ -40,84 +26,151 @@ ret.setHandlers = function(handlers) {
 };
 
 ret.setMongoose = function(mongoose) {
-	ret.mongoose = mongoose;
-	ret.varModel = mongoose.model('Var');
+	ret.mongoose       = mongoose;
+	ret.varModel       = mongoose.model('Var');
 	ret.characterModel = mongoose.model('Character');
-	ret.tableModel = mongoose.model('Table');
-	ret.tableRowModel = mongoose.model('TableRow');
+	ret.tableModel     = mongoose.model('Table');
+	ret.tableRowModel  = mongoose.model('TableRow');
 }
 
-function handleSingleCommand(stateHolder, command, state, callback) {
-	if (command.length == 0) return callback(command);
+function handleCommandPart(commandArray, state, cb) {
+	if (commandArray.length == 0) return cb();
 
-	console.log(command);
+	console.log('commandArray', commandArray);
+	
+	if (commandArray.length == 1) {
+		var stn = new SyntaxTreeNode();
+		stn.strRep = commandArray[0].rawValue;
+		stn.node = commandArray[0];
+		stn.work = function (stateHolder, state, node, cb) {
+			return cb(null, stn.strRep);
+		};
+		return cb(null, stn);
+	}
 
 	for (var i = 0; i < ret.patterns.length; i++) {
 		var pattern = ret.patterns[i];
-		var found = pattern.matches(command);
+		var found = false;
+		try {
+			console.log(pattern);
+			found = pattern.matches(commandArray);
+		} catch (e) {
+			return cb(e.stack + " " + commandArray.toString());
+		}
+
 		if (found !== false) {
-			console.log('Found ' + pattern.name);
-			pattern.work(stateHolder, found, command, state, ret.handlers, executeCommands, function(newCommand) {
-				handleSingleCommand(stateHolder, newCommand, state, callback);
-			});
+			console.log('pattern found', pattern);
+			pattern.process(
+				commandArray,
+				state,
+				found,
+				function(error, node) {
+					if (error) {
+						return cb(error, node);
+					}
+
+					var otherCommandPartArray = node.trees;
+
+					async.eachSeries(
+						otherCommandPartArray,
+						function(index, next) {
+							handleCommandPart(
+								index,
+								state,
+								function(error, node2) {
+									if (node2) {
+										node.addSubNode(node2);
+									}
+
+									if (error) {
+										return cb(error, node);
+									}
+
+									return next();
+								}
+							)
+						},
+						function(error) {
+							return cb(error, node);
+						}
+					)
+				}
+			);
 			return;
 		}
-	};
-
-	console.log('fell through');
-
-	ret.stateHolder.simpleAddMessage(ret.stateHolder.username, 'Got to end of command without being able to process it completely. Here\'s what\'s left:');
-	for (var i = 0; i < command.length; i++) {
-		ret.stateHolder.simpleAddMessage(ret.stateHolder.username, "\n");
-		ret.stateHolder.simpleAddMessage(ret.stateHolder.username, command[i].type + ': ' + command[i].rawValue);
 	}
+	console.log('could not process', commandArray);
 
-	return callback(command);
+	var errorMessage = 'Could not figure out how to process ';
+	var pieces = [];
+	for (var i = 0; i < commandArray.length; i++) {
+		pieces.push(commandArray[i].rawValue);
+	}
+	errorMessage += pieces.join(' ');
+
+	return cb(errorMessage);
+}
+ret.handleCommandPart = handleCommandPart;
+
+/***
+ * handleSingleCommand
+ ***/
+function handleSingleCommand(stateHolder, command, state, callback) {
+	var tokenLists = [command];
+
+	handleCommandPart(
+		command,
+		state,
+		function(
+			error,
+			returnedNode
+		) {
+			if (error) {
+				var errorMessage = "SYNTAX ERROR: " + error;
+				console.log(errorMessage);
+				return callback(error);
+			}
+
+			returnedNode.work(stateHolder, state, returnedNode, function(error) {
+				return callback(error, returnedNode);
+			});
+		}
+	)
 }
 
-function executeCommands(commands, state, next) {
-	var totalCommands = [];
-	var currentCommands = [];
-	
+function executeCommands(stateHolder, commands, state, next) {
 	for (var i = 0; i < commands.length; i++) {
-		var command = commands[i];
-		currentCommands.push(command);
-		if (command.type == 'SEMICOLON') {
-			totalCommands.push(currentCommands);
-			currentCommands = [];			
-		} else if (command.type == 'BLOCK') {
-			if (commands.length > i + 1) {
-				if (commands[i + 1].type != 'ELSE') {
-					totalCommands.push(currentCommands);
-					currentCommands = [];
+		if (commands[i].type == 'MACRO_ARGUMENT') {
+			var value = commands[i].rawValue;
+
+			var matches = value.match(/{([0-9]+)\+}/);
+			if (matches) {
+				var strValue = '';
+				for (var m = matches[1]; m < state.args.length; m++) {
+					if (m != matches[1]) strValue += ' ';
+					strValue += state.args[m];
+				}
+
+				commands[i] = {
+					rawValue: strValue,
+					type: 'QUOTED_STRING'
+				};
+			} else {
+				matches = value.match(/{([0-9]+)}/);
+				if (matches) {
+					var strValue = state.args[matches[1]];
+					commands[i] = {
+						rawValue: strValue,
+						type: 'QUOTED_STRING'
+					};
 				}
 			}
 		}
 	}
 
-	if (currentCommands.length) {
-		totalCommands.push(currentCommands);
-	}
-
-	console.log('totalCommands', totalCommands);
-
-	async.eachSeries(
-		totalCommands,
-		function(iterator, callback) {
-			var temporaryStateHolder = ret.stateHolder.clone();
-			temporaryStateHolder.isTemporary = true;
-			temporaryStateHolder.real = ret.stateHolder;
-
-			handleSingleCommand(temporaryStateHolder, iterator, state, function(result) {
-				console.log('done handling');
-				temporaryStateHolder.clearMessages(ret.stateHolder.channelID);
-				callback();
-			});
-		},
-		function() {
-			next();
-		}
-	);
+	handleSingleCommand(stateHolder, commands, state, function(error, result) {
+		next(error);
+	});
 }
 
 ret.debug = function(pieces, stateHolder, next) {
@@ -129,22 +182,23 @@ ret.debug = function(pieces, stateHolder, next) {
 	}
 
 	try {
-		tokenizer(command, ret, function(commands) {
+		tokenizer(command, function(error, commands) {
+			if (error) {
+				stateHolder.simpleAddMessage(stateHolder.username, error);
+				return next();
+			}
 			stateHolder.simpleAddMessage(stateHolder.username, JSON.stringify(commands, ['rawValue', 'type'], "      "));
 			return next();
 		});
 		return;
 	} catch (e) {
-		stateHolder.simpleAddMessage(stateHolder.username, e);
+		console.log(e);
+		stateHolder.simpleAddMessage(stateHolder.username, e.stack);
 	}
 	return next();
 }
 
 ret.handle = function(pieces, stateHolder, next) {
-	ret.stateHolder = stateHolder;
-	ret.stateHolder.errorList = [];
-	ret.stateHolder.verified = false;
-
 	var state = {
 		variables: stateHolder.incomingVariables ? stateHolder.incomingVariables : {},
 		args: ('originalArgs' in stateHolder) ? stateHolder.originalArgs : pieces
@@ -158,16 +212,22 @@ ret.handle = function(pieces, stateHolder, next) {
 	}
 
 	try {
-		tokenizer(command, ret, function(commands) {
-			executeCommands(commands, state, function() {
-				if (ret.stateHolder.errorList.length) {
-					stateHolder.simpleAddMessage(stateHolder.username, ret.stateHolder.errorList.join("\n"));
+		tokenizer(command, function(error, commands) {
+			if (error) {
+				stateHolder.simpleAddMessage(stateHolder.username, error);
+				return next();
+			}
+			executeCommands(stateHolder, commands, state, function(error) {
+				if (error) {
+					stateHolder.simpleAddMessage(stateHolder.username, error);
 				}
-				next(null, state);
+				return next(null, state);
 			});
 		});
 	} catch (e) {
-		stateHolder.simpleAddMessage(stateHolder.username, e);
+		console.log('exception when handling code', e);
+		stateHolder.simpleAddMessage(stateHolder.username, e.stack);
+		return next(null, state);
 	}
 	return;
 }
