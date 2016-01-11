@@ -61,7 +61,7 @@ Namespace.prototype.setTableValue = function(tableName, key, value, cb) {
 			var table = res[0].id;
 
 			var parameters = {
-				table: table._id,
+				table: table,
 				key: key
 			};
 
@@ -76,10 +76,11 @@ Namespace.prototype.setTableValue = function(tableName, key, value, cb) {
 					function(err) {
 						if (err) return cb(err);
 						var parameters = {
-							table: table._id,
+							table: table,
 							key: key,
 							value: value
 						};
+						console.log('creating table row', parameters);
 						var tableRow = new m.tableRowModel(parameters);
 						return tableRow.save(cb);
 					}

@@ -36,8 +36,6 @@ ret.setMongoose = function(mongoose) {
 function handleCommandPart(commandArray, state, cb) {
 	if (commandArray.length == 0) return cb();
 
-	console.log('commandArray', commandArray);
-	
 	if (commandArray.length == 1) {
 		var stn = new SyntaxTreeNode();
 		stn.strRep = commandArray[0].rawValue;
@@ -52,14 +50,12 @@ function handleCommandPart(commandArray, state, cb) {
 		var pattern = ret.patterns[i];
 		var found = false;
 		try {
-			console.log(pattern);
 			found = pattern.matches(commandArray);
 		} catch (e) {
 			return cb(e.stack + " " + commandArray.toString());
 		}
 
 		if (found !== false) {
-			console.log('pattern found', pattern);
 			pattern.process(
 				commandArray,
 				state,
@@ -99,8 +95,6 @@ function handleCommandPart(commandArray, state, cb) {
 			return;
 		}
 	}
-	console.log('could not process', commandArray);
-
 	var errorMessage = 'Could not figure out how to process ';
 	var pieces = [];
 	for (var i = 0; i < commandArray.length; i++) {
@@ -192,7 +186,6 @@ ret.debug = function(pieces, stateHolder, next) {
 		});
 		return;
 	} catch (e) {
-		console.log(e);
 		stateHolder.simpleAddMessage(stateHolder.username, e.stack);
 	}
 	return next();
@@ -225,7 +218,6 @@ ret.handle = function(pieces, stateHolder, next) {
 			});
 		});
 	} catch (e) {
-		console.log('exception when handling code', e);
 		stateHolder.simpleAddMessage(stateHolder.username, e.stack);
 		return next(null, state);
 	}

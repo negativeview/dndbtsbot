@@ -14,12 +14,9 @@ function work(stateHolder, state, node, cb) {
 			if (error) return cb(error);
 			var rightHandSide = value;
 
-			console.log('comparison', rightHandSide, leftHandSide);
 			if (rightHandSide == leftHandSide) {
-				console.log('true');
 				return cb(null, 'true');
 			} else {
-				console.log('false');
 				return cb(null, 'false');
 			}
 		});
@@ -29,10 +26,8 @@ function work(stateHolder, state, node, cb) {
 module.exports = {
 	name: 'Double Equals',
 	matches: function(command) {
-		console.log('looking for double equals');
 		for (var i = command.length - 1; i > 0; i--) {
 			if (command[i].type == 'DOUBLE_EQUALS') {
-				console.log('found double equals');
 				return i;
 			}
 		}
