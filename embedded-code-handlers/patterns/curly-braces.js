@@ -36,7 +36,7 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(command, state, index, cb) {
+	process: function(command, node, state, index, cb) {
 		var inside = []
 
 		var count = 0;

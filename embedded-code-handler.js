@@ -33,7 +33,25 @@ ret.setMongoose = function(mongoose) {
 	ret.tableRowModel  = mongoose.model('TableRow');
 }
 
-function handleCommandPart(commandArray, state, cb) {
+function findPattern(commandArray, cb) {
+	for (var i = 0; i < ret.patterns.length; i++) {
+		var pattern = ret.patterns[i];
+		var found = false;
+		try {
+			found = pattern.matches(commandArray);
+		} catch (e) {
+			return cb(e.stack);
+		}
+
+		if (found !== false) {
+			return cb(null, found, pattern);
+		}
+	}
+
+	return cb();
+}
+
+function handleCommandPart(commandArray, node, state, cb) {
 	if (commandArray.length == 0) return cb();
 
 	if (commandArray.length == 1) {
@@ -46,63 +64,54 @@ function handleCommandPart(commandArray, state, cb) {
 		return cb(null, stn);
 	}
 
-	for (var i = 0; i < ret.patterns.length; i++) {
-		var pattern = ret.patterns[i];
-		var found = false;
-		try {
-			found = pattern.matches(commandArray);
-		} catch (e) {
-			return cb(e.stack + " " + commandArray.toString());
+	findPattern(commandArray, function(err, found, pattern) {
+		if (err) return cb(err);
+		if (!pattern) {
+			var errorMessage = 'Could not figure out how to process ';
+			var pieces = [];
+			for (var i = 0; i < commandArray.length; i++) {
+				pieces.push(commandArray[i].rawValue);
+			}
+			errorMessage += pieces.join(' ');
+
+			return cb(errorMessage);
 		}
 
-		if (found !== false) {
-			pattern.process(
-				commandArray,
-				state,
-				found,
-				function(error, node) {
-					if (error) {
-						return cb(error, node);
-					}
-
-					var otherCommandPartArray = node.trees;
-
-					async.eachSeries(
-						otherCommandPartArray,
-						function(index, next) {
-							handleCommandPart(
-								index,
-								state,
-								function(error, node2) {
-									if (node2) {
-										node.addSubNode(node2);
-									}
-
-									if (error) {
-										return cb(error, node);
-									}
-
-									return next();
-								}
-							)
-						},
-						function(error) {
-							return cb(error, node);
-						}
-					)
+		pattern.process(
+			commandArray,
+			node,
+			state,
+			found,
+			function(error, node2) {
+				if (error) {
+					return cb(error, node2);
 				}
-			);
-			return;
-		}
-	}
-	var errorMessage = 'Could not figure out how to process ';
-	var pieces = [];
-	for (var i = 0; i < commandArray.length; i++) {
-		pieces.push(commandArray[i].rawValue);
-	}
-	errorMessage += pieces.join(' ');
 
-	return cb(errorMessage);
+				node.addSubNode(node2);
+
+				async.eachSeries(
+					node2.trees,
+					function(index, next) {
+						handleCommandPart(
+							index,
+							node2,
+							state,
+							function(error, stn) {
+								if (error) return cb(error);
+
+								node2.addSubNode(stn);
+
+								return next();
+							}
+						);
+					},
+					function() {
+						return cb(null, node);
+					}
+				);
+			}
+		);
+	});
 }
 ret.handleCommandPart = handleCommandPart;
 
@@ -112,22 +121,34 @@ ret.handleCommandPart = handleCommandPart;
 function handleSingleCommand(stateHolder, command, state, callback) {
 	var tokenLists = [command];
 
+	var stn = new SyntaxTreeNode();
+	stn.strRep = '<program>';
+
 	handleCommandPart(
 		command,
+		stn,
 		state,
 		function(
 			error,
 			returnedNode
 		) {
 			if (error) {
-				var errorMessage = "SYNTAX ERROR: " + error;
-				console.log(errorMessage);
 				return callback(error);
 			}
 
-			returnedNode.work(stateHolder, state, returnedNode, function(error) {
-				return callback(error, returnedNode);
-			});
+			console.log(JSON.stringify(returnedNode, ["strRep", "nodes"], "  "));
+
+			async.eachSeries(
+				returnedNode.nodes,
+				function(index, next) {
+					index.work(stateHolder, state, index, function(error) {
+						return next(error);
+					});
+				},
+				function(error) {
+					return callback(error, stn);
+				}
+			);
 		}
 	)
 }

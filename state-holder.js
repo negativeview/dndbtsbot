@@ -70,6 +70,14 @@ module.exports = function(user, userID, channelID, rawEvent) {
 	}
 
 	ret.doFinalOutput = function() {
+		var unicodeIcons = {
+			star: '\u2605',
+			skullAndCrossbones: '\u2620',
+			frowningFace: '\u2639',
+			smilingFace: '\u263A',
+			crossedSwords: '\u2694'
+		};
+
 		for (var i in ret.messages) {
 			var outputType = ret.messages[i];
 

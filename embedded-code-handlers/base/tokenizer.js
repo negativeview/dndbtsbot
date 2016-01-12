@@ -243,12 +243,6 @@ module.exports = function(command, cb) {
 			value: lexeme
 		});
 	});
-	lex.addRule(/::/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'DOUBLECOLON'
-		});
-	});
 	lex.addRule(/[^ '"\[\]\.\(\)\t\n;]+/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,

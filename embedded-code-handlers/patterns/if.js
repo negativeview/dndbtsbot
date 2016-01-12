@@ -60,14 +60,16 @@ module.exports = {
 					var m = goUntil(command, i, -1, 0, 'RIGHT_CURLY', 'LEFT_CURLY');
 					m = m.m;
 
-					if (m - 1 < 0) return false;
+					if (m - 1 < 0) {
+						return false;
+					}
 
 					if (command[m - 1].type == 'RIGHT_PAREN') {
 						m = goUntil(command, m - 1, -1, 0, 'RIGHT_PAREN', 'LEFT_PAREN');
 						m = m.m;
 						if (command[m-1].type == 'IF') return m - 1;
 					} else if (command[m - 1].type == 'ELSE') {
-						m = goUntil(command, m - 1, -1, 0, 'RIGHT_CURLY', 'LEFT_CURLY');
+						m = goUntil(command, m - 3, -1, 0, 'RIGHT_CURLY', 'LEFT_CURLY');
 						m = m.m;
 						if (m < 0) {
 							return false;
@@ -75,7 +77,9 @@ module.exports = {
 						if (command[m - 1].type == 'RIGHT_PAREN') {
 							m = goUntil(command, m - 1, -1, 0, 'RIGHT_PAREN', 'LEFT_PAREN');
 							m = m.m;
-							if (command[m-1].type == 'IF') return m - 1;
+							if (command[m-1].type == 'IF') {
+								return m - 1;
+							}
 						}
 					}
 				}
@@ -85,9 +89,17 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(command, state, index, cb) {
+	process: function(command, node, state, index, cb) {
 		var stn = new SyntaxTreeNode();
+		stn.strRep = 'placeholder';
 
+		var pre = [];
+		for (var i = 0; i < index; i++) {
+			pre.push(command[i]);
+		}
+		node.addSubTree(pre);
+
+		var stn = new SyntaxTreeNode();
 		if (command[index + 1].type != 'LEFT_PAREN') {
 			return cb('Missing a left parenthesis after IF statmeent.');
 		}
@@ -109,6 +121,8 @@ module.exports = {
 		}
 		stn.strRep = 'IfElse';
 		stn.work = work;
+
+		node.addSubTree(stn);
 
 		return cb('', stn);
 	}
