@@ -297,6 +297,8 @@ function modifyAttackRoll(roll, activeCharacter, stateHolder, next) {
 	var mongoose = stateHolder.mongoose;
 	var varModel = mongoose.model('Var');
 
+	if (stateHolder.inAttackRoll) return next(roll);
+
 	var params = {
 		character: activeCharacter.id,
 		name: 'modifyAttackRoll'
@@ -318,7 +320,9 @@ function modifyAttackRoll(roll, activeCharacter, stateHolder, next) {
 				rollString: roll
 			};
 
+			stateHolder.inAttackRoll = true;
 			embeddedCodeHandler.handle(pieces, stateHolder, function(err, res) {
+				stateHolder.inAttackRoll = false;
 				return next(res.variables.rollString);
 			});
 		} else {
@@ -330,6 +334,8 @@ function modifyAttackRoll(roll, activeCharacter, stateHolder, next) {
 function modifyDamageRoll(roll, attackRoll, activeCharacter, stateHolder, next) {
 	var mongoose = stateHolder.mongoose;
 	var varModel = mongoose.model('Var');
+
+	if (stateHolder.inAttackRoll) return next(roll);
 
 	var params = {
 		character: activeCharacter.id,
@@ -361,7 +367,9 @@ function modifyDamageRoll(roll, attackRoll, activeCharacter, stateHolder, next) 
 				attackOnDie: dieResult
 			};
 
+			stateHolder.inAttackRoll = true;
 			embeddedCodeHandler.handle(pieces, stateHolder, function(err, res) {
+				stateHolder.inAttackRoll = false;
 				return next(res.variables.rollString);
 			});
 		} else {
