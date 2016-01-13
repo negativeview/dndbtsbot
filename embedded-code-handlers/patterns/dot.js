@@ -12,8 +12,6 @@ function work(stateHolder, state, node, cb) {
 		return cb('. excepts two sub-nodes. How did this even happen??');
 	}
 
-	console.log('working on dot', JSON.stringify(node, ['type', 'strRep', 'nodes', 'tokenList'], '  '));
-
 	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
 		if (error) return cb(error);
 

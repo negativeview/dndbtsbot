@@ -6,17 +6,28 @@ function work(stateHolder, state, node, cb) {
 		return cb('= excepts two sub-nodes. How did this even happen??');
 	}
 
+	console.log('assignment work');
+
 	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
-		if (error) return cb(error);
+		if (error) {
+			console.log('error in assignment', error);
+			return cb(error);
+		}
 		var leftHandSide = value;
 
 		console.log('left hand side', leftHandSide);
+
 		node.nodes[1].work(stateHolder, state, node.nodes[1], function(error, value) {
 			var rightHandSide = value;
 
+			console.log('right hand side');
+
 			if (leftHandSide.type == 'variable') {
 				leftHandSide.assign(rightHandSide, function(error) {
-					if (error) return cb(error);
+					if (error) {
+						console.log('error when assigning', error);
+						return cb(error);
+					}
 					return cb();
 				});
 			} else {

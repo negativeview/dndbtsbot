@@ -51,6 +51,8 @@ Namespace.prototype.setTableValue = function(tableName, key, value, cb) {
 
 		m.parameters.name = tableName;
 
+		console.log('setTableValue parameters', m.parameters);
+
 		m.tableModel.find(m.parameters).exec(function(err, res) {
 			if (err) return cb(err);
 

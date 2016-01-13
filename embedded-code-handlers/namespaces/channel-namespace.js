@@ -4,20 +4,18 @@ var Namespace = require('./namespace.js');
 function ChannelNamespace(stateHolder) {
 	Namespace.call(this, stateHolder);
 
-	this.channelID = stateHolder.channelID;
-	this.serverID = stateHolder.findServerID(this.channelID);
-	if (!this.serverID) {
+	if (!stateHolder.serverID) {
 		throw "Cannot access channel variables from a PM";
 	}
 
 	this.parameters = {
-		channel: this.channelID
+		channel: stateHolder.channelID
 	};
 }
 util.inherits(ChannelNamespace, Namespace);
 
 ChannelNamespace.prototype.canEdit = function(cb) {
-	var serverID = this.stateHolder.findServerID(this.stateHolder.channelID);
+	var serverID = this.stateHolder.serverID;
 	if (!serverID) return cb(null, false);
 
 	if (this.stateHolder.isAdmin(this.stateHolder.username)) {
