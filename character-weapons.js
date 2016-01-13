@@ -361,8 +361,12 @@ function modifyDamageRoll(roll, attackRoll, activeCharacter, stateHolder, next) 
 			var dieResult = 0;
 			for (var i = 0; i < attackRoll.rawResults.length; i++) {
 				if (attackRoll.rawResults[i].type == 'die') {
+					console.log(attackRoll.rawResults[i]);
 					if (attackRoll.rawResults[i].kept && attackRoll.rawResults[i].kept.length == 1) {
 						dieResult = attackRoll.rawResults[i].kept[0];
+						break;
+					} else if (attackRoll.rawResults[i].results && attackRoll.rawResults[i].results.length == 1) {
+						dieResult = attackRoll.rawResults[i].results[0];
 						break;
 					}
 				}
