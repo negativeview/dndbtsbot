@@ -41,33 +41,40 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(command, node, state, index, cb) {
+	process: function(node, state, index, cb) {
 		var left = [];
 		var right = [];
 
 		for (var i = 0; i < index; i++) {
-			left.push(command[i]);
+			left.push(node.tokenList[i]);
 		}
+		var leftNode = new SyntaxTreeNode();
+		leftNode.strRep = '';
+		leftNode.tokenList = left;
 
-		for (var i = index + 1; i < command.length; i++) {
-			if (command[i].type != 'RIGHT_BRACKET') {
-				right.push(command[i]);
+		for (var i = index + 1; i < node.tokenList.length; i++) {
+			if (node.tokenList[i].type != 'RIGHT_BRACKET') {
+				right.push(node.tokenList[i]);
 			} else {
 				break;
 			}
 		}
+		var rightNode = new SyntaxTreeNode();
+		rightNode.strRep = '';
+		rightNode.tokenList = right;
 
-		if (i != (command.length - 1)) {
-			console.log('Could not finish command', i, (command.length - 1), command);
+		if (i != (node.tokenList.length - 1)) {
+			console.log('Could not finish command', i, (node.tokenList.length - 1), node.tokenList);
 			return cb('Could not finish command')
 		}
 
-		var stn = new SyntaxTreeNode();
-		stn.strRep = '[]';
-		stn.work = work;
-		stn.addSubTree(left);
-		stn.addSubTree(right);
+		node.strRep = '[]';
+		node.type = 'parsed';
+		node.work = work;
+		node.addSubNode(leftNode);
+		node.addSubNode(rightNode);
+		node.tokenList = [];
 
-		return cb('', stn);
+		return cb('', node);
 	}
 };

@@ -9,5 +9,6 @@ module.exports = {
 	ifElse: require('./if.js'),
 	doubleEquals: require('./double-equals.js'),
 	semicolon: require('./semicolon.js'),
-	curlyBraces: require('./curly-braces.js')
+	curlyBraces: require('./curly-braces.js'),
+	simpleString: require('./simple-string.js')
 };

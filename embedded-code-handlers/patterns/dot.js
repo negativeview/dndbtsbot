@@ -12,6 +12,8 @@ function work(stateHolder, state, node, cb) {
 		return cb('. excepts two sub-nodes. How did this even happen??');
 	}
 
+	console.log('working on dot', JSON.stringify(node, ['type', 'strRep', 'nodes', 'tokenList'], '  '));
+
 	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
 		if (error) return cb(error);
 
@@ -63,24 +65,31 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(command, node, state, index, cb) {
+	process: function(node, state, index, cb) {
 		var left = [];
 		var right = [];
 
 		for (var i = 0; i < index; i++) {
-			left.push(command[i]);
+			left.push(node.tokenList[i]);
 		}
+		var leftNode = new SyntaxTreeNode();
+		leftNode.strRep = '';
+		leftNode.tokenList = left;
 
-		for (var i = index + 1; i < command.length; i++) {
-			right.push(command[i]);
+		for (var i = index + 1; i < node.tokenList.length; i++) {
+			right.push(node.tokenList[i]);
 		}
+		var rightNode = new SyntaxTreeNode();
+		rightNode.strRep = '';
+		rightNode.tokenList = right;
 
-		var stn = new SyntaxTreeNode();
-		stn.strRep = '.';
-		stn.addSubTree(left);
-		stn.addSubTree(right);
-		stn.work = work;
+		node.type = 'parsed';
+		node.strRep = '.';
+		node.addSubNode(leftNode);
+		node.addSubNode(rightNode);
+		node.work = work;
+		node.tokenList = [];
 
-		return cb('', stn);
+		return cb('', node);
 	}
 };

@@ -416,7 +416,7 @@ ret.handle = function(pieces, stateHolder, next) {
 		return next();
 	}
 
-	var serverID = stateHolder.findServerID(stateHolder.channelID);
+	var serverID = stateHolder.serverID;
 	if (pieces[2] == 'channel' || pieces[2] == 'server') {
 		if (!serverID) {
 			stateHolder.simpleAddMessage(stateHolder.username, 'You must use this command from a channel so that I know what server/channel to use.');

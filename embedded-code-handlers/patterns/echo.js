@@ -6,15 +6,16 @@ function work(stateHolder, state, node, cb) {
 		return cb('echo excepts one sub-nodes. How did this even happen??');
 	}
 
-	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
-		if (error) return cb(error);
-
-		var leftHandSide = value;
-
-		stateHolder.simpleAddMessage(stateHolder.channelID, leftHandSide);
-
+	var subNode = node.nodes[0];
+	if (subNode.work) {
+		subNode.work(stateHolder, state, subNode, function(error, value) {
+			stateHolder.simpleAddMessage(stateHolder.channelID, value);
+			return cb();
+		});
+	} else {
+		stateHolder.simpleAddMessage(stateHolder.channelID, subNode.strRep);
 		return cb();
-	});
+	}
 }
 
 module.exports = {
@@ -27,7 +28,7 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(command, node, state, index, cb) {
+	process: function(node, state, index, cb) {
 		if (index != 0) {
 			throw "Echo does not return anything.";
 		}
@@ -36,8 +37,8 @@ module.exports = {
 		node.strRep = 'echo';
 
 		var sub = [];
-		for (var i = 1; i < command.length; i++) {
-			sub.push(command[i]);
+		for (var i = 1; i < node.tokenList.length; i++) {
+			sub.push(node.tokenList[i]);
 		}
 
 		var childStn = new SyntaxTreeNode();
@@ -46,6 +47,6 @@ module.exports = {
 		node.addSubNode(childStn);
 		node.work = work;
 
-		return cb('', stn);
+		return cb('', node);
 	}
 };

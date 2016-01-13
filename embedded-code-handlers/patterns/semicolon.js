@@ -6,6 +6,7 @@ function work(stateHolder, state, node, cb) {
 		if (error) return cb(error);
 
 		if (node.nodes.length > 1) {
+			if (node.nodes[1].type == 'unparsed-node-list' && node.nodes[1].tokenList.length == 0) return cb();
 			node.nodes[1].work(stateHolder, state, node.nodes[1], function(error, value) {
 				if (error) return cb(error);
 			
@@ -49,8 +50,12 @@ module.exports = {
 		node.type = 'parsed';
 		node.strRep = ';';
 		node.addSubNode(leftNode);
-		node.addSubNode(rightNode);
+
+		if (rightNode.tokenList.length)
+			node.addSubNode(rightNode);
+		
 		node.work = work;
+		node.tokenList = [];
 
 		return cb('', node);
 	}

@@ -22,21 +22,25 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(command, node, state, index, cb) {
+	process: function(node, state, index, cb) {
 		if (index != 0) {
 			throw "Ignore does not return anything.";
 		}
 
 		var sub = [];
-		for (var i = 1; i < command.length; i++) {
-			sub.push(command[i]);
+		for (var i = 1; i < node.tokenList.length; i++) {
+			sub.push(node.tokenList[i]);
 		}
+		var leftNode = new SyntaxTreeNode();
+		leftNode.strRep = '';
+		leftNode.tokenList = sub;
 
-		var stn = new SyntaxTreeNode();
-		stn.strRep = 'ignore';
-		stn.addSubTree(sub);
-		stn.work = work;
+		node.strRep = 'ignore';
+		node.addSubNode(leftNode);
+		node.work = work;
+		node.type = 'parsed';
+		node.tokenList = [];
 
-		return cb('', stn);
+		return cb('', node);
 	}
 };

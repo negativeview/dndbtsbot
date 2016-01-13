@@ -274,6 +274,7 @@ module.exports = function(command, cb) {
 			}
 		);
 	} catch (e) {
+		console.log('got here? ', e, e.stack);
 		return cb(e.stack);
 	}
 }

@@ -66,11 +66,11 @@ HandlerRegistry.prototype.execute = function(command, pieces, next) {
 	if (!c) {
 		return next('Not a function: ' + command);
 	}
-	c(pieces, next);
+	c(pieces, this.stateHolder, next);
 };
 
 HandlerRegistry.prototype.macro = function(command, pieces, next) {
-	macroHandler.attempted(pieces, next);
+	macroHandler.attempted(pieces, this.stateHolder, next);
 };
 
 module.exports = HandlerRegistry;

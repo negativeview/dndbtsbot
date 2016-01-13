@@ -6,6 +6,11 @@ function work(stateHolder, state, node, cb) {
 		return cb('table expects one sub-node. How did this even happen??');
 	}
 
+
+
+
+
+
 	var messageA = null;
 	var messageB = null;
 	if (stateHolder.channelID in stateHolder.messages) {
@@ -14,6 +19,11 @@ function work(stateHolder, state, node, cb) {
 	if (stateHolder.username in stateHolder.messages) {
 		messageB = stateHolder.messages[stateHolder.username].message
 	}
+	//console.log('table node', node.nodes);
+	return cb();
+
+
+
 	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
 		if (error) return cb(error);
 
@@ -43,21 +53,25 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(command, node, state, index, cb) {
+	process: function(node, state, index, cb) {
 		if (index != 0) {
 			throw "Table does not return anything.";
 		}
 
 		var sub = [];
-		for (var i = 1; i < command.length; i++) {
-			sub.push(command[i]);
+		for (var i = 1; i < node.tokenList.length; i++) {
+			sub.push(node.tokenList[i]);
 		}
+		var leftNode = new SyntaxTreeNode();
+		leftNode.strRep = '';
+		leftNode.tokenList = sub;
 
-		var stn = new SyntaxTreeNode();
-		stn.strRep = 'table';
-		stn.addSubTree(sub);
-		stn.work = work;
+		node.type = 'parsed';
+		node.strRep = 'table';
+		node.addSubNode(leftNode);
+		node.work = work;
+		node.tokenList = [];
 
-		return cb('', stn);
+		return cb('', node);
 	}
 };

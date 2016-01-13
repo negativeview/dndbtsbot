@@ -36,12 +36,12 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(command, node, state, index, cb) {
-		var inside = []
+	process: function(node, state, index, cb) {
+		var insideArray = []
 
 		var count = 0;
-		for (var i = index + 1; i < command.length; i++) {
-			var token = command[i];
+		for (var i = index + 1; i < node.tokenList.length; i++) {
+			var token = node.tokenList[i];
 			if (token.type == 'RIGHT_PAREN') {
 				if (count == 0) {
 					break;
@@ -51,14 +51,18 @@ module.exports = {
 			} else if (token.type == 'LEFT_PAREN') {
 				count++;
 			}
-			inside.push(token);
+			insideArray.push(token);
 		}
 
-		var stn = new SyntaxTreeNode();
-		stn.strRep = '()';
-		stn.addSubTree(inside);
-		stn.work = work;
+		var inside = new SyntaxTreeNode();
+		inside.tokenList = insideArray;
 
-		return cb('', stn);
+		node.type = 'parsed';
+		node.strRep = '()';
+		node.addSubNode(inside);
+		node.work = work;
+		node.tokenList = [];
+
+		return cb('', node);
 	}
 };

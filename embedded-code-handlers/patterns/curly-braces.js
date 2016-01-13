@@ -58,6 +58,7 @@ module.exports = {
 		stn.strRep = '()';
 		stn.addSubTree(inside);
 		stn.work = work;
+		stn.tokenList = [];
 
 		return cb('', stn);
 	}
