@@ -285,10 +285,14 @@ function attackFormat(stateHolder, activeCharacter, weapon, toHit, toHitString, 
 	stateHolder.simpleAddMessage(stateHolder.channelID, "```");
 }
 
-function attackFormat2(stateHolder, activeCharacter, weapon, toHit, toHitString, damageRoll, damageValue) {
+function attackFormat2(stateHolder, activeCharacter, weapon, toHit, toHitString, damageRoll, damageValue, footer) {
 	var output = "\n*" + activeCharacter.name + " attacks with " + weapon.name + " (" + weapon.damageType + ")*";
 	output    += "\n**To Hit:** " + toHitString;
 	output    += "\n**Damage:** " + damageValue;
+
+	if (footer) {
+		output += "\n" + footer;
+	}
 
 	stateHolder.simpleAddMessage(stateHolder.channelID, output);
 }
@@ -357,8 +361,10 @@ function modifyDamageRoll(roll, attackRoll, activeCharacter, stateHolder, next) 
 			var dieResult = 0;
 			for (var i = 0; i < attackRoll.rawResults.length; i++) {
 				if (attackRoll.rawResults[i].type == 'die') {
-					dieResults = attackRoll.rawResults[i].results[0];
-					break;
+					if (attackRoll.rawResults[i].kept && attackRoll.rawResults[i].kept.length == 1) {
+						dieResult = attackRoll.rawResults[i].kept[0];
+						break;
+					}
 				}
 			}
 
@@ -370,10 +376,10 @@ function modifyDamageRoll(roll, attackRoll, activeCharacter, stateHolder, next) 
 			stateHolder.inAttackRoll = true;
 			embeddedCodeHandler.handle(pieces, stateHolder, function(err, res) {
 				stateHolder.inAttackRoll = false;
-				return next(res.variables.rollString);
+				return next(res.variables);
 			});
 		} else {
-			return next(roll);
+			return next({ rollString: roll });
 		}
 	});
 }
@@ -438,7 +444,10 @@ function doAttack(activeCharacter, weapon, stateHolder, next) {
 			if (weapon.magicModifier)
 				diceToRoll += "+" + weapon.magicModifier;
 
-			modifyDamageRoll(diceToRoll, result, activeCharacter, stateHolder, function(modifiedDamageRoll) {
+			modifyDamageRoll(diceToRoll, result, activeCharacter, stateHolder, function(variables) {
+				var modifiedDamageRoll = variables.rollString;
+				var footer = variables.footer;
+
 				dice.execute(modifiedDamageRoll, function(result) {
 					var dieResults = [];
 					for (var i = 0; i < result.rawResults.length; i++) {
@@ -449,7 +458,7 @@ function doAttack(activeCharacter, weapon, stateHolder, next) {
 						}
 					}
 
-					attackFormat2(stateHolder, activeCharacter, weapon, toHitOnDie, toHit, damageRoll, result.output);
+					attackFormat2(stateHolder, activeCharacter, weapon, toHitOnDie, toHit, damageRoll, result.output, footer);
 
 					stateHolder.verified = verified;
 					return next();
