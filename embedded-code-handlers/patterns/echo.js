@@ -9,6 +9,22 @@ function work(stateHolder, state, node, cb) {
 	var subNode = node.nodes[0];
 	if (subNode.work) {
 		subNode.work(stateHolder, state, subNode, function(error, value) {
+			if (error) {
+				console.log(error);
+				return cb(error);
+			}
+
+			if (value.type == 'variable') {
+				value.getScalarValue(
+					function(error, res) {
+						if (error) return cb(error);
+						
+						stateHolder.simpleAddMessage(stateHolder.channelID, res);
+						return cb();
+					}
+				);
+				return;
+			}
 			stateHolder.simpleAddMessage(stateHolder.channelID, value);
 			return cb();
 		});

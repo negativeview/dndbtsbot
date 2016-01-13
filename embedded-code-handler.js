@@ -74,7 +74,14 @@ EmbeddedCodeHandler.prototype.executeString = function(command, next) {
 
 	// Run the tokenizer and pass the result of that to further steps.
 	try {
-		tokenizer(command, this.handleTokenList.bind(this, next, codeState));
+		tokenizer(
+			command,
+			this.handleTokenList.bind(
+				this,
+				next,
+				codeState
+			)
+		);
 	} catch (e) {
 		return next(e.stack);
 	}
@@ -137,8 +144,6 @@ EmbeddedCodeHandler.prototype.findPattern = function(foundCallback, tokenArray, 
 };
 
 EmbeddedCodeHandler.prototype.executeProcessed = function(cb, state, topLevelNode, error, lastNodeProcessed) {
-	console.log(JSON.stringify(topLevelNode, ['strRep', 'rawValue', 'type', 'nodes', 'tokenList'], '  '));
-	
 	topLevelNode.work(this.stateHolder, state, topLevelNode, function() {
 		return cb();
 	});

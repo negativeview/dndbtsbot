@@ -42,7 +42,7 @@ Namespace.prototype.setScalarValue = function(key, value, cb) {
 	});
 };
 
-Namespace.prototype.setTableValue = function(tableName, key, value, cb) {
+Namespace.prototype.getTableRow = function(tableName, key, cb) {
 	var m = this;
 
 	this.canEdit(function(err, canEdit) {
@@ -50,8 +50,6 @@ Namespace.prototype.setTableValue = function(tableName, key, value, cb) {
 		if (!canEdit) return cb('Cannot edit');
 
 		m.parameters.name = tableName;
-
-		console.log('setTableValue parameters', m.parameters);
 
 		m.tableModel.find(m.parameters).exec(function(err, res) {
 			if (err) return cb(err);
@@ -70,42 +68,42 @@ Namespace.prototype.setTableValue = function(tableName, key, value, cb) {
 			m.tableRowModel.find(parameters).exec(function(err, res) {
 				if (err) return cb(err);
 
-				async.eachSeries(
-					res,
-					function(index, next) {
-						index.remove(next);
-					},
-					function(err) {
-						if (err) return cb(err);
-						var parameters = {
-							table: table,
-							key: key,
-							value: value
-						};
-						console.log('creating table row', parameters);
-						var tableRow = new m.tableRowModel(parameters);
-						return tableRow.save(cb);
-					}
-				);
+				return cb(null, res);
 			});
 		});
 	});
 };
 
-Namespace.prototype.getTableValueByKey = function(key, cb) {
-	this.parameters.name = key;
+Namespace.prototype.setTableValue = function(tableName, key, value, cb) {
+	this.getTableRow(tableName, key, function(error, res) {
+		if (err) return cb(err);
 
-	this.model.find(this.parameters).exec(function(err, res) {
-		console.log(err, res);
+		async.eachSeries(
+			res,
+			function(index, next) {
+				index.remove(next);
+			},
+			function(err) {
+				if (err) return cb(err);
+				var parameters = {
+					table: table,
+					key: key,
+					value: value
+				};
+				var tableRow = new m.tableRowModel(parameters);
+				return tableRow.save(cb);
+			}
+		);
+	});
+};
 
-		if (err) {
-			return cb(err);
-		}
-
-		if (res.length == 0) {
-			return cb(null, '');
-		}
-
+Namespace.prototype.getTableValueByKey = function(tableName, key, cb) {
+	console.log('getTableValueByKey');
+	this.getTableRow(tableName, key, function(error, res) {
+		console.log('returned', error, res);
+		if (error) return cb(error);
+		if (res.length == 0) return cb(null, '');
+		console.log('here:', res);
 		return cb(null, res[0].value);
 	});
 };

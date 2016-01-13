@@ -200,7 +200,7 @@ ret.attempted = function(pieces, stateHolder, next) {
 			command = res[0].macro;
 			stateHolder.adminDetermined = true;
 			stateHolder.isAdmin = true;
-			stateHolder.executionHelper.handle(command, stateHolder, next);
+			stateHolder.executionHelper.handle(command, next);
 		} else {
 			var parameters = {
 				name: pieces[0],
@@ -215,7 +215,7 @@ ret.attempted = function(pieces, stateHolder, next) {
 
 				if (res.length) {
 					command = res[0].macro;
-					stateHolder.executionHelper.handle(command, stateHolder, next);
+					stateHolder.executionHelper.handle(command, next);
 				} else {
 					return next();
 				}
