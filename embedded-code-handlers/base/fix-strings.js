@@ -44,9 +44,8 @@ module.exports = function(command, callback) {
 			}
 			throw "Missing closing " + stringType + " in line `" + erroredLine + "`";
 		}
-
-		return callback(null, workingCommand);
 	} catch (e) {
 		return callback(e.stack);
 	}
+	return callback(null, workingCommand);
 }

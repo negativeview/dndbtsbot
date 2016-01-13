@@ -254,7 +254,6 @@ module.exports = function(command, cb) {
 
 	try {
 		lex.lex();
-
 		fixStrings(
 			tokens,
 			function(error, tokensWithQuotedStrings) {

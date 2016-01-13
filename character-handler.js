@@ -166,44 +166,6 @@ function handleSkillRoll(pieces, stateHolder, next) {
 }
 
 ret.init = function(mongoose, handlers) {
-	var Schema = mongoose.Schema;
-	var CharacterSchema = new Schema({
-		user: String,
-		name: String,
-		strength: Number,
-		dexterity: Number,
-		constitution: Number,
-		intelligence: Number,
-		wisdom: Number,
-		charisma: Number,
-		spellcastingAbility: String,
-		proficiencyBonus: Number,
-		ac: Number,
-		hp: Number,
-		maxHP: Number,
-		isCurrent: Boolean,
-		weapons: [
-			{
-				name: String,
-				abilityScore: String,
-				damageType: String,
-				isCurrent: Boolean,
-				critRoll: String,
-				normalRoll: String,
-				magicModifier: Number,
-
-				complexity: String,
-				range: String,
-				cost: Number,
-				weight: Number,
-				properties: [String]
-			}
-		],
-		newProficiencies: {},
-		proficiencies: [String]
-	});
-	mongoose.model('Character', CharacterSchema);
-
 	ret.characterModel = mongoose.model('Character');
 	ret.handlers = handlers;
 
@@ -276,8 +238,7 @@ function doSet(pieces, stateHolder, activeCharacter, next) {
 		}
 
 		activeCharacter.save(function(err) {
-			if (err) console.log(err);
-			return next();
+			return next(err);
 		});
 		return;
 	}
@@ -421,8 +382,7 @@ function doProficiency(pieces, stateHolder, activeCharacter, next) {
 		delete activeCharacter.newProficiencies[pieces[2]];
 		activeCharacter.markModified('newProficiencies');
 		activeCharacter.save(function(err, postSave) {
-			if (err) console.log(err);
-			return next();
+			return next(err);
 		});
 	} else if (pieces[3] == 'on' || pieces[3] == '1') {
 		var indexOf = activeCharacter.proficiencies.indexOf(pieces[2]);
@@ -432,8 +392,7 @@ function doProficiency(pieces, stateHolder, activeCharacter, next) {
 		activeCharacter.newProficiencies[pieces[2]] = 1;
 		activeCharacter.markModified('newProficiencies');
 		activeCharacter.save(function(err, postSave) {
-			if (err) console.log(err);
-			return next();
+			return next(err);
 		});
 	} else if (pieces[3] == '2') {
 		var indexOf = activeCharacter.proficiencies.indexOf(pieces[2]);
@@ -443,8 +402,7 @@ function doProficiency(pieces, stateHolder, activeCharacter, next) {
 		activeCharacter.newProficiencies[pieces[2]] = 2;
 		activeCharacter.markModified('newProficiencies');
 		activeCharacter.save(function(err, postSave) {
-			if (err) console.log(err);
-			return next();
+			return next(err);
 		});
 	}
 }

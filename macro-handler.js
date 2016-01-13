@@ -1,28 +1,5 @@
-var executionHelper = require('./execution-helper.js');
-
 var ret = {
 	macroModel: null
-};
-
-ret.init = function(mongoose) {
-	var Schema = mongoose.Schema;
-	var MacroSchema = new Schema({
-		name: String,
-		user: String,
-		macro: String
-	});
-	mongoose.model('Macro', MacroSchema);
-
-	ret.macroModel = mongoose.model('Macro');
-
-	var AdminMacroSchema = new Schema({
-		name: String,
-		server: String,
-		macro: String
-	});
-	mongoose.model('AdminMacro', AdminMacroSchema);
-
-	ret.adminMacroModel = mongoose.model('AdminMacro');
 };
 
 ret.get = function(isAdmin, pieces, stateHolder, next) {
@@ -174,7 +151,7 @@ ret.handle = function(pieces, stateHolder, next) {
 			return next();
 		}
 
-		var admin = stateHolder.isAdmin(serverID, stateHolder.username);
+		var admin = stateHolder.isAdmin(stateHolder.username);
 		if (!admin) {
 			stateHolder.simpleAddMessage(stateHolder.username, 'Only administrators can use this command.');
 			return next();
@@ -221,7 +198,7 @@ ret.attempted = function(pieces, stateHolder, next) {
 			command = res[0].macro;
 			stateHolder.adminDetermined = true;
 			stateHolder.isAdmin = true;
-			executionHelper.handle(command, stateHolder, next);
+			stateHolder.executionHelper.handle(command, stateHolder, next);
 		} else {
 			var parameters = {
 				name: pieces[0],
@@ -236,7 +213,7 @@ ret.attempted = function(pieces, stateHolder, next) {
 
 				if (res.length) {
 					command = res[0].macro;
-					executionHelper.handle(command, stateHolder, next);
+					stateHolder.executionHelper.handle(command, stateHolder, next);
 				} else {
 					return next();
 				}

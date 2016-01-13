@@ -1,35 +1,21 @@
-var executionHelper  = require('./execution-helper.js');
-var mongoose         = require('mongoose');
-var bot              = require('./authenticate.js');
 var async            = require('async');
-var handlers         = require('./handler-registry.js');
-var stateHolderClass = require('./state-holder.js');
-var messageQueue     = require('./message-queue.js');
+var bot              = require('./authenticate.js');
+var ExecutionHelper  = require('./utility-classes/execution-helper.js');
+var MessageQueue     = require('./utility-classes/message-queue.js');
+var mongoose         = require('mongoose');
+var mongooseModels   = require('./mongoose-models.js');
+var StateHolder      = require('./utility-classes/state-holder.js');
 
-/**
- * Highest-level validation that we even want to process this message further.
- * If we do, it passes the message to globalHandlerMiddle.
- */
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
-	// Ignore messages from ourselves, so that we don't accidentally
-	// send ourselves into an infinite loop.
 	if (user == bot.username || user == bot.id) return;
 
 	updateChannelTitles();
 
-	// We early return if the message doesn't start with an exclamation point.
 	if (message[0] != '!') return;
 
-	// Now that we're actually comitting to processing the message, set up a
-	// state holder.
-	var stateHolder = stateHolderClass(user, userID, channelID, rawEvent);
-	stateHolder.init(mongoose, bot);
-
-	// Default to verified. It's easier to un-verify when we run user-provided
-	// code than it is to verify all input.
-	stateHolder.verified = true;
-
-	executionHelper.handle(message, stateHolder, function(err) {
+	var stateHolder = new StateHolder(messageQueue, user, bot, mongoose, userID, channelID, rawEvent);
+	var executionHelper = new ExecutionHelper(stateHolder);
+	executionHelper.handle(message, function(err) {
 		stateHolder.doFinalOutput();
 		forcePump();
 		if (err) return;
@@ -86,15 +72,14 @@ function updateChannelTitles() {
 	*/
 }
 
+var messageQueue;
 function onBotReady() {
+	messageQueue = new MessageQueue();
+
 	var currentRelease = 'Boogie Woogie';
 
 	console.log(bot.username + " - (" + bot.id + ")");
 	bot.setPresence({game: currentRelease});
-}
-
-function updateRoomTopic() {
-
 }
 
 function onBotDisconnected() {
@@ -124,7 +109,7 @@ function forcePump() {
 function onMongoose(err) {
 	if (err) throw err;
 
-	handlers.init(mongoose, bot);
+	mongooseModels(mongoose);
 
 	bot.on('ready',        onBotReady);
 	bot.on('message',      globalHandlerWrap);

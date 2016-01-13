@@ -448,27 +448,7 @@ var bookWeapons = [
 
 ret.init = function(mongoose) {
 	ret.mongoose = mongoose;
-
-	var Schema = mongoose.Schema;
-	var WeaponsStoreSchema = new Schema({
-		server: String,
-		name: String,
-		shortName: String,
-		complexity: String,
-		range: String,
-		cost: Number,
-		damageRoll: String,
-		damageType: String,
-		weight: Number,
-		properties: [String],
-		twoHandedDamage: String,
-		normalRange: Number,
-		maximumRange: Number
-	});
-	mongoose.model('WeaponStore', WeaponsStoreSchema);
 	ret.weaponStoreModel = mongoose.model('WeaponStore');
-
-	ret.weaponStoreModel
 };
 
 function weaponFindWrap(parameters, stateHolder, earlyReturn, successReturn) {

@@ -32,15 +32,19 @@ module.exports = {
 			throw "Echo does not return anything.";
 		}
 
+		node.type = 'parsed';
+		node.strRep = 'echo';
+
 		var sub = [];
 		for (var i = 1; i < command.length; i++) {
 			sub.push(command[i]);
 		}
 
-		var stn = new SyntaxTreeNode();
-		stn.strRep = 'echo';
-		stn.addSubTree(sub);
-		stn.work = work;
+		var childStn = new SyntaxTreeNode();
+		childStn.tokenList = sub;
+
+		node.addSubNode(childStn);
+		node.work = work;
 
 		return cb('', stn);
 	}

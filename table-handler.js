@@ -1,25 +1,7 @@
 var ret = {};
 
 ret.init = function(mongoose) {
-	var Schema = mongoose.Schema;
-
-	var TableSchema = new Schema({
-		name: String,
-		user: String,
-		channel: String,
-		server: String,
-		publicEdit: Boolean
-	});
-	mongoose.model('Table', TableSchema);
-
 	ret.tableModel = mongoose.model('Table');
-
-	var TableRowSchema = new Schema({
-		table: String,
-		key: String,
-		value: String
-	});
-	mongoose.model('TableRow', TableRowSchema);
 	ret.tableRowModel = mongoose.model('TableRow');
 };
 
@@ -240,7 +222,7 @@ ret.set = function(pieces, stateHolder, next) {
 					return next();
 				}
 
-				var admin = stateHolder.isAdmin(serverID, stateHolder.username);
+				var admin = stateHolder.isAdmin(stateHolder.username);
 				if (!admin) {
 					stateHolder.simpleAddMessage(stateHolder.username, 'You cannot edit this table.');
 					return next();
@@ -442,7 +424,7 @@ ret.handle = function(pieces, stateHolder, next) {
 		}
 
 		if (pieces[1] != 'get' && pieces[1] != 'set') {
-			var admin = stateHolder.isAdmin(serverID, stateHolder.username);
+			var admin = stateHolder.isAdmin(stateHolder.username);
 			if (!admin) {
 				stateHolder.simpleAddMessage(stateHolder.username, 'Only administrators can use this command.');
 				return next();

@@ -1,20 +1,21 @@
-var async    = require('async');
+var async = require('async');
+var HandlerRegistry = require('./handler-registry.js');
 
 var ret = {};
 
-ret.handle = function(message, stateHolder, cb) {
-	var handlers = require('./handler-registry.js');
+function ExecutionHelper(stateHolder) {
+	this.stateHolder = stateHolder;
+	this.stateHolder.executionHelper = this;
+	this.handlers = new HandlerRegistry(stateHolder);
+}
 
-	console.log(message);
-
+ExecutionHelper.prototype.handle = function(message, cb) {
 	var splitMessages = message.split("\n");
-
 	var messages = [];
 
 	var message = '';
 	for (var i = 0; i < splitMessages.length; i++) {
 		var newLine = splitMessages[i];
-
 		if (newLine.indexOf("!macro") === 0 || message.indexOf("!!") === 0) {
 			message += newLine + "\n";
 			for (var m = i + 1; m < splitMessages.length; m++) {
@@ -24,14 +25,12 @@ ret.handle = function(message, stateHolder, cb) {
 			message = '';
 			break;			
 		}
-
 		if (newLine[0] == '!') {
 			if (message.length != 0) {
 				messages[messages.length] = message.replace("\n", '');
 				message = '';
 			}
 		}
-
 		if (message.length != 0) message += " \n";
 		message += newLine;
 	}
@@ -39,28 +38,28 @@ ret.handle = function(message, stateHolder, cb) {
 		messages[messages.length] = message.replace("\n", '');
 	}
 
+	this.handleParsedMessages(messages, cb);
+};
+
+ExecutionHelper.prototype.handleParsedMessages = function(messages, cb) {
+	var m = this;
 	async.eachSeries(
 		messages,
 		function(statement, next) {
 			var pieces = statement.split(" ");
 			var command = pieces[0];
 
-			var commandFound = handlers.findCommand(command);
+			var commandFound = m.handlers.findCommand(command);
 			if (commandFound) {
-				handlers.execute(
+				m.handlers.execute(
 					command,
 					pieces,
-					stateHolder,
 					next
 				);
 			} else {
-				if (stateHolder.inMacro) {
-					return next();
-				}
-				handlers.macro(
+				m.handlers.macro(
 					command,
 					pieces,
-					stateHolder,
 					next
 				);
 			}
@@ -72,4 +71,4 @@ ret.handle = function(message, stateHolder, cb) {
 	);
 };
 
-module.exports = ret;
+module.exports = ExecutionHelper;

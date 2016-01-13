@@ -15,7 +15,8 @@ module.exports.testSimpleString = function(test) {
 		stn.strRep = '<program>';
 
 		codeHandler.handleCommandPart(tokens, stn, null, function(error, topLevelNode) {
-			test.ifError(error);
+			console.log(JSON.stringify(topLevelNode, ["strRep", "type", "nodes"], "  "));
+			test.ifError(error, error);
 
 			test.equal('<program>', topLevelNode.strRep, "Wrong node chosen for top level node.");
 			test.equal(1, topLevelNode.nodes.length, "Top level node has wrong number of children.");
@@ -44,7 +45,7 @@ module.exports.testIfElse = function(test) {
 				test.ifError(error);
 
 				test.equal('<program>', topLevelNode.strRep, "Wrong node chosen for top level node.");
-				test.equal(1, topLevelNode.nodes.length, "Top level node has wrong number of children.");
+				test.equal(3, topLevelNode.nodes.length, "Top level node has wrong number of children.");
 
 				var node = topLevelNode.nodes[0];
 				test.equal('echo', node.strRep, node.strRep);

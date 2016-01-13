@@ -20,7 +20,7 @@ ChannelNamespace.prototype.canEdit = function(cb) {
 	var serverID = this.stateHolder.findServerID(this.stateHolder.channelID);
 	if (!serverID) return cb(null, false);
 
-	if (this.stateHolder.isAdmin(serverID, this.stateHolder.username)) {
+	if (this.stateHolder.isAdmin(this.stateHolder.username)) {
 		return cb(null, true);
 	}
 

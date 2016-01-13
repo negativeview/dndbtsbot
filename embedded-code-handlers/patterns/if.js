@@ -91,13 +91,14 @@ module.exports = {
 	},
 	process: function(command, node, state, index, cb) {
 		var stn = new SyntaxTreeNode();
-		stn.strRep = 'placeholder';
+		stn.strRep = 'pre if statement';
 
 		var pre = [];
 		for (var i = 0; i < index; i++) {
 			pre.push(command[i]);
 		}
 		node.addSubTree(pre);
+		console.log(node);
 
 		var stn = new SyntaxTreeNode();
 		if (command[index + 1].type != 'LEFT_PAREN') {
@@ -122,6 +123,7 @@ module.exports = {
 		stn.strRep = 'IfElse';
 		stn.work = work;
 
+		console.log('adding second');
 		node.addSubTree(stn);
 
 		return cb('', stn);

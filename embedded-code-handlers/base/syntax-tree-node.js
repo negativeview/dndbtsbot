@@ -1,13 +1,9 @@
 function SyntaxTreeNode() {
 	this.nodes = [];
-	this.trees = [];
 	this.strRep = "Unset";
-	this.type = 'syntaxtreenode';
+	this.type = 'unparsed-node-list';
+	this.tokenList = [];
 }
-
-SyntaxTreeNode.prototype.addSubTree = function(tree) {
-	this.trees.push(tree);
-};
 
 SyntaxTreeNode.prototype.addSubNode = function(subNode) {
 	this.nodes.push(subNode);

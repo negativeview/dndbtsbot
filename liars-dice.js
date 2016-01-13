@@ -177,14 +177,14 @@ function ldStart(pieces, stateHolder, next) {
 		var startingPlayer = stateHolder.actualUsername;
 		if (data.totalResult == 1) {
 			game.activePlayer = 1;
-			startingPlayer = stateHolder.memberNumberToName(serverID, game.userB);
+			startingPlayer = stateHolder.memberNumberToName(game.userB);
 		} else {
 			game.activePlayer = 2;
 		}
 
 		stateHolder.simpleAddMessage(
 			stateHolder.channelID,
-			'Started a game of liars dice between ' + stateHolder.actualUsername + ' and ' + stateHolder.memberNumberToName(serverID, game.userB) + "\n" +
+			'Started a game of liars dice between ' + stateHolder.actualUsername + ' and ' + stateHolder.memberNumberToName(game.userB) + "\n" +
 			startingPlayer + ' starts. DMing the players their dice.'
 		);
 

@@ -1,6 +1,5 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
-var executionHelper = require('../../execution-helper.js');
 
 function work(stateHolder, state, node, cb) {
 	if (node.nodes.length != 1) {
@@ -18,7 +17,7 @@ function work(stateHolder, state, node, cb) {
 	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
 		if (error) return cb(error);
 
-		executionHelper.handle('!table ' + value, stateHolder, function() {
+		stateHolder.executionHelper.handle('!table ' + value, stateHolder, function() {
 			if (messageA) {
 				stateHolder.messages[stateHolder.channelID] = messageA;
 			} else {
