@@ -1,6 +1,6 @@
 var Dice = require('./dice.js');
 var ret = {};
-var embeddedCodeHandler = require('./embedded-code-handler.js');
+var embeddedCodeHandler = require('./embedded-code-handlers/base/embedded-code-handler.js');
 
 var weaponKeys = [
 	'name',

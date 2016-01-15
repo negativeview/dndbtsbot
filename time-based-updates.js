@@ -1,5 +1,5 @@
 var async               = require('async');
-var EmbeddedCodeHandler = require('./embedded-code-handler.js');
+var EmbeddedCodeHandler = require('./embedded-code-handlers/base/embedded-code-handler.js');
 var HandlerRegistry     = require('./utility-classes/handler-registry.js');
 var moment              = require('moment');
 var StateHolder         = require('./utility-classes/state-holder.js');

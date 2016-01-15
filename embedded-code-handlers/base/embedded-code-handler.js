@@ -1,0 +1,369 @@
+var async          = require('async');
+var CodeState      = require('./code-state.js');
+var helper         = require('../helper.js');
+var patterns       = require('../patterns/all.js');
+var tokenizer      = require('./tokenizer.js');
+var SyntaxTreeNode = require('./syntax-tree-node.js');
+
+var patterns = [
+	patterns.ifElse,
+	patterns.curlyBraces,
+	patterns.semicolon,
+	patterns.parenthesis,
+	patterns.assignment,
+	patterns.echo,
+	patterns.ignore,
+	patterns.squareBrackets,
+	patterns.dot,
+	patterns.table,
+	patterns.doubleEquals,
+	patterns.simpleString,
+	patterns.macroArgument,
+	patterns.plus
+];
+
+function EmbeddedCodeHandler(stateHolder, handlerRegistry) {
+	this.stateHolder = stateHolder;
+	this.mongoose = stateHolder.mongoose;
+	this.varModel = this.mongoose.model('Var');
+	this.characterModel = this.mongoose.model('Character');
+	this.tableModel = this.mongoose.model('Table');
+	this.tableRowModel = this.mongoose.model('TableRow');
+	this.handlers = handlerRegistry;
+};
+
+/*****
+ * Handles code that is set up as an array of words.
+ *
+ * This function is intended to be the gateway between the old system, which
+ * splits everything into arrays of words, and the new system which doesn't.
+ * For that reason, this function also sets up a CodeState object, which the
+ * old system knows nothing about. It then passes everything on to
+ * `executeString`, which does all the actual work.
+ *
+ * `pieces`
+ *    An array of strings that represent the program itself.
+ *
+ * `stateHolder`
+ *    The global stateHolder that is used by a huge amount of code in this bot.
+ *
+ * `externalCallback`
+ *    The callback to call when this is done executing. The callback takes the
+ *    following arguments:
+ *
+ *    `error`
+ *       Either null, or an error message meant ot be displayed to the end user.
+ *    `codeState`
+ *       The state of the internal execution environment. Using this, you can
+ *       tell what the various local variables are, making it feasible to use
+ *       EmbededCodeHandler as an extension mechanism.
+ *****/
+EmbeddedCodeHandler.prototype.handle = function(pieces, stateHolder, externalCallback) {
+	/**
+	 * Re-build the command. Because it came through the older stupid
+	 * system it's an array of words split on spaces. Put them back
+	 * together.
+	 */
+	var command = '';
+	for (var i = 1; i < pieces.length; i++) {
+		if (command != '')
+			command += ' ';
+		command += pieces[i];
+	}
+
+	/**
+	 * Set up our CodeState object, which handles things like input
+	 * arguments, the current code stack, etc.
+	 */
+	var codeState = new CodeState();
+	if (this.stateHolder.incomingVariables)
+		codeState.addVariables(this.stateHolder.incomingVariables);
+
+	if ('originalArgs' in this.stateHolder) {
+		codeState.setArguments(this.stateHolder.originalArgs);
+	} else {
+		codeState.setArguments(command.split(" "));
+	}
+
+	this.executeString(command, codeState, externalCallback);
+};
+
+/*****
+ * Handles code that is set up as just a string.
+ *
+ * This function is where we actually kick off executing code. It expects code
+ * to be in a sensible string by now.
+ *
+ * `command`
+ *    The string that is the code.
+ *
+ * `codeState`
+ *    A CodeState instance that represents the state of the virtual machine. As
+ *    an input it can pre-define local variables or set the arguments that the
+ *    code will see as being passed.
+ *
+ * `externalCallback`
+ *    The callback to call when this is done executing. The callback takes the
+ *    following arguments:
+ *
+ *    `error`
+ *       Either null, or an error message meant ot be displayed to the end user.
+ *    `codeState`
+ *       The state of the internal execution environment. Using this, you can
+ *       tell what the various local variables are, making it feasible to use
+ *       EmbededCodeHandler as an extension mechanism.
+ *****/
+EmbeddedCodeHandler.prototype.executeString = function(command, codeState, externalCallback) {
+	// Run the tokenizer and pass the result of that to further steps.
+	try {
+		tokenizer(
+			command,
+			this.handleTokenList.bind(
+				this,
+				externalCallback,
+				codeState
+			)
+		);
+	} catch (e) {
+		return externalCallback(e.stack);
+	}
+};
+
+/*****
+ * Kicks off the process of turning a token list into a syntax tree and
+ * executing it.
+ *
+ * `externalCallback`
+ *    The callback to call when this is done executing. The callback takes the
+ *    following arguments:
+ *
+ *    `error`
+ *       Either null, or an error message meant ot be displayed to the end user.
+ *    `codeState`
+ *       The state of the internal execution environment. Using this, you can
+ *       tell what the various local variables are, making it feasible to use
+ *       EmbededCodeHandler as an extension mechanism.
+ * `codeState`
+ *    A CodeState instance that represents the state of the virtual machine. As
+ *    an input it can pre-define local variables or set the arguments that the
+ *    code will see as being passed.
+ * `error`
+ *    This function is primarily called as the callback from something else.
+ *    This argument is either null or the error that that function generated.
+ *    We should bail early if this is set to an error message.
+ * `tokens`
+ *    An array of parsed tokens.
+ *****/
+EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeState, error, tokens) {
+	if (error) return externalCallback(error);
+
+	var stn = new SyntaxTreeNode();
+	stn.strRep = '<program>';
+	stn.type = 'program';
+	stn.tokenList = tokens;
+
+	this.recursiveProcess(
+		stn,
+		codeState,
+		this.executeProcessed.bind(
+			this,
+			externalCallback,
+			codeState,
+			stn
+		)
+	);
+};
+
+/*****
+ * Takes a SyntaxTreeNode and processes it and its children.
+ *
+ * `syntaxTreeNode`
+ *    The SyntaxTreeNode that we want to start our processing with.
+ * `codeState`
+ *    A CodeState instance that represents the state of the virtual machine. As
+ *    an input it can pre-define local variables or set the arguments that the
+ *    code will see as being passed.
+ * `executeCallback`
+ *    What to call when we are done creating the syntax tree and want to
+ *    execute it instead. The callback takes the following arguments:
+ *    `externalCallback`
+ *       The callback to call when this is done executing. The callback takes
+ *       the following arguments:
+ *
+ *       `error`
+ *          Either null, or an error message meant ot be displayed to the end
+ *          user.
+ *       `codeState`
+ *          The state of the internal execution environment. Using this, you
+ *          can tell what the various local variables are, making it feasible
+ *          to use EmbededCodeHandler as an extension mechanism.
+ *    `codeState`
+ *       A CodeState instance that represents the state of the virtual machine.
+ *       As an input it can pre-define local variables or set the arguments
+ *       that the code will see as being passed.
+ *    `topLevelNode`
+ *       The SyntaxTreeNode that represents the top level node. This is often
+ *       something like a ';' node, which is pretty boring.
+ *    `error`
+ *       The error that may hvae been generated from the previous step.
+ *    `lastNodeProcessed`
+ *       The last node that was processed. If an error was generated, this will
+ *       be the node that generated the error. Otherwise, it's still the last
+ *       node processed, but that's less important to know if there's no error.
+ *****/
+EmbeddedCodeHandler.prototype.recursiveProcess = function(syntaxTreeNode, codeState, executeCallback) {
+	if (!syntaxTreeNode.tokenList) return executeCallback();
+
+	this.findPattern(
+		this.processSingle.bind(
+			this,
+			executeCallback,
+			syntaxTreeNode,
+			codeState
+		),
+		syntaxTreeNode.tokenList,
+		function() {
+			return executeCallback(null, syntaxTreeNode);
+		}
+	);
+};
+
+/*****
+ * NOT DONE WITH DOCUMENTATION
+ * Takes a tokenArray find tries to find what pattern applies to it.
+ *
+ * This is a BIG part of turning a token array into a syntax tree node.
+ *
+ * `foundCallback`
+ *    What to call when we find an appropriate pattern. The callback takes the
+ *    following arguments:
+ *       `executeCallback`
+ *       `topLevelNode`
+ *       `codeState`
+ *          A CodeState instance that represents the state of the virtual
+ *          machine. As an input it can pre-define local variables or set the
+ *          arguments that the code will see as being passed.
+ *       `index`
+ *          The index into the tokenArray where the pattern starts.
+ *       `pattern`
+ *          The pattern that we found.
+ *
+ * `stateHolder`
+ *    The global stateHolder that is used by a huge amount of code in this bot.
+ *
+ * `externalCallback`
+ *    The callback to call when this is done executing. The callback takes the
+ *    following arguments:
+ *
+ *    `error`
+ *       Either null, or an error message meant ot be displayed to the end user.
+ *    `codeState`
+ *       The state of the internal execution environment. Using this, you can
+ *       tell what the various local variables are, making it feasible to use
+ *       EmbededCodeHandler as an extension mechanism.
+ *****/
+EmbeddedCodeHandler.prototype.findPattern = function(foundCallback, tokenArray, next) {
+	for (var i = 0; i < patterns.length; i++) {
+		var pattern = patterns[i];
+		var found = false;
+		try {
+			found = pattern.matches(tokenArray);
+		} catch (e) {
+			return next(e.stack);
+		}
+
+		if (found !== false) {
+			return foundCallback(found, pattern);
+		}
+	}
+
+	return next();
+};
+
+EmbeddedCodeHandler.prototype.executeProcessed = function(cb, state, topLevelNode, error, lastNodeProcessed) {
+	console.log('TOP LEVEL NODE', JSON.stringify(topLevelNode, ['strRep', 'nodes'], '  '));
+	topLevelNode.work(this.stateHolder, state, topLevelNode, function(error) {
+		return cb(error, state);
+	});
+};
+
+/*****
+ * NOT DONE WITH DOCUMENTATION
+ * Takes a tokenArray find tries to find what pattern applies to it.
+ *
+ * This is a BIG part of turning a token array into a syntax tree node.
+ *
+ * `executeCallback`
+ * `parentNode`
+ * `codeState`
+ *    A CodeState instance that represents the state of the virtual machine. As
+ *    an input it can pre-define local variables or set the arguments that the
+ *    code will see as being passed.
+ * `index`
+ *    The numeric index where the pattern starts.
+ * `pattern`
+ *    The pattern that we found to process.
+
+
+
+
+
+ * `foundCallback`
+ *    What to call when we find an appropriate pattern. The callback takes the
+ *    following arguments:
+ *       `executeCallback`
+ *       `topLevelNode`
+ *       `codeState`
+ *          A CodeState instance that represents the state of the virtual
+ *          machine. As an input it can pre-define local variables or set the
+ *          arguments that the code will see as being passed.
+ *       `index`
+ *          The index into the tokenArray where the pattern starts.
+ *       `pattern`
+ *          The pattern that we found.
+ *
+ * `stateHolder`
+ *    The global stateHolder that is used by a huge amount of code in this bot.
+ *
+ * `externalCallback`
+ *    The callback to call when this is done executing. The callback takes the
+ *    following arguments:
+ *
+ *    `error`
+ *       Either null, or an error message meant ot be displayed to the end user.
+ *    `codeState`
+ *       The state of the internal execution environment. Using this, you can
+ *       tell what the various local variables are, making it feasible to use
+ *       EmbededCodeHandler as an extension mechanism.
+ *****/
+EmbeddedCodeHandler.prototype.processSingle = function(executeCallback, parentNode, codeState, index, pattern) {
+	var recursive = function(a, b, c) {
+		this.recursiveProcess(a, b, c);
+	};
+	recursive = recursive.bind(this);
+
+	pattern.process(parentNode, codeState, index, function(error, newNode) {
+		async.eachSeries(
+			parentNode.nodes,
+			function(index, next) {
+				if (index.type == 'unparsed-node-list' && index.tokenList.length) {
+					recursive(index, codeState, function(error) {
+						if (error) console.log('error', error);
+						next();
+					});
+				} else {
+					return next();
+				}
+			},
+			function(error) {
+				return executeCallback(error);
+			}
+		);
+	});
+};
+
+EmbeddedCodeHandler.prototype.debug = function(pieces, next) {
+
+};
+
+module.exports = EmbeddedCodeHandler;
