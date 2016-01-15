@@ -8,7 +8,7 @@ function work(stateHolder, state, node, cb) {
 
 	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
 		if (error) return cb(error);
-
+		
 		var leftHandSide = value;
 		if (leftHandSide.type != 'variable') {
 			return cb('square-brackets: Expecting variable, got ', leftHandSide);
@@ -20,6 +20,12 @@ function work(stateHolder, state, node, cb) {
 			if (leftHandSide.type == 'variable') {
 				if (typeof(rightHandSide) == 'string') {
 					leftHandSide.setIndex(rightHandSide);
+
+
+					console.log('got here', leftHandSide);
+
+
+
 					return cb(null, leftHandSide);
 				} else {
 					return cb('square-brackets: Do not know what to do with type ' + typeof(rightHandSide) + ' on the right');

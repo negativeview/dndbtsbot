@@ -17,6 +17,9 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	var stateHolder = new StateHolder(messageQueue, user, bot, mongoose, userID, channelID, rawEvent);
 	var executionHelper = new ExecutionHelper(stateHolder);
 	executionHelper.handle(message, function(err) {
+		if (err) {
+			stateHolder.simpleAddMessage(userID, 'ERROR:' + err);
+		}
 		stateHolder.doFinalOutput();
 		forcePump();
 		if (err) return;

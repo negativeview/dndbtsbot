@@ -146,9 +146,9 @@ EmbeddedCodeHandler.prototype.findPattern = function(foundCallback, tokenArray, 
 };
 
 EmbeddedCodeHandler.prototype.executeProcessed = function(cb, state, topLevelNode, error, lastNodeProcessed) {
-	console.log(topLevelNode);
-	topLevelNode.work(this.stateHolder, state, topLevelNode, function() {
-		return cb(null, state);
+	console.log('TOP LEVEL NODE', JSON.stringify(topLevelNode, ['strRep', 'nodes'], '  '));
+	topLevelNode.work(this.stateHolder, state, topLevelNode, function(error) {
+		return cb(error, state);
 	});
 };
 
