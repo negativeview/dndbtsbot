@@ -307,24 +307,6 @@ EmbeddedCodeHandler.prototype.executeProcessed = function(cb, state, topLevelNod
 
 
 
-
- * `foundCallback`
- *    What to call when we find an appropriate pattern. The callback takes the
- *    following arguments:
- *       `executeCallback`
- *       `topLevelNode`
- *       `codeState`
- *          A CodeState instance that represents the state of the virtual
- *          machine. As an input it can pre-define local variables or set the
- *          arguments that the code will see as being passed.
- *       `index`
- *          The index into the tokenArray where the pattern starts.
- *       `pattern`
- *          The pattern that we found.
- *
- * `stateHolder`
- *    The global stateHolder that is used by a huge amount of code in this bot.
- *
  * `externalCallback`
  *    The callback to call when this is done executing. The callback takes the
  *    following arguments:
