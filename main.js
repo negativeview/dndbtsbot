@@ -5,11 +5,12 @@ var MessageQueue     = require('./utility-classes/message-queue.js');
 var mongoose         = require('mongoose');
 var mongooseModels   = require('./mongoose-models.js');
 var StateHolder      = require('./utility-classes/state-holder.js');
+var TimeBasedUpdates = require('./time-based-updates.js');
 
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	if (user == bot.username || user == bot.id) return;
 
-	updateChannelTitles();
+	timeBasedUpdates.update();
 
 	if (message[0] != '!') return;
 
@@ -25,56 +26,12 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 
 var lastUpdate = '';
 
-function updateChannelTitles() {
-	var announcementChannels = [
-		'123184695289577474',
-		//'132594342954139648'
-	];
-
-	var moment = require('moment');
-	var m = moment().utc();
-	m.subtract(7, 'hours');
-
-	var hours = m.hours();
-
-	var amPM = 'AM';
-	if (hours > 12) {
-		hours = hours - 12;
-		amPM = 'PM';
-	}
-
-	if (hours == 0) hours = 12;
-
-	var shouldBeTopic = 'Time: ' + hours + ':XX ' + amPM;
-
-	/*
-	if (lastUpdate != shouldBeTopic) {
-		lastUpdate = shouldBeTopic;
-
-		for (var i = 0; i < announcementChannels.length; i++) {
-			var toSend = {to: announcementChannels[i], message: lastUpdate};
-			bot.sendMessage(toSend, function(err) {
-				if (err) console.log(err);
-			});
-		}
-	}
-	*/
-
-	/*
-	if (shouldBeTopic != topic) {
-		bot.editChannelInfo(
-			{
-				channel: '132594342954139648',
-				topic: shouldBeTopic
-			}
-		);
-	}
-	*/
-}
-
 var messageQueue;
+var timeBasedUpdates;
+
 function onBotReady() {
 	messageQueue = new MessageQueue();
+	timeBasedUpdates = new TimeBasedUpdates(bot, mongoose, messageQueue);
 
 	var currentRelease = 'Boogie Woogie';
 

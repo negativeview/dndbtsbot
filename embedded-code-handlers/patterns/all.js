@@ -10,5 +10,7 @@ module.exports = {
 	doubleEquals: require('./double-equals.js'),
 	semicolon: require('./semicolon.js'),
 	curlyBraces: require('./curly-braces.js'),
-	simpleString: require('./simple-string.js')
+	simpleString: require('./simple-string.js'),
+	macroArgument: require('./macro-argument.js'),
+	plus: require('./plus.js')
 };

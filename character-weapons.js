@@ -408,8 +408,6 @@ function doAttack(activeCharacter, weapon, stateHolder, next) {
 				if (result.rawResults[i].type == 'die') {
 					toHitOnDie = result.rawResults[i].results[0];
 					break;
-				} else {
-					console.log('type', result.rawResults[i].type);
 				}
 			}
 			var toHit = result.output;

@@ -10,6 +10,7 @@ Variable.prototype.setIndex = function(index) {
 }
 
 Variable.prototype.assign = function(value, cb) {
+	console.log('In assign, namespace:', namespace);
 	if (this.index) {
 		this.namespace.setTableValue(this.name, this.index, value, cb);
 	} else {

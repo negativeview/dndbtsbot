@@ -24,7 +24,12 @@ function work(stateHolder, state, node, cb) {
 					}
 					return cb();
 				});
+			} else if (typeof(leftHandSide) == 'string') {
+				console.log('assigning ' + rightHandSide + ' to variable ' + leftHandSide);
+				state.variables[leftHandSide] = rightHandSide;
+				return cb();
 			} else {
+				console.log('Do not know how to assign to', typeof(leftHandSide));
 				return cb('I do not know how to assign to ' + leftHandSide.type);
 			}
 		});

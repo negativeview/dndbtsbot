@@ -17,6 +17,7 @@ module.exports = {
 		node.strRep = node.tokenList[index].rawValue;
 		node.work = work;
 		node.type = 'processed';
+		node.simpleString = node.tokenList[index].type == 'STRING';
 		node.tokenList = [];
 
 		return cb('', node);

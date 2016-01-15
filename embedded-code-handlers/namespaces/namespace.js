@@ -68,15 +68,16 @@ Namespace.prototype.getTableRow = function(tableName, key, cb) {
 			m.tableRowModel.find(parameters).exec(function(err, res) {
 				if (err) return cb(err);
 
-				return cb(null, res);
+				return cb(null, table, res);
 			});
 		});
 	});
 };
 
 Namespace.prototype.setTableValue = function(tableName, key, value, cb) {
-	this.getTableRow(tableName, key, function(error, res) {
-		if (err) return cb(err);
+	var m = this;
+	this.getTableRow(tableName, key, function(error, table, res) {
+		if (error) return cb(error);
 
 		async.eachSeries(
 			res,
@@ -99,7 +100,7 @@ Namespace.prototype.setTableValue = function(tableName, key, value, cb) {
 
 Namespace.prototype.getTableValueByKey = function(tableName, key, cb) {
 	console.log('getTableValueByKey');
-	this.getTableRow(tableName, key, function(error, res) {
+	this.getTableRow(tableName, key, function(error, table, res) {
 		console.log('returned', error, res);
 		if (error) return cb(error);
 		if (res.length == 0) return cb(null, '');

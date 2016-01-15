@@ -2,22 +2,41 @@ var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
 function work(stateHolder, state, node, cb) {
-	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
+	var before = node.nodes[0];
+	var comparison = node.nodes[1];
+	var trueBranch = node.nodes[2];
+	var falseBranch = node.nodes[3];
+	var after = node.nodes[4];
+
+	before.work(stateHolder, state, before, function(error, value) {
 		if (error) return cb(error);
 
-		if (value == 'true') {
-			node.nodes[1].work(stateHolder, state, node.nodes[1], function(error, value) {
+		comparison.work(stateHolder, state, comparison, function(error, value) {
+			if (error) return cb(error);
+
+			var branch = null;
+			switch (value) {
+				case 'true':
+					branch = trueBranch;
+					break;
+				case 'false':
+					branch = falseBranch;
+					break;
+				default:
+					return cb('Comparison value did not wind up being true or false.');
+			}
+
+			branch.work(stateHolder, state, branch, function(error, value) {
 				if (error) return cb(error);
 
-				return cb();
-			});
-		} else {
-			node.nodes[2].work(stateHolder, state, node.nodes[2], function(error, value) {
-				if (error) return cb(error);
+				if (after.type == 'unparsed-node-list' && after.nodes.length == 0)
+					return cb();
 
-				return cb();
+				after.work(stateHolder, state, after, function(error, value) {
+					return cb(error);
+				});
 			});
-		}
+		});
 	});
 }
 
@@ -89,43 +108,60 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(command, node, state, index, cb) {
-		var stn = new SyntaxTreeNode();
-		stn.strRep = 'pre if statement';
+	process: function(node, state, index, cb) {
+		try {
+			var command = node.tokenList;
+			
+			var pre = new SyntaxTreeNode();
+			pre.strRep = 'pre if statement';
+			for (var i = 0; i < index; i++) {
+				pre.tokenList.push(command[i]);
+			}
+			node.addSubNode(pre);
 
-		var pre = [];
-		for (var i = 0; i < index; i++) {
-			pre.push(command[i]);
+			var conditional = new SyntaxTreeNode();
+			conditional.strRep = 'conditional';
+			if (command[index + 1].type != 'LEFT_PAREN') {
+				throw new Error("Missing a left parenthesis after IF statement" + command[index + 1].type);
+			}
+
+			var res = goUntil(command, index + 3, +1, command.length, 'LEFT_PAREN', 'RIGHT_PAREN');
+			conditional.tokenList = res.collection.reverse();
+			node.addSubNode(conditional);
+
+			var m = res.m;
+			res = goUntil(command, m + 3, +1, command.length, 'LEFT_CURLY', 'RIGHT_CURLY');
+			m = res.m;
+
+			var trueBranch = new SyntaxTreeNode();
+			trueBranch.strRep = 'true branch';
+			trueBranch.tokenList = res.collection.reverse();
+			node.addSubNode(trueBranch);
+
+			var elseBranch = new SyntaxTreeNode();
+			elseBranch.strRep = 'elseBranch';
+			if (command[res.m + 1].type == 'ELSE') {
+				res = goUntil(command, m + 4, +1, command.length, 'LEFT_CURLY', 'RIGHT_CURLY');
+				elseBranch.tokenList = res.collection.reverse();
+			}
+			node.addSubNode(elseBranch);
+
+			var afterBranch = new SyntaxTreeNode();
+			afterBranch.strRep = 'after';
+			for (var i = res.m + 1; i < command.length; i++) {
+				afterBranch.tokenList.push(command[i]);
+			}
+			node.addSubNode(afterBranch);
+
+			node.work = work;
+			node.strRep = 'IfElse';
+			node.tokenList = [];
+
+			console.log('got to end of process');
+		} catch (e) {
+			console.log('exception in if', e, e.stack);
+			return cb(e);
 		}
-		node.addSubTree(pre);
-		console.log(node);
-
-		var stn = new SyntaxTreeNode();
-		if (command[index + 1].type != 'LEFT_PAREN') {
-			return cb('Missing a left parenthesis after IF statmeent.');
-		}
-
-		var res = goUntil(command, index + 3, +1, command.length, 'LEFT_PAREN', 'RIGHT_PAREN');
-		var comparisonCollection = res.collection;
-		stn.addSubTree(comparisonCollection.reverse());
-
-		var m = res.m;
-
-		res = goUntil(command, m + 3, +1, command.length, 'LEFT_CURLY', 'RIGHT_CURLY');
-		m = res.m;
-		var ifCollection = res.collection;
-		stn.addSubTree(ifCollection.reverse());
-
-		if (command[res.m + 1].type == 'ELSE') {
-			res = goUntil(command, m + 4, +1, command.length, 'LEFT_CURLY', 'RIGHT_CURLY');
-			stn.addSubTree(res.collection.reverse());
-		}
-		stn.strRep = 'IfElse';
-		stn.work = work;
-
-		console.log('adding second');
-		node.addSubTree(stn);
-
-		return cb('', stn);
+		return cb('', node);
 	}
 };

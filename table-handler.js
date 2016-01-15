@@ -215,7 +215,7 @@ ret.set = function(pieces, stateHolder, next) {
 		var table = results[0];
 
 		if (!(table.publicEdit)) {
-			var serverID = stateHolder.findServerID(stateHolder.channelID);
+			var serverID = stateHolder.serverID;
 			if (pieces[2] == 'channel') {
 				if (!serverID) {
 					stateHolder.simpleAddMessage(stateHolder.username, 'You must use this command from a channel so that I know what server to use.');

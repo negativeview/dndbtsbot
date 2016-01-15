@@ -33,24 +33,27 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(command, node, state, index, cb) {
+	process: function(node, state, index, cb) {
 		var left = [];
 		var right = [];
 
+		var left = new SyntaxTreeNode();
+		left.strRep = 'left';
 		for (var i = 0; i < index; i++) {
-			left.push(command[i]);
+			left.tokenList.push(node.tokenList[i]);
 		}
+		node.addSubNode(left);
 
-		for (var i = index + 1; i < command.length; i++) {
-			right.push(command[i]);
+		var right = new SyntaxTreeNode();
+		right.strRep = 'right';
+		for (var i = index + 1; i < node.tokenList.length; i++) {
+			right.tokenList.push(node.tokenList[i]);
 		}
+		node.addSubNode(right);
 
-		var stn = new SyntaxTreeNode();
-		stn.strRep = '==';
-		stn.addSubTree(left);
-		stn.addSubTree(right);
-		stn.work = work;
+		node.strRep = '==';
+		node.work = work;
 
-		return cb('', stn);
+		return cb('', node);
 	}
 };

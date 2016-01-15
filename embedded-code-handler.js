@@ -17,7 +17,9 @@ var patterns = [
 	patterns.dot,
 	patterns.table,
 	patterns.doubleEquals,
-	patterns.simpleString
+	patterns.simpleString,
+	patterns.macroArgument,
+	patterns.plus
 ];
 
 function EmbeddedCodeHandler(stateHolder, handlerRegistry) {
@@ -64,7 +66,7 @@ EmbeddedCodeHandler.prototype.executeString = function(command, next) {
 	 */
 	var codeState = new CodeState();
 	if (this.stateHolder.incomingVariables)
-		codeState.addVariables(stateHolder.incomingVariables);
+		codeState.addVariables(this.stateHolder.incomingVariables);
 
 	if ('originalArgs' in this.stateHolder) {
 		codeState.setArguments(this.stateHolder.originalArgs);
@@ -144,8 +146,9 @@ EmbeddedCodeHandler.prototype.findPattern = function(foundCallback, tokenArray, 
 };
 
 EmbeddedCodeHandler.prototype.executeProcessed = function(cb, state, topLevelNode, error, lastNodeProcessed) {
+	console.log(topLevelNode);
 	topLevelNode.work(this.stateHolder, state, topLevelNode, function() {
-		return cb();
+		return cb(null, state);
 	});
 };
 

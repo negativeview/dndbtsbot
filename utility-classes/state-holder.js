@@ -1,7 +1,7 @@
 function StateHolder(messageQueue, user, bot, mongoose, userID, channelID, rawEvent) {
 	this.messages = {};
 	this.channelID = channelID;
-	this.username = rawEvent.d.author.id;
+	this.username = rawEvent ? rawEvent.d.author.id : null;
 	this.actualUsername = user;
 	this.adminDetermined = false;
 	this._isAdmin = false;
