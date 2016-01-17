@@ -26,6 +26,7 @@ module.exports = function(command, callback) {
 					inString = false;
 					token = {
 						type: 'QUOTED_STRING',
+						strValue: '"' + workingString + '"',
 						rawValue: workingString
 					};
 					workingString = '';

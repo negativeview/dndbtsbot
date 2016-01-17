@@ -6,11 +6,24 @@ function work(stateHolder, state, node, cb) {
 		return cb('+ expects two sub-nodes. How did this even happen??');
 	}
 
-	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
-		var leftValue = value;
+	var leftNode = node.nodes[0];
+
+	console.log('calling work', leftNode);
+	leftNode.work(stateHolder, state, leftNode, function(error, value) {
+		console.log('got back from work', value);
+		if (error) return cb(error);
+
+		if (!value) {
+			console.log('no-left-plus', error, value);
+			throw new Error('+ was not given a left value.');
+		}
+
+		var leftValue = value.strRep;
 
 		node.nodes[1].work(stateHolder, state, node.nodes[1], function(error, value) {
-			var rightValue = value;
+			if (error) return cb(error);
+
+			var rightValue = value.strRep;
 
 			if (typeof(leftValue) == 'string') {
 				if (node.nodes[0].simpleString) {
@@ -69,7 +82,7 @@ module.exports = {
 		return false;
 	},
 	process: function(node, state, index, cb) {
-		node.type = 'parsed';
+		node.type = 'PLUS';
 		node.strRep = '+';
 
 		var left = new SyntaxTreeNode();

@@ -23,7 +23,7 @@ module.exports = {
 		node.strRep = 'macro argument';
 		node.work = work;
 		node.tokenList = [];
-		node.type = 'parsed';
+		node.type = 'MACRO ARGUMENT';
 
 		return cb('', node);
 	}

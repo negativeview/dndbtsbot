@@ -75,32 +75,15 @@ module.exports = {
 	matches: function(command) {
 		try {
 			for (var i = command.length - 1; i > 0; i--) {
-				if (command[i].type == 'RIGHT_CURLY') {
-					var m = goUntil(command, i, -1, 0, 'RIGHT_CURLY', 'LEFT_CURLY');
+				if (command[i].type == 'RIGHT_PAREN') {
+					var m = goUntil(command, i, -1, 0, 'RIGHT_PAREN', 'LEFT_PAREN');
 					m = m.m;
 
 					if (m - 1 < 0) {
 						return false;
 					}
 
-					if (command[m - 1].type == 'RIGHT_PAREN') {
-						m = goUntil(command, m - 1, -1, 0, 'RIGHT_PAREN', 'LEFT_PAREN');
-						m = m.m;
-						if (command[m-1].type == 'IF') return m - 1;
-					} else if (command[m - 1].type == 'ELSE') {
-						m = goUntil(command, m - 3, -1, 0, 'RIGHT_CURLY', 'LEFT_CURLY');
-						m = m.m;
-						if (m < 0) {
-							return false;
-						}
-						if (command[m - 1].type == 'RIGHT_PAREN') {
-							m = goUntil(command, m - 1, -1, 0, 'RIGHT_PAREN', 'LEFT_PAREN');
-							m = m.m;
-							if (command[m-1].type == 'IF') {
-								return m - 1;
-							}
-						}
-					}
+					if (command[m-1].type == 'IF') return m - 1;
 				}
 			}
 		} catch (e) {
@@ -112,13 +95,6 @@ module.exports = {
 		try {
 			var command = node.tokenList;
 			
-			var pre = new SyntaxTreeNode();
-			pre.strRep = 'pre if statement';
-			for (var i = 0; i < index; i++) {
-				pre.tokenList.push(command[i]);
-			}
-			node.addSubNode(pre);
-
 			var conditional = new SyntaxTreeNode();
 			conditional.strRep = 'conditional';
 			if (command[index + 1].type != 'LEFT_PAREN') {
@@ -129,38 +105,12 @@ module.exports = {
 			conditional.tokenList = res.collection.reverse();
 			node.addSubNode(conditional);
 
-			var m = res.m;
-			res = goUntil(command, m + 3, +1, command.length, 'LEFT_CURLY', 'RIGHT_CURLY');
-			m = res.m;
-
-			var trueBranch = new SyntaxTreeNode();
-			trueBranch.strRep = 'true branch';
-			trueBranch.tokenList = res.collection.reverse();
-			node.addSubNode(trueBranch);
-
-			var elseBranch = new SyntaxTreeNode();
-			elseBranch.strRep = 'elseBranch';
-			if (command[res.m + 1].type == 'ELSE') {
-				res = goUntil(command, m + 4, +1, command.length, 'LEFT_CURLY', 'RIGHT_CURLY');
-				elseBranch.tokenList = res.collection.reverse();
-			}
-			node.addSubNode(elseBranch);
-
-			var afterBranch = new SyntaxTreeNode();
-			afterBranch.strRep = 'after';
-			for (var i = res.m + 1; i < command.length; i++) {
-				afterBranch.tokenList.push(command[i]);
-			}
-			node.addSubNode(afterBranch);
-
 			node.work = work;
-			node.strRep = 'IfElse';
+			node.strRep = 'If';
+			node.type = 'If';
 			node.tokenList = [];
-
-			console.log('got to end of process');
 		} catch (e) {
-			console.log('exception in if', e, e.stack);
-			return cb(e);
+			return cb(e.stack);
 		}
 		return cb('', node);
 	}

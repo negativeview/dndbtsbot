@@ -12,5 +12,7 @@ module.exports = {
 	curlyBraces: require('./curly-braces.js'),
 	simpleString: require('./simple-string.js'),
 	macroArgument: require('./macro-argument.js'),
-	plus: require('./plus.js')
+	plus: require('./plus.js'),
+	booleanAnd: require('./boolean-and.js'),
+	notEquals: require('./not-equals.js')
 };

@@ -2,7 +2,8 @@ var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
 function work(stateHolder, state, node, cb) {
-	return cb(null, node.strRep);
+	console.log('in simple string node:::', node);
+	return cb(null, node);
 }
 
 module.exports = {
@@ -16,7 +17,7 @@ module.exports = {
 	process: function(node, state, index, cb) {
 		node.strRep = node.tokenList[index].rawValue;
 		node.work = work;
-		node.type = 'processed';
+		node.type = node.tokenList[index].type;
 		node.simpleString = node.tokenList[index].type == 'STRING';
 		node.tokenList = [];
 

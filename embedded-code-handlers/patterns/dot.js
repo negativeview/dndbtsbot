@@ -9,10 +9,11 @@ var Variable           = require('../base/variable.js');
 
 function work(stateHolder, state, node, cb) {
 	if (node.nodes.length != 2) {
-		return cb('. excepts two sub-nodes. How did this even happen??');
+		throw new Error('. expects two sub-nodes. How did this even happen??');
 	}
 
-	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
+	var leftNode = node.nodes[0];
+	leftNode.work(stateHolder, state, leftNode, function(error, value) {
 		if (error) return cb(error);
 
 		var leftHandSide = value;
@@ -21,8 +22,10 @@ function work(stateHolder, state, node, cb) {
 			try {
 				var rightHandSide = value;
 
-				if (typeof(leftHandSide) == "string") {
-					switch (leftHandSide) {
+				console.log('in dot', leftHandSide, rightHandSide);
+
+				if (leftHandSide.type == "STRING") {
+					switch (leftHandSide.strRep) {
 						case 'channel':
 							var namespace = new ChannelNamespace(stateHolder);
 							break;
@@ -44,7 +47,7 @@ function work(stateHolder, state, node, cb) {
 					}
 				}
 
-				var variable = new Variable(namespace, rightHandSide);
+				var variable = new Variable(namespace, rightHandSide.strRep);
 				cb(null, variable);
 			} catch (e) {
 				return cb(e.stack);

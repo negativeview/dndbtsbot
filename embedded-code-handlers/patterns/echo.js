@@ -24,11 +24,15 @@ function work(stateHolder, state, node, cb) {
 					}
 				);
 				return;
+			} else if (value.type == 'QUOTED_STRING') {
+				stateHolder.simpleAddMessage(stateHolder.channelID, value);
+				return cb();
+			} else {
+				throw new Error('Do not know how to echo a ' + value.type + ', expecting a variable or a QUOTED_STRING');
 			}
-			stateHolder.simpleAddMessage(stateHolder.channelID, value);
-			return cb();
 		});
 	} else {
+		console.log('in else branch', subNode);
 		stateHolder.simpleAddMessage(stateHolder.channelID, subNode.strRep);
 		return cb();
 	}
@@ -49,7 +53,7 @@ module.exports = {
 			throw "Echo does not return anything.";
 		}
 
-		node.type = 'parsed';
+		node.type = 'ECHO';
 		node.strRep = 'echo';
 
 		var sub = [];
@@ -62,6 +66,7 @@ module.exports = {
 
 		node.addSubNode(childStn);
 		node.work = work;
+		node.tokenList = [];
 
 		return cb('', node);
 	}

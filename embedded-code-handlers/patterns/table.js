@@ -66,7 +66,7 @@ module.exports = {
 		leftNode.strRep = '';
 		leftNode.tokenList = sub;
 
-		node.type = 'parsed';
+		node.type = 'TABLE';
 		node.strRep = 'table';
 		node.addSubNode(leftNode);
 		node.work = work;

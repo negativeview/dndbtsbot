@@ -52,7 +52,6 @@ ret.set = function(isAdmin, pieces, stateHolder, next) {
 		macroName = '!' + macroName;
 	}
 
-	console.log('stateHolder', stateHolder);
 	var model = isAdmin ? stateHolder.mongoose.model('AdminMacro') : stateHolder.mongoose.model('Macro');
 	var params = {
 		name: macroName

@@ -102,7 +102,6 @@ Namespace.prototype.getTableValueByKey = function(tableName, key, cb) {
 	this.getTableRow(tableName, key, function(error, table, res) {
 		if (error) return cb(error);
 		if (res.length == 0) return cb(null, '');
-		console.log('here:', res);
 		return cb(null, res[0].value);
 	});
 };

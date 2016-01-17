@@ -57,7 +57,7 @@ module.exports = {
 		var inside = new SyntaxTreeNode();
 		inside.tokenList = insideArray;
 
-		node.type = 'parsed';
+		node.type = 'PARENTHESIS';
 		node.strRep = '()';
 		node.addSubNode(inside);
 		node.work = work;

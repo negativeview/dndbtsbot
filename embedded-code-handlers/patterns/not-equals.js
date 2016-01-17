@@ -2,8 +2,9 @@ var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
 function work(stateHolder, state, node, cb) {
+	throw new Error("NOT IMPLEMENTED");
 	if (node.nodes.length != 2) {
-		return cb('== excepts two sub-nodes. How did this even happen??');
+		return cb('!= excepts two sub-nodes. How did this even happen??');
 	}
 
 	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
@@ -24,10 +25,10 @@ function work(stateHolder, state, node, cb) {
 }
 
 module.exports = {
-	name: 'Double Equals',
+	name: 'Not Equals',
 	matches: function(command) {
 		for (var i = command.length - 1; i > 0; i--) {
-			if (command[i].type == 'DOUBLE_EQUALS') {
+			if (command[i].type == 'NOT_EQUALS') {
 				return i;
 			}
 		}
@@ -51,8 +52,8 @@ module.exports = {
 		}
 		node.addSubNode(right);
 
-		node.type = 'DOUBLE EQUALS';
-		node.strRep = '==';
+		node.type = 'NOT EQUALS';
+		node.strRep = '!=';
 		node.work = work;
 
 		return cb('', node);

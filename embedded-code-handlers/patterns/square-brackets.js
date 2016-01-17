@@ -18,13 +18,9 @@ function work(stateHolder, state, node, cb) {
 			var rightHandSide = value;
 
 			if (leftHandSide.type == 'variable') {
-				if (typeof(rightHandSide) == 'string') {
-					leftHandSide.setIndex(rightHandSide);
-
-
-					console.log('got here', leftHandSide);
-
-
+				// NOTE: This works for numbers, but won't work for variables. :()
+				if (rightHandSide.type == 'STRING') {
+					leftHandSide.setIndex(rightHandSide.strRep);
 
 					return cb(null, leftHandSide);
 				} else {
@@ -71,11 +67,14 @@ module.exports = {
 
 		if (i != (node.tokenList.length - 1)) {
 			console.log('Could not finish command', i, (node.tokenList.length - 1), node.tokenList);
-			return cb('Could not finish command')
+			return cb(
+				'Could not finish command: ' +
+				node.tokenList.map(function(item) { return item.strValue; }).join(" ")
+			);
 		}
 
 		node.strRep = '[]';
-		node.type = 'parsed';
+		node.type = 'SQUARE BRACKETS';
 		node.work = work;
 		node.addSubNode(leftNode);
 		node.addSubNode(rightNode);

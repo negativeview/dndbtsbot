@@ -1,4 +1,5 @@
 var async               = require('async');
+var CodeState           = require('./embedded-code-handlers/base/code-state.js');
 var EmbeddedCodeHandler = require('./embedded-code-handlers/base/embedded-code-handler.js');
 var HandlerRegistry     = require('./utility-classes/handler-registry.js');
 var moment              = require('moment');
@@ -92,31 +93,38 @@ TimeBasedUpdates.prototype.updateSingleChannelBasedOnRows = function(cb, channel
 
 	if (hours == 0) hours = 12;
 
-	stateHolder.incomingVariables = {
-		discord5eHour: hours,
-		discord5eAMPM: amPM
-	};
+	var codeState = new CodeState();
+	codeState.addVariables(
+		{
+			discord5eHour: hours,
+			discord5eAMPM: amPM
+		}
+	);
 
 	var m = this;
 	if (tableRebuild.title) {
-		embeddedCodeHandler.executeString(tableRebuild.title, function(error, res) {
-			if (error) {
-				console.log(error);
-				return;
-			}
+		embeddedCodeHandler.executeString(
+			tableRebuild.title,
+			codeState,
+			function(error, res) {
+				if (error) {
+					console.log(error);
+					return;
+				}
 
-			var actualTopic = m.bot.servers[serverID].channels[channelID].topic;
-			var newTopic = res.variables.title;
+				var actualTopic = m.bot.servers[serverID].channels[channelID].topic;
+				var newTopic = res.variables.title;
 
-			if (newTopic && newTopic != actualTopic) {
-				m.bot.editChannelInfo(
-					{
-						channel: channelID,
-						topic: newTopic
-					}
-				);
+				if (newTopic && newTopic != actualTopic) {
+					m.bot.editChannelInfo(
+						{
+							channel: channelID,
+							topic: newTopic
+						}
+					);
+				}
 			}
-		});
+		);
 	}
 
 	return cb();

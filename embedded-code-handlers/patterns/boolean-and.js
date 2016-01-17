@@ -2,6 +2,8 @@ var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
 function work(stateHolder, state, node, cb) {
+	throw new Error("Not implemented");
+	
 	if (node.nodes.length != 2) {
 		return cb('= excepts two sub-nodes. How did this even happen??');
 	}
@@ -37,10 +39,10 @@ function work(stateHolder, state, node, cb) {
 }
 
 module.exports = {
-	name: 'Assignment',
+	name: 'Boolean AND',
 	matches: function(command) {
 		for (var i = command.length - 1; i > 0; i--) {
-			if (command[i].type == 'EQUALS') {
+			if (command[i].type == 'BOOLEAN_AND') {
 				return i;
 			}
 		}
@@ -62,8 +64,8 @@ module.exports = {
 		var rightNode = new SyntaxTreeNode();
 		rightNode.tokenList = right;
 
-		node.type = 'ASSIGNMENT';
-		node.strRep = '=';
+		node.type = 'BOOLEAN_AND';
+		node.strRep = '&&';
 		node.addSubNode(leftNode);
 		node.addSubNode(rightNode);
 		node.work = work;

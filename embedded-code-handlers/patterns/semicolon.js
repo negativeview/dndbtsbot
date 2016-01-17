@@ -2,7 +2,14 @@ var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
 function work(stateHolder, state, node, cb) {
-	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
+	var leftNode = node.nodes[0];
+
+	if (typeof(leftNode.work) != 'function') {
+		console.log(leftNode);
+		throw new Error('Node not processed correctly');
+	}
+
+	leftNode.work(stateHolder, state, leftNode, function(error, value) {
 		if (error) return cb(error);
 
 		if (node.nodes.length > 1) {
@@ -47,7 +54,7 @@ module.exports = {
 		rightNode.strRep = '';
 		rightNode.tokenList = right;
 
-		node.type = 'parsed';
+		node.type = 'SEMICOLON';
 		node.strRep = ';';
 		node.addSubNode(leftNode);
 

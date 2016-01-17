@@ -38,7 +38,7 @@ module.exports = {
 		node.strRep = 'ignore';
 		node.addSubNode(leftNode);
 		node.work = work;
-		node.type = 'parsed';
+		node.type = 'IGNORE';
 		node.tokenList = [];
 
 		return cb('', node);

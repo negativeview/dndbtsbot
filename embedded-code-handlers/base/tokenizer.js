@@ -18,6 +18,7 @@ module.exports = function(command, cb) {
 	lex.addRule(/\{[0-9]+\+?\}/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'MACRO_ARGUMENT'
 		});
 	});
@@ -25,227 +26,239 @@ module.exports = function(command, cb) {
 	lex.addRule(/\./gm, function(lexeme) {
 		tokens.push({
 			rawValue: '.',
+			strValue: lexeme,
 			type: 'DOT'
 		});
 	});
 	lex.addRule(/[ \t\n\r]/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'WHITESPACE'
-		});
-	});
-	lex.addRule(/username/gm, function(lexeme) {
-		tokens.push({
-			rawValue: stateHolder.actualUsername,
-			type: 'QUOTED_STRING'
 		});
 	});
 	lex.addRule(/table/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'TABLE'
 		});
 	});
 	lex.addRule(/echo/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'ECHO'
 		});
 	});
 	lex.addRule(/pm/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'PM'
 		});
 	});
 	lex.addRule(/ignore/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'IGNORE'
-		});
-	});
-	lex.addRule(/var\(/gm, function(lexeme) {
-		tokens.push({
-			rawValue: 'var',
-			type: 'FUNCTION'
-		});
-		tokens.push({
-			rawValue: '(',
-			type: 'LEFT_PAREN'
 		});
 	});
 	lex.addRule(/foreach/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'FOREACH'
-		});
-	});
-	lex.addRule(/delete/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'DELETE'
 		});
 	});
 	lex.addRule(/if/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'IF'
 		});
 	});
 	lex.addRule(/else/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'ELSE'
 		});
 	});
 	lex.addRule(/\+/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'PLUS'
 		});
 	});
 	lex.addRule(/\-/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'MINUS'
 		});
 	});
 	lex.addRule(/\*/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'ASTERISK'
 		});
 	});
 	lex.addRule(/\//, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'FORWARDSLASH'
 		});
 	});
 	lex.addRule(/\?/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'QUESTION_MARK'
 		});
 	});
 	lex.addRule(/:/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'COLON'
 		});
 	});
 	lex.addRule(/!=/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'NOT_EQUALS'
 		});
 	});
 	lex.addRule(/==/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'DOUBLE_EQUALS'
 		});
 	});
 	lex.addRule(/</gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'LEFT_ANGLE'
 		});
 	});
 	lex.addRule(/>/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'RIGHT_ANGLE'
 		});
 	});
 	lex.addRule(/\!/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'EXCLAMATION'
 		});
 	});
 	lex.addRule(/=/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'EQUALS'
 		});
 	});
 	lex.addRule(/;/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'SEMICOLON'
 		});
 	});
 	lex.addRule(/\(/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'LEFT_PAREN'
 		});
 	});
 	lex.addRule(/\)/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'RIGHT_PAREN'
 		});
 	});
 	lex.addRule(/\[/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'LEFT_BRACKET'
 		});
 	});
 	lex.addRule(/\]/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'RIGHT_BRACKET'
 		});
 	});
 	lex.addRule(/\{/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'LEFT_CURLY'
 		});
 	});
 	lex.addRule(/\}/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'RIGHT_CURLY'
 		});
 	});
 	lex.addRule(/\&\&/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'BOOLEAN_AND'
 		});
 	});
 	lex.addRule(/\|\|/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'BOOLEAN_OR'
 		});
 	});
 	lex.addRule(/'/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'SINGLE_QUOTE'
 		});
 	});
 	lex.addRule(/["“]/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'DOUBLE_QUOTE'
 		});
 	});
 	lex.addRule(/[0-9]+/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
-			type: 'QUOTED_STRING',
+			strValue: lexeme,
+			type: 'STRING',
 			value: lexeme
 		});
 	});
 	lex.addRule(/[^ '"\[\]\.\(\)\t\n;]+/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			strValue: lexeme,
 			type: 'STRING'
 		});
 	});
@@ -274,6 +287,10 @@ module.exports = function(command, cb) {
 			}
 		);
 	} catch (e) {
-		return cb(e.stack);
+		if (e.stack) {
+			return cb(e.stack);
+		} else {
+			return cb(e);
+		}
 	}
 }
