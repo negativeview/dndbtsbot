@@ -1,9 +1,8 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, node, cb) {
-	console.log('in simple string node:::', node);
-	return cb(null, node);
+function work(stateHolder, state, cb) {
+	return cb(null, this);
 }
 
 module.exports = {

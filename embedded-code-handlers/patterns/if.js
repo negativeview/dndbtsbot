@@ -1,42 +1,23 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, node, cb) {
-	var before = node.nodes[0];
-	var comparison = node.nodes[1];
-	var trueBranch = node.nodes[2];
-	var falseBranch = node.nodes[3];
-	var after = node.nodes[4];
-
-	before.work(stateHolder, state, before, function(error, value) {
+function work(stateHolder, state, cb) {
+	var comparison = this.nodes[0];
+	comparison.work(stateHolder, state, function(error, value) {
 		if (error) return cb(error);
 
-		comparison.work(stateHolder, state, comparison, function(error, value) {
-			if (error) return cb(error);
+		switch (value) {
+			case 'true':
+				this.result = true;
+				break;
+			case 'false':
+				this.result = false;
+				break;
+			default:
+				return cb('Comparison value did not wind up being true or false.');
+		}
 
-			var branch = null;
-			switch (value) {
-				case 'true':
-					branch = trueBranch;
-					break;
-				case 'false':
-					branch = falseBranch;
-					break;
-				default:
-					return cb('Comparison value did not wind up being true or false.');
-			}
-
-			branch.work(stateHolder, state, branch, function(error, value) {
-				if (error) return cb(error);
-
-				if (after.type == 'unparsed-node-list' && after.nodes.length == 0)
-					return cb();
-
-				after.work(stateHolder, state, after, function(error, value) {
-					return cb(error);
-				});
-			});
-		});
+		return cb(null, this);
 	});
 }
 

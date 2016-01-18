@@ -1,12 +1,13 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, node, cb) {
-	if (node.nodes.length != 1) {
+function work(stateHolder, state, cb) {
+	if (this.nodes.length != 1) {
 		return cb('echo excepts one sub-nodes. How did this even happen??');
 	}
 
-	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
+	var subNode = this.nodes[0];
+	subNode.work(stateHolder, state, function(error, value) {
 		if (error) return cb(error);
 		return cb();
 	});

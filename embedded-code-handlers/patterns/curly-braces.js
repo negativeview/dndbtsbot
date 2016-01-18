@@ -1,18 +1,22 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, node, cb) {
-	if (node.nodes.length != 3) {
+function work(stateHolder, state, cb) {
+	if (this.nodes.length != 3) {
 		return cb('{} expects three sub-nodes. How did this even happen??');
 	}
 
-	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
+	var beforeNode = this.nodes[0];
+	beforeNode.work(stateHolder, state, function(error, value) {
 		if (error) return cb(error);
-		node.nodes[1].work(stateHolder, state, node.nodes[1], function(error, value) {
-			if (error) return cb(error);
-			if (node.nodes[2].type == 'unparsed-node-list' && node.nodes[2].tokenList.length == 0) return cb();
 
-			node.nodes[2].work(stateHolder, state, node.nodes[2], cb);
+		var insideNode = this.nodes[1];
+		insideNode.work(stateHolder, state, function(error, value) {
+			if (error) return cb(error);
+			if (this.nodes[2].type == 'unparsed-node-list' && this.nodes[2].tokenList.length == 0) return cb();
+
+			var afterNode = this.nodes[2];
+			afterNode.work(stateHolder, state, cb);
 		});
 	});
 }

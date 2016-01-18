@@ -7,9 +7,9 @@ var SyntaxTreeNode = require('./syntax-tree-node.js');
 
 var patterns = [
 	patterns.curlyBraces,
-
 	patterns.ifElse,
 	patterns.semicolon,
+	patterns.echo,
 	patterns.parenthesis,
 	patterns.assignment,
 	patterns.plus,
@@ -23,7 +23,6 @@ var patterns = [
 	patterns.table,
 	patterns.simpleString,
 	patterns.macroArgument,
-	patterns.echo
 ];
 
 function EmbeddedCodeHandler(stateHolder, handlerRegistry) {
@@ -295,8 +294,6 @@ EmbeddedCodeHandler.prototype.executeProcessed = function(externalCallback, code
 
 EmbeddedCodeHandler.prototype.processSingle = function(doneProcessing, parentNode, codeState, index, pattern) {
 	if (typeof(doneProcessing) != 'function') throw Error('not a function');
-
-	console.log('Pattern ', pattern.name, parentNode.tokenList);
 
 	try {
 		pattern.process(

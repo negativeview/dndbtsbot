@@ -1,12 +1,13 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, node, cb) {
-	if (node.nodes.length != 2) {
+function work(stateHolder, state, cb) {
+	if (this.nodes.length != 2) {
 		return cb('[] excepts two sub-nodes. How did this even happen??');
 	}
 
-	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
+	var leftNode = this.nodes[0];
+	leftNode.work(stateHolder, state, function(error, value) {
 		if (error) return cb(error);
 		
 		var leftHandSide = value;
@@ -14,7 +15,8 @@ function work(stateHolder, state, node, cb) {
 			return cb('square-brackets: Expecting variable, got ', leftHandSide);
 		}
 
-		node.nodes[1].work(stateHolder, state, node.nodes[1], function(error, value) {
+		var rightNode = this.nodes[1];
+		rightNode.work(stateHolder, state, function(error, value) {
 			var rightHandSide = value;
 
 			if (leftHandSide.type == 'variable') {

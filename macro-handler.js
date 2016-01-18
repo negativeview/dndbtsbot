@@ -96,7 +96,7 @@ ret.set = function(isAdmin, pieces, stateHolder, next) {
 };
 
 ret.del = function(isAdmin, pieces, stateHolder, next) {
-	var model = isAdmin ? ret.adminMacroModel : ret.macroModel;
+	var model = isAdmin ? stateHolder.mongoose.model('AdminMacro') : stateHolder.mongoose.model('Macro');
 	var params = {};
 	if (isAdmin) params.server = stateHolder.bot.serverFromChannel(stateHolder.channelID);
 	if (!isAdmin) params.user = stateHolder.username;

@@ -1,39 +1,48 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, node, cb) {
-	if (node.nodes.length != 2) {
+function work(stateHolder, state, cb) {
+	if (this.nodes.length != 2) {
 		return cb('= excepts two sub-nodes. How did this even happen??');
 	}
 
-	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
-		if (error) {
-			console.log('error in assignment', error);
-			return cb(error);
-		}
-		var leftHandSide = value;
+	var leftNode = this.nodes[0];
+	leftNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
+}
 
-		node.nodes[1].work(stateHolder, state, node.nodes[1], function(error, value) {
-			var rightHandSide = value;
+function work2(cb, stateHolder, state, error, value) {
+	if (error) {
+		return cb(error);
+	}
+	
+	var leftHandSide = value;
+	var rightNode = this.nodes[1];
+	rightNode.work(stateHolder, state, work3.bind(this, cb, leftHandSide, state));
+}
 
-			if (leftHandSide.type == 'variable') {
-				leftHandSide.assign(rightHandSide, function(error) {
-					if (error) {
-						console.log('error when assigning', error);
-						return cb(error);
-					}
-					return cb();
-				});
-			} else if (leftHandSide.type == 'STRING') {
-				console.log('assigning ' + rightHandSide + ' to variable ' + leftHandSide.strRep);
-				state.variables[leftHandSide.strRep] = rightHandSide;
-				return cb();
-			} else {
-				console.log('Do not know how to assign to', typeof(leftHandSide));
-				return cb('I do not know how to assign to ' + leftHandSide.type);
+function work3(cb, leftHandSide, state, error, value) {
+	var rightHandSide = value;
+
+	switch (rightHandSide.type) {
+		case 'QUOTED_STRING':
+			rightHandSide = rightHandSide.strRep;
+			break;
+		default:
+			throw new Error('When assigning to a variable, could not tell what right side was: ' + rightHandSide.type);
+	}
+
+	if (leftHandSide.type == 'variable') {
+		leftHandSide.assign(rightHandSide, function(error) {
+			if (error) {
+				return cb(error);
 			}
+			return cb();
 		});
-	});
+	} else if (leftHandSide.type == 'STRING') {
+		state.variables[leftHandSide.strRep] = rightHandSide;
+		return cb();
+	} else {
+		return cb('I do not know how to assign to ' + leftHandSide.type);
 }
 
 module.exports = {
@@ -72,3 +81,10 @@ module.exports = {
 		return cb('', node);
 	}
 };
+
+
+
+
+
+
+

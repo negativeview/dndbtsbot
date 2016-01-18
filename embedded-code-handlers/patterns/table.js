@@ -1,15 +1,10 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, node, cb) {
-	if (node.nodes.length != 1) {
+function work(stateHolder, state, cb) {
+	if (this.nodes.length != 1) {
 		return cb('table expects one sub-node. How did this even happen??');
 	}
-
-
-
-
-
 
 	var messageA = null;
 	var messageB = null;

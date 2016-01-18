@@ -1,37 +1,36 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, node, cb) {
+function work(stateHolder, state, cb) {
 	throw new Error("Not implemented");
 	
-	if (node.nodes.length != 2) {
+	if (this.nodes.length != 2) {
 		return cb('= excepts two sub-nodes. How did this even happen??');
 	}
 
-	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
+	var leftNode = this.nodes[0];
+	leftNode.work(stateHolder, state, function(error, value) {
 		if (error) {
 			console.log('error in assignment', error);
 			return cb(error);
 		}
 		var leftHandSide = value;
 
-		node.nodes[1].work(stateHolder, state, node.nodes[1], function(error, value) {
+		var rightNode = this.nodes[1];
+		rightNode.work(stateHolder, state, function(error, value) {
 			var rightHandSide = value;
 
 			if (leftHandSide.type == 'variable') {
 				leftHandSide.assign(rightHandSide, function(error) {
 					if (error) {
-						console.log('error when assigning', error);
 						return cb(error);
 					}
 					return cb();
 				});
 			} else if (leftHandSide.type == 'STRING') {
-				console.log('assigning ' + rightHandSide + ' to variable ' + leftHandSide.strRep);
 				state.variables[leftHandSide.strRep] = rightHandSide;
 				return cb();
 			} else {
-				console.log('Do not know how to assign to', typeof(leftHandSide));
 				return cb('I do not know how to assign to ' + leftHandSide.type);
 			}
 		});

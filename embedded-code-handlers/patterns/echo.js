@@ -1,41 +1,34 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, node, cb) {
-	if (node.nodes.length != 1) {
+function work(stateHolder, state, cb) {
+	if (this.nodes.length != 1) {
 		return cb('echo excepts one sub-nodes. How did this even happen??');
 	}
 
-	var subNode = node.nodes[0];
-	if (subNode.work) {
-		subNode.work(stateHolder, state, subNode, function(error, value) {
-			if (error) {
-				console.log(error);
-				return cb(error);
-			}
+	var subNode = this.nodes[0];
+	subNode.work(stateHolder, state, function(error, value) {
+		if (error) {
+			return cb(error);
+		}
 
-			if (value.type == 'variable') {
-				value.getScalarValue(
-					function(error, res) {
-						if (error) return cb(error);
-						
-						stateHolder.simpleAddMessage(stateHolder.channelID, res);
-						return cb();
-					}
-				);
-				return;
-			} else if (value.type == 'QUOTED_STRING') {
-				stateHolder.simpleAddMessage(stateHolder.channelID, value);
-				return cb();
-			} else {
-				throw new Error('Do not know how to echo a ' + value.type + ', expecting a variable or a QUOTED_STRING');
-			}
-		});
-	} else {
-		console.log('in else branch', subNode);
-		stateHolder.simpleAddMessage(stateHolder.channelID, subNode.strRep);
-		return cb();
-	}
+		if (value.type == 'variable') {
+			value.getScalarValue(
+				function(error, res) {
+					if (error) return cb(error);
+					
+					stateHolder.simpleAddMessage(stateHolder.channelID, res);
+					return cb();
+				}
+			);
+			return;
+		} else if (value.type == 'QUOTED_STRING') {
+			stateHolder.simpleAddMessage(stateHolder.channelID, value.strRep);
+			return cb();
+		} else {
+			throw new Error('Do not know how to echo a ' + value.type + ', expecting a variable or a QUOTED_STRING');
+		}
+	});
 }
 
 module.exports = {

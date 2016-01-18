@@ -1,20 +1,20 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, node, cb) {
-	var leftNode = node.nodes[0];
-
+function work(stateHolder, state, cb) {
+	var leftNode = this.nodes[0];
 	if (typeof(leftNode.work) != 'function') {
-		console.log(leftNode);
 		throw new Error('Node not processed correctly');
 	}
 
-	leftNode.work(stateHolder, state, leftNode, function(error, value) {
+	leftNode.work(stateHolder, state, function(error, value) {
 		if (error) return cb(error);
 
 		if (node.nodes.length > 1) {
 			if (node.nodes[1].type == 'unparsed-node-list' && node.nodes[1].tokenList.length == 0) return cb();
-			node.nodes[1].work(stateHolder, state, node.nodes[1], function(error, value) {
+
+			var rightNode = node.nodes[1];
+			rightNode.work(stateHolder, state, function(error, value) {
 				if (error) return cb(error);
 			
 				return cb();

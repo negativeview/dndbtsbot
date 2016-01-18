@@ -7,22 +7,21 @@ var CharacterNamespace = require('../namespaces/character-namespace.js');
 var WeaponNamespace    = require('../namespaces/weapon-namespace.js');
 var Variable           = require('../base/variable.js');
 
-function work(stateHolder, state, node, cb) {
-	if (node.nodes.length != 2) {
+function work(stateHolder, state, cb) {
+	if (this.nodes.length != 2) {
 		throw new Error('. expects two sub-nodes. How did this even happen??');
 	}
 
-	var leftNode = node.nodes[0];
-	leftNode.work(stateHolder, state, leftNode, function(error, value) {
+	var leftNode = this.nodes[0];
+	leftNode.work(stateHolder, state, function(error, value) {
 		if (error) return cb(error);
 
 		var leftHandSide = value;
 
-		node.nodes[1].work(stateHolder, state, node.nodes[1], function(error, value) {
+		var rightNode = this.nodes[1];
+		rightNode.work(stateHolder, state, function(error, value) {
 			try {
 				var rightHandSide = value;
-
-				console.log('in dot', leftHandSide, rightHandSide);
 
 				if (leftHandSide.type == "STRING") {
 					switch (leftHandSide.strRep) {

@@ -1,43 +1,48 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, node, cb) {
-	if (node.nodes.length != 2) {
+function work(stateHolder, state, cb) {
+	if (this.nodes.length != 2) {
 		return cb('+ expects two sub-nodes. How did this even happen??');
 	}
 
-	var leftNode = node.nodes[0];
-
-	console.log('calling work', leftNode);
-	leftNode.work(stateHolder, state, leftNode, function(error, value) {
-		console.log('got back from work', value);
+	var leftNode = this.nodes[0];
+	leftNode.work(stateHolder, state, function(error, value) {
 		if (error) return cb(error);
 
 		if (!value) {
-			console.log('no-left-plus', error, value);
 			throw new Error('+ was not given a left value.');
 		}
 
-		var leftValue = value.strRep;
+		var leftValue = value;
 
-		node.nodes[1].work(stateHolder, state, node.nodes[1], function(error, value) {
+		var rightNode = this.nodes[1];
+		rightNode.work(stateHolder, state, function(error, value) {
 			if (error) return cb(error);
 
-			var rightValue = value.strRep;
+			var rightValue = value;
 
-			if (typeof(leftValue) == 'string') {
-				if (node.nodes[0].simpleString) {
-					leftValue = state.variables[leftValue];
-				}
+			if (leftValue.type == 'STRING') {
+				leftValue = state.variables[leftValue.strRep];
+			} else if (leftValue.type == 'QUOTED_STRING') {
+				leftValue = leftValue.strRep;
+			} else {
+				throw new Error('Left value of + is not a known type of value: ' + leftValue.type);
 			}
 
-			if (typeof(rightValue) == 'string') {
-				if (node.nodes[1].simpleString) {
-					rightValue = state.variables[rightValue];
-				}
+			if (rightValue.type == 'STRING') {
+				rightValue = state.variables[rightValue.strValue];
+			} else if (rightValue.type == 'QUOTED_STRING') {
+				rightValue = rightValue.strRep;
+			} else {
+				throw new Error('Right value of + is not a known type of value: ' + rightValue.type);
 			}
 
-			return cb(null, leftValue + rightValue);
+			var returnNode = new SyntaxTreeNode();
+			returnNode.type = 'QUOTED_STRING';
+			returnNode.strRep = leftValue + rightValue;
+
+			return cb(null, returnNode);
 		});
 	});
 
