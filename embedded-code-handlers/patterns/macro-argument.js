@@ -2,10 +2,16 @@ var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
 function work(stateHolder, state, cb) {
+	console.log('macro', this);
 	var syntaxTreeNode = new SyntaxTreeNode();
 	syntaxTreeNode.type = 'QUOTED_STRING';
 	syntaxTreeNode.strRep = state.args[this.matches[1]];
 	return cb(null, syntaxTreeNode);
+}
+
+function toString() {
+	var ret = '{' + this.matches[1] + '}';
+	return ret;	
 }
 
 module.exports = {
@@ -19,14 +25,22 @@ module.exports = {
 		return false;
 	},
 	process: function(node, state, index, cb) {
-		var token = node.tokenList[0];
+		if (node.tokenList.length != 1) {
+			console.log(node.tokenList);
+			throw new Error('Macro argument was not by itself when parsing: ' + node.tokenList.join(', '));
+		}
+		var token = node.tokenList[index];
 
 		var matches = token.rawValue.match(/\{([0-9]+)(\+?)\}/);
-		node.matches = matches;
+		node.rawValue = token.rawValue;
+		if (matches) {
+			node.matches = matches;
+		}
 		node.strRep = 'macro argument';
 		node.work = work;
 		node.tokenList = [];
-		node.type = 'MACRO ARGUMENT';
+		node.toString = toString;
+		node.type = 'MACRO_ARGUMENT';
 
 		return cb('', node);
 	}

@@ -3,10 +3,10 @@ var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
 function work(stateHolder, state, cb) {
 	var comparison = this.nodes[0];
-	comparison.work(stateHolder, state, work2.bind(this, cb));
+	comparison.work(stateHolder, state, work2.bind(this, cb, comparison));
 }
 
-function work2(cb, error, value) {
+function work2(cb, comparison, error, value) {
 	if (error) return cb(error);
 
 	switch (value.type) {
@@ -14,10 +14,18 @@ function work2(cb, error, value) {
 			this.result = value.booleanValue;
 			break;
 		default:
-			throw new Error('IF does not know how to evaluate ' + value.type + ' as a boolean.');
+			console.log('comparison that failed to set boolean was ', comparison, this);
+			throw new Error('IF does not know how to evaluate ' + value.type + ' as a boolean::' + this.toString());
 	}
 
 	return cb(null, this);
+}
+
+function toString() {
+	var ret = 'if (';
+	ret += this.nodes[0].toString();
+	ret += ')';
+	return ret;
 }
 
 function goUntil(command, i, mod, limit, typeA, typeB, cb) {
@@ -79,6 +87,7 @@ module.exports = {
 
 			node.work = work;
 			node.strRep = 'If';
+			node.toString = toString;
 			node.type = 'If';
 			node.tokenList = [];
 		} catch (e) {

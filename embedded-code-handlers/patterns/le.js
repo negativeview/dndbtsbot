@@ -3,7 +3,7 @@ var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
 function work(stateHolder, state, cb) {
 	if (this.nodes.length != 2) {
-		return cb('!= excepts two sub-nodes. How did this even happen??');
+		return cb('<= excepts two sub-nodes. How did this even happen??');
 	}
 
 	var leftNode = this.nodes[0];
@@ -22,7 +22,7 @@ function work2(cb, stateHolder, state, error, value) {
 		var returnNode = new SyntaxTreeNode();
 		returnNode.type = 'BOOLEAN';
 
-		if (rightHandSide.strRep != leftHandSide.strRep) {
+		if (parseInt(rightHandSide.strRep) <= parseInt(leftHandSide.strRep)) {
 			returnNode.strRep = 'true';
 			returnNode.booleanValue = true;
 		} else {
@@ -35,10 +35,10 @@ function work2(cb, stateHolder, state, error, value) {
 }
 
 module.exports = {
-	name: 'Not Equals',
+	name: 'Less than or Equal',
 	matches: function(command) {
 		for (var i = command.length - 1; i > 0; i--) {
-			if (command[i].type == 'NOT_EQUALS') {
+			if (command[i].type == 'LE') {
 				return i;
 			}
 		}
@@ -62,8 +62,8 @@ module.exports = {
 		}
 		node.addSubNode(right);
 
-		node.type = 'NOT EQUALS';
-		node.strRep = '!=';
+		node.type = 'LE';
+		node.strRep = '<=';
 		node.work = work;
 		node.tokenList = [];
 

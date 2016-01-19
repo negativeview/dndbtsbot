@@ -7,6 +7,7 @@ function work(stateHolder, state, cb) {
 	}
 
 	var leftNode = this.nodes[0];
+	console.log('assignment left node', leftNode);
 	leftNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
 }
 

@@ -23,6 +23,10 @@ Variable.prototype.getScalarValue = function(cb) {
 	}
 }
 
+Variable.prototype.getTable = function(cb) {
+	return this.namespace.getTable(this.name, cb);
+}
+
 Variable.prototype.getTableValueByKey = function(key, cb) {
 	return this.namespace.getTableValueByKey(key, cb);
 };

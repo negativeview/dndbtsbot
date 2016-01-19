@@ -135,6 +135,13 @@ module.exports = function(command, cb) {
 			type: 'NOT_EQUALS'
 		});
 	});
+	lex.addRule(/<=/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			strValue: lexeme,
+			type: 'LE'
+		});
+	});
 	lex.addRule(/==/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
@@ -267,6 +274,7 @@ module.exports = function(command, cb) {
 
 	try {
 		lex.lex();
+
 		fixStrings(
 			tokens,
 			function(error, tokensWithQuotedStrings) {
@@ -280,6 +288,8 @@ module.exports = function(command, cb) {
 						if (error) {
 							return cb(error);
 						}
+
+						console.log(finalizedTokens);
 
 						return cb(null, finalizedTokens);
 					}

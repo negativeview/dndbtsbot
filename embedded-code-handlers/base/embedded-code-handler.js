@@ -16,10 +16,12 @@ var patterns = [
 	patterns.assignment,
 	patterns.plus,
 	patterns.booleanAnd,
-	
 	patterns.ignore,
+
 	patterns.doubleEquals,
 	patterns.notEquals,
+	patterns.le,
+
 	patterns.squareBrackets,
 	patterns.dot,
 	patterns.table,

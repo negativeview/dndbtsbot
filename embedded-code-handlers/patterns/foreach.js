@@ -3,22 +3,33 @@ var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
 function work(stateHolder, state, cb) {
 	var comparison = this.nodes[0];
-	comparison.work(stateHolder, state, function(error, value) {
-		if (error) return cb(error);
+	comparison.work(stateHolder, state, work2.bind(this, cb, comparison));
+}
 
-		switch (value) {
-			case 'true':
-				this.result = true;
-				break;
-			case 'false':
-				this.result = false;
-				break;
-			default:
-				return cb('Comparison value did not wind up being true or false.');
-		}
+function work2(cb, comparison, error, value) {
+	if (error) return cb(error);
 
+	console.log('Attempt to get table');
+
+	value.getTable(function(err, res) {
+		console.log('Got table', err, res);
 		return cb(null, this);
 	});
+	return;
+
+	switch (value) {
+		case 'true':
+			this.result = true;
+			break;
+		case 'false':
+			this.result = false;
+			break;
+		default:
+			console.log('Comparison value did not wind up being truthy or falsey.', value, comparison);
+			return cb('Not true or false.');
+	}
+
+	return cb(null, this);
 }
 
 function goUntil(command, i, mod, limit, typeA, typeB, cb) {

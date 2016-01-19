@@ -13,6 +13,28 @@ Namespace.prototype.canEdit = function(cb) {
 	return cb(null, true);
 };
 
+Namespace.prototype.getTable = function(tableName, cb) {
+	var m = this;
+
+	this.parameters.name = tableName;
+	this.tableModel.find(this.parameters).exec(function(err, res) {
+		if (err) return cb(err);
+		if (res.length == 0) return cb('No such table: ' + tableName);
+
+		var id = res[0].id;
+
+		var parameters = {
+			table: id
+		};
+
+		m.tableRowModel.find(parameters).exec(function(err, res) {
+			if (err) return cb(err);
+
+			return cb(null, res);
+		});
+	});
+};
+
 Namespace.prototype.setScalarValue = function(key, value, cb) {
 	var m = this;
 
