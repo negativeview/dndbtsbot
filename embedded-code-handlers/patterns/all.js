@@ -6,7 +6,7 @@ module.exports = {
 	ignore: require('./ignore.js'),
 	parenthesis: require('./parenthesis.js'),
 	table: require('./table.js'),
-	ifElse: require('./if.js'),
+	ifBranch: require('./if.js'),
 	doubleEquals: require('./double-equals.js'),
 	semicolon: require('./semicolon.js'),
 	curlyBraces: require('./curly-braces.js'),
@@ -14,5 +14,7 @@ module.exports = {
 	macroArgument: require('./macro-argument.js'),
 	plus: require('./plus.js'),
 	booleanAnd: require('./boolean-and.js'),
-	notEquals: require('./not-equals.js')
+	notEquals: require('./not-equals.js'),
+	elseBranch: require('./else.js'),
+	foreach: require('./foreach.js')
 };

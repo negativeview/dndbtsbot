@@ -2,28 +2,28 @@ var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
 function work(stateHolder, state, cb) {
-	throw new Error("NOT IMPLEMENTED");
 	if (this.nodes.length != 2) {
 		return cb('!= excepts two sub-nodes. How did this even happen??');
 	}
 
 	var leftNode = this.nodes[0];
-	leftNode.work(stateHolder, state, function(error, value) {
+	leftNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
+}
+
+function work2(cb, stateHolder, state, error, value) {
+	if (error) return cb(error);
+
+	var leftHandSide = value;
+	var rightNode = this.nodes[1];
+	rightNode.work(stateHolder, state, function(error, value) {
 		if (error) return cb(error);
+		var rightHandSide = value;
 
-		var leftHandSide = value;
-
-		var rightNode = this.nodes[1];
-		rightNode.work(stateHolder, state, function(error, value) {
-			if (error) return cb(error);
-			var rightHandSide = value;
-
-			if (rightHandSide == leftHandSide) {
-				return cb(null, 'true');
-			} else {
-				return cb(null, 'false');
-			}
-		});
+		if (rightHandSide == leftHandSide) {
+			return cb(null, 'true');
+		} else {
+			return cb(null, 'false');
+		}
 	});
 }
 
@@ -58,6 +58,7 @@ module.exports = {
 		node.type = 'NOT EQUALS';
 		node.strRep = '!=';
 		node.work = work;
+		node.tokenList = [];
 
 		return cb('', node);
 	}

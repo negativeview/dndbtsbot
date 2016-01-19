@@ -7,32 +7,39 @@ function work(stateHolder, state, cb) {
 	}
 
 	var leftNode = this.nodes[0];
-	leftNode.work(stateHolder, state, function(error, value) {
-		if (error) return cb(error);
+	leftNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
+}
+
+function work2(cb, stateHolder, state, error, value) {
+	if (error) return cb(error);
 		
-		var leftHandSide = value;
-		if (leftHandSide.type != 'variable') {
-			return cb('square-brackets: Expecting variable, got ', leftHandSide);
+	var leftHandSide = value;
+	if (leftHandSide.type != 'VARIABLE') {
+		return cb('square-brackets: Expecting variable, got ', leftHandSide.type);
+	}
+
+	var rightNode = this.nodes[1];
+	rightNode.work(stateHolder, state, work3.bind(this, cb, leftHandSide));
+}
+
+function work3(cb, leftHandSide, error, value) {
+	var rightHandSide = value;
+
+	if (leftHandSide.type == 'VARIABLE') {
+		// NOTE: This works for numbers, but won't work for variables. :()
+		if (rightHandSide.type == 'STRING') {
+			leftHandSide.setIndex(rightHandSide.strRep);
+
+			return cb(null, leftHandSide);
+		} else if (rightHandSide.type == 'QUOTED_STRING') {
+			leftHandSide.setIndex(rightHandSide.strRep);
+			return cb(null, leftHandSide);
+		} else {
+			return cb('square-brackets: Do not know what to do with type ' + typeof(rightHandSide) + ' on the right');
 		}
-
-		var rightNode = this.nodes[1];
-		rightNode.work(stateHolder, state, function(error, value) {
-			var rightHandSide = value;
-
-			if (leftHandSide.type == 'variable') {
-				// NOTE: This works for numbers, but won't work for variables. :()
-				if (rightHandSide.type == 'STRING') {
-					leftHandSide.setIndex(rightHandSide.strRep);
-
-					return cb(null, leftHandSide);
-				} else {
-					return cb('square-brackets: Do not know what to do with type ' + typeof(rightHandSide) + ' on the right');
-				}
-			} else {
-				return cb('square-brackets: Do not know what to do with ' + typeof(leftHandSide) + ' on the left');
-			}
-		});
-	});
+	} else {
+		return cb('square-brackets: Do not know what to do with ' + typeof(leftHandSide) + ' on the left');
+	}
 }
 
 module.exports = {
@@ -68,7 +75,6 @@ module.exports = {
 		rightNode.tokenList = right;
 
 		if (i != (node.tokenList.length - 1)) {
-			console.log('Could not finish command', i, (node.tokenList.length - 1), node.tokenList);
 			return cb(
 				'Could not finish command: ' +
 				node.tokenList.map(function(item) { return item.strValue; }).join(" ")

@@ -7,22 +7,31 @@ function work(stateHolder, state, cb) {
 	}
 
 	var leftNode = this.nodes[0];
-	leftNode.work(stateHolder, state, function(error, value) {
+	leftNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
+}
+
+function work2(cb, stateHolder, state, error, value) {
+	if (error) return cb(error);
+
+	var leftHandSide = value;
+
+	var rightNode = this.nodes[1];
+	rightNode.work(stateHolder, state, function(error, value) {
 		if (error) return cb(error);
+		var rightHandSide = value;
 
-		var leftHandSide = value;
+		var returnNode = new SyntaxTreeNode();
+		returnNode.type = 'BOOLEAN';
 
-		var rightNode = this.nodes[1];
-		rightNode.work(stateHolder, state, function(error, value) {
-			if (error) return cb(error);
-			var rightHandSide = value;
+		if (rightHandSide.strRep == leftHandSide.strRep) {
+			returnNode.strRep = 'true';
+			returnNode.booleanValue = true;
+		} else {
+			returnNode.strRep = 'false';
+			returnNode.booleanValue = false;
+		}
 
-			if (rightHandSide == leftHandSide) {
-				return cb(null, 'true');
-			} else {
-				return cb(null, 'false');
-			}
-		});
+		return cb(null, returnNode);
 	});
 }
 

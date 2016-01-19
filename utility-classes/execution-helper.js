@@ -65,7 +65,9 @@ ExecutionHelper.prototype.handleParsedMessages = function(messages, cb) {
 			}
 		},
 		function(err) {
-			if (err) console.log('ERR HERE', err);
+			if (err) {
+				throw new Error(err);
+			}
 			return cb(err);
 		}
 	);

@@ -13,28 +13,8 @@ ret.flatten = function(tokens) {
 		flat += tokens[i].rawValue;
 	}
 
-	console.log('flat: ' + flat);
-
 	return flat;
 }
-
-ret.fakeStateHolder = function(stateHolder) {
-	var fakeStateHolder = Object.create(stateHolder);
-	fakeStateHolder.result = '';
-	fakeStateHolder.real = stateHolder;
-
-	fakeStateHolder.simpleAddMessage = function(to, message) {
-		console.log('adding message ' + message + ' to a fake state holder.');
-		fakeStateHolder.result += message;
-	};
-	fakeStateHolder.squashAddMessage = function(to, message) {
-		console.log('squash add message');
-	};
-	fakeStateHolder.doFinalOutput = function() {
-		console.log('doFinalOutput of a fake state holder!');
-	};
-	return fakeStateHolder;
-};
 
 ret.setHandlers = function(handlers) {
 	ret.handlers = handlers;

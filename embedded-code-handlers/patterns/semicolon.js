@@ -2,27 +2,32 @@ var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
 function work(stateHolder, state, cb) {
+	if (typeof(cb) != 'function') throw new Error('cb is not a function: ', typeof(cb));
+
 	var leftNode = this.nodes[0];
 	if (typeof(leftNode.work) != 'function') {
 		throw new Error('Node not processed correctly');
 	}
 
-	leftNode.work(stateHolder, state, function(error, value) {
-		if (error) return cb(error);
+	leftNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
+}
 
-		if (node.nodes.length > 1) {
-			if (node.nodes[1].type == 'unparsed-node-list' && node.nodes[1].tokenList.length == 0) return cb();
+function work2(cb, stateHolder, state, error, value) {
+	if (error) return cb(error);
 
-			var rightNode = node.nodes[1];
-			rightNode.work(stateHolder, state, function(error, value) {
-				if (error) return cb(error);
-			
-				return cb();
-			});
-		} else {
-			return cb();
-		}
-	});
+	if (this.nodes.length > 1) {
+		if (this.nodes[1].type == 'unparsed-node-list' && this.nodes[1].tokenList.length == 0) return cb();
+
+		var rightNode = this.nodes[1];
+		rightNode.work(stateHolder, state, work3.bind(this, cb));
+	} else {
+		return cb();
+	}
+}
+
+function work3(cb, error, value) {
+	if (error) return cb(error);
+	return cb(null, value);
 }
 
 module.exports = {

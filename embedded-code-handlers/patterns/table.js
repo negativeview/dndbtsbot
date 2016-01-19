@@ -14,7 +14,6 @@ function work(stateHolder, state, cb) {
 	if (stateHolder.username in stateHolder.messages) {
 		messageB = stateHolder.messages[stateHolder.username].message
 	}
-	//console.log('table node', node.nodes);
 	return cb();
 
 

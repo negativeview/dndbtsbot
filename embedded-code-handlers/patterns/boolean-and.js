@@ -11,8 +11,7 @@ function work(stateHolder, state, cb) {
 	var leftNode = this.nodes[0];
 	leftNode.work(stateHolder, state, function(error, value) {
 		if (error) {
-			console.log('error in assignment', error);
-			return cb(error);
+			throw new Error(error);
 		}
 		var leftHandSide = value;
 

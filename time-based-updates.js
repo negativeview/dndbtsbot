@@ -108,8 +108,7 @@ TimeBasedUpdates.prototype.updateSingleChannelBasedOnRows = function(cb, channel
 			codeState,
 			function(error, res) {
 				if (error) {
-					console.log(error);
-					return;
+					throw new Error(error);
 				}
 
 				var actualTopic = m.bot.servers[serverID].channels[channelID].topic;

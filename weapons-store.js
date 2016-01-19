@@ -454,9 +454,7 @@ ret.init = function(mongoose) {
 function weaponFindWrap(parameters, stateHolder, earlyReturn, successReturn) {
 	ret.weaponStoreModel.find(parameters).exec(function(err, weapons) {
 		if (err) {
-			console.log(err);
-			stateHolder.simpleAddMessage(stateHolder.username, err);
-			return earlyReturn();
+			throw new Error(err);
 		}
 
 		return successReturn(weapons);
@@ -605,7 +603,9 @@ function init(pieces, stateHolder, serverID, next) {
 				existingWeapon.properties = bookWeapon.properties;
 
 				existingWeapon.save(function(err) {
-					if (err) console.log(err);
+					if (err) {
+						throw new Error(err);
+					}
 
 					return callback();
 				});

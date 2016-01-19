@@ -31,7 +31,7 @@ function work3(cb, leftHandSide, state, error, value) {
 			throw new Error('When assigning to a variable, could not tell what right side was: ' + rightHandSide.type);
 	}
 
-	if (leftHandSide.type == 'variable') {
+	if (leftHandSide.type == 'VARIABLE') {
 		leftHandSide.assign(rightHandSide, function(error) {
 			if (error) {
 				return cb(error);
@@ -43,6 +43,7 @@ function work3(cb, leftHandSide, state, error, value) {
 		return cb();
 	} else {
 		return cb('I do not know how to assign to ' + leftHandSide.type);
+	}
 }
 
 module.exports = {
@@ -81,10 +82,3 @@ module.exports = {
 		return cb('', node);
 	}
 };
-
-
-
-
-
-
-

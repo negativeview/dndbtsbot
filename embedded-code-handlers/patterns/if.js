@@ -3,22 +3,21 @@ var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
 function work(stateHolder, state, cb) {
 	var comparison = this.nodes[0];
-	comparison.work(stateHolder, state, function(error, value) {
-		if (error) return cb(error);
+	comparison.work(stateHolder, state, work2.bind(this, cb));
+}
 
-		switch (value) {
-			case 'true':
-				this.result = true;
-				break;
-			case 'false':
-				this.result = false;
-				break;
-			default:
-				return cb('Comparison value did not wind up being true or false.');
-		}
+function work2(cb, error, value) {
+	if (error) return cb(error);
 
-		return cb(null, this);
-	});
+	switch (value.type) {
+		case 'BOOLEAN':
+			this.result = value.booleanValue;
+			break;
+		default:
+			throw new Error('IF does not know how to evaluate ' + value.type + ' as a boolean.');
+	}
+
+	return cb(null, this);
 }
 
 function goUntil(command, i, mod, limit, typeA, typeB, cb) {
@@ -29,20 +28,16 @@ function goUntil(command, i, mod, limit, typeA, typeB, cb) {
 		limit == 0 ? m >= 0 : m < limit;
 		m += mod
 	) {
-		try {
-			if (command[m].type == typeA) {
-				count++;
-			} else if (command[m].type == typeB) {
-				if (count == 0) {
-					break;
-				} else {
-					count--;
-				}
+		if (command[m].type == typeA) {
+			count++;
+		} else if (command[m].type == typeB) {
+			if (count == 0) {
+				break;
+			} else {
+				count--;
 			}
-			collection.unshift(command[m]);
-		} catch (e) {
-			console.log(e.stack);
 		}
+		collection.unshift(command[m]);
 	}
 
 	return {
@@ -54,21 +49,17 @@ function goUntil(command, i, mod, limit, typeA, typeB, cb) {
 module.exports = {
 	name: 'If',
 	matches: function(command) {
-		try {
-			for (var i = command.length - 1; i > 0; i--) {
-				if (command[i].type == 'RIGHT_PAREN') {
-					var m = goUntil(command, i, -1, 0, 'RIGHT_PAREN', 'LEFT_PAREN');
-					m = m.m;
+		for (var i = command.length - 1; i > 0; i--) {
+			if (command[i].type == 'RIGHT_PAREN') {
+				var m = goUntil(command, i, -1, 0, 'RIGHT_PAREN', 'LEFT_PAREN');
+				m = m.m;
 
-					if (m - 1 < 0) {
-						return false;
-					}
-
-					if (command[m-1].type == 'IF') return m - 1;
+				if (m - 1 < 0) {
+					return false;
 				}
+
+				if (command[m-1].type == 'IF') return m - 1;
 			}
-		} catch (e) {
-			console.log(e.stack);
 		}
 		return false;
 	},

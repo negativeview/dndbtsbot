@@ -2,7 +2,10 @@ var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
 function work(stateHolder, state, cb) {
-	return cb(null, state.args[this.matches[1]]);
+	var syntaxTreeNode = new SyntaxTreeNode();
+	syntaxTreeNode.type = 'QUOTED_STRING';
+	syntaxTreeNode.strRep = state.args[this.matches[1]];
+	return cb(null, syntaxTreeNode);
 }
 
 module.exports = {

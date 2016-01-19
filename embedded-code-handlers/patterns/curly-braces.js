@@ -7,22 +7,45 @@ function work(stateHolder, state, cb) {
 	}
 
 	var beforeNode = this.nodes[0];
-	beforeNode.work(stateHolder, state, function(error, value) {
-		if (error) return cb(error);
+	beforeNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
+}
 
-		var insideNode = this.nodes[1];
-		insideNode.work(stateHolder, state, function(error, value) {
-			if (error) return cb(error);
-			if (this.nodes[2].type == 'unparsed-node-list' && this.nodes[2].tokenList.length == 0) return cb();
+function work2(cb, stateHolder, state, error, value) {
+	if (error) return cb(error);
 
-			var afterNode = this.nodes[2];
-			afterNode.work(stateHolder, state, cb);
-		});
-	});
+	var insideNode = this.nodes[1];
+	if ('result' in value) {
+		this.wasIf = true;
+		this.booleanValue = value.result;
+		if (value.result) {
+			insideNode.work(stateHolder, state, work3.bind(this, cb, stateHolder, state));
+		} else {
+			var f = work3.bind(this, cb, stateHolder, state);
+			return f(null, null);
+		}
+	} else {
+		insideNode.work(stateHolder, state, work3.bind(this, cb, stateHolder, state));
+	}
+}
+
+function work3(cb, stateHolder, state, error, value) {
+	if (error) return cb(error);
+	if (this.nodes[2].type == 'unparsed-node-list' && this.nodes[2].tokenList.length == 0) return cb();
+
+	var afterNode = this.nodes[2];
+	if (afterNode.type == 'ELSE' && this.wasIf) {
+		afterNode.booleanValue = !this.booleanValue;
+	}
+
+	if (afterNode.work) {
+		afterNode.work(stateHolder, state, cb);
+	}
 }
 
 module.exports = {
 	name: 'Curly Braces',
+	wasIf: false,
+	booleanValue: false,
 	matches: function(command) {
 		var foundRight = false;
 		for (var i = command.length - 1; i >= 0; i--) {

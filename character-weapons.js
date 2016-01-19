@@ -123,8 +123,7 @@ function doWeaponSet(pieces, stateHolder, activeCharacter, next) {
 			activeCharacter.weapons[i][key] = value;
 			activeCharacter.save(function(err) {
 				if (err) {
-					stateHolder.simpleAddMessage(stateHolder.username, err);
-					console.log(err);
+					throw new Error(err);
 				} else {
 					stateHolder.simpleAddMessage(stateHolder.username, 'Saved weapon variable.');
 				}
@@ -155,7 +154,9 @@ function doWeaponDrop(pieces, stateHolder, activeCharacter, next) {
 		if (activeCharacter.weapons[i].name == finalParam) {
 			activeCharacter.weapons.splice(i, 1);
 			return activeCharacter.save(function(err) {
-				if (err) { console.log(err); }
+				if (err) {
+					throw new Error(err);
+				}
 
 				stateHolder.simpleAddMessage(stateHolder.username, 'Dropped weapon ' + finalParam + ' from character ' + activeCharacter.name);
 				return next();
@@ -182,9 +183,7 @@ function doWeaponGrab(pieces, stateHolder, activeCharacter, next) {
 	};
 	weaponStoreModel.find(params).exec(function(err, results) {
 		if (err) {
-			stateHolder.simpleAddMessage(stateHolder.username, err);
-			console.log(err);
-			return next();
+			throw new Error(err);
 		}
 
 		if (results.length == 0) {

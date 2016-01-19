@@ -1,7 +1,7 @@
 function Variable(namespace, name) {
 	this.namespace = namespace;
 	this.name = name;
-	this.type = 'variable';
+	this.type = 'VARIABLE';
 	this.index = null;
 }
 

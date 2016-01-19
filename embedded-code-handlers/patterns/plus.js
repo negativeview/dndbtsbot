@@ -7,73 +7,71 @@ function work(stateHolder, state, cb) {
 	}
 
 	var leftNode = this.nodes[0];
-	leftNode.work(stateHolder, state, function(error, value) {
-		if (error) return cb(error);
+	leftNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
+};
 
-		if (!value) {
-			throw new Error('+ was not given a left value.');
-		}
+function work2(cb, stateHolder, state, error, value) {
+	if (error) return cb(error);
 
-		var leftValue = value;
-
-		var rightNode = this.nodes[1];
-		rightNode.work(stateHolder, state, function(error, value) {
-			if (error) return cb(error);
-
-			var rightValue = value;
-
-			if (leftValue.type == 'STRING') {
-				leftValue = state.variables[leftValue.strRep];
-			} else if (leftValue.type == 'QUOTED_STRING') {
-				leftValue = leftValue.strRep;
-			} else {
-				throw new Error('Left value of + is not a known type of value: ' + leftValue.type);
-			}
-
-			if (rightValue.type == 'STRING') {
-				rightValue = state.variables[rightValue.strValue];
-			} else if (rightValue.type == 'QUOTED_STRING') {
-				rightValue = rightValue.strRep;
-			} else {
-				throw new Error('Right value of + is not a known type of value: ' + rightValue.type);
-			}
-
-			var returnNode = new SyntaxTreeNode();
-			returnNode.type = 'QUOTED_STRING';
-			returnNode.strRep = leftValue + rightValue;
-
-			return cb(null, returnNode);
-		});
-	});
-
-	return;
-
-	var subNode = node.nodes[0];
-	if (subNode.work) {
-		subNode.work(stateHolder, state, subNode, function(error, value) {
-			if (error) {
-				console.log(error);
-				return cb(error);
-			}
-
-			if (value.type == 'variable') {
-				value.getScalarValue(
-					function(error, res) {
-						if (error) return cb(error);
-						
-						stateHolder.simpleAddMessage(stateHolder.channelID, res);
-						return cb();
-					}
-				);
-				return;
-			}
-			stateHolder.simpleAddMessage(stateHolder.channelID, value);
-			return cb();
-		});
-	} else {
-		stateHolder.simpleAddMessage(stateHolder.channelID, subNode.strRep);
-		return cb();
+	if (!value) {
+		throw new Error('+ was not given a left value.');
 	}
+
+	var leftValue = value;
+
+	var rightNode = this.nodes[1];
+
+	if (leftValue.type == 'STRING') {
+		leftValue = state.variables[leftValue.strRep];
+	} else if (leftValue.type == 'QUOTED_STRING') {
+		leftValue = leftValue.strRep;
+	} else if (leftValue.type == 'VARIABLE') {
+		var m = this;
+
+		leftValue.getScalarValue(
+			function(error, value) {
+				if (error) return cb(error);
+				return rightNode.work(stateHolder, state, work3.bind(m, cb, value, state));
+			}
+		);
+		return;
+	} else {
+		throw new Error('Left value of + is not a known type of value: ' + leftValue.type);
+	}
+
+	rightNode.work(stateHolder, state, work3.bind(this, cb, leftValue, state));
+}
+
+function work3(cb, leftValue, state, error, value) {
+	if (error) return cb(error);
+
+	var rightValue = value;
+	if (rightValue.type == 'STRING') {
+		rightValue = state.variables[rightValue.strRep];
+	} else if (rightValue.type == 'QUOTED_STRING') {
+		rightValue = rightValue.strRep;
+	} else if (rightValue.type == 'VARIABLE') {
+		var m = this;
+		rightValue.getScalarValue(
+			function(error, value) {
+				if (error) return cb(error);
+
+				return work4(leftValue, value, cb);
+			});
+		return;
+	} else {
+		throw new Error('Right value of + is not a known type of value: ' + rightValue.type);
+	}
+
+	return work4(leftValue, rightValue, cb);
+}
+
+function work4(leftValue, rightValue, cb) {
+	var returnNode = new SyntaxTreeNode();
+	returnNode.type = 'QUOTED_STRING';
+	returnNode.strRep = leftValue + rightValue;
+
+	return cb(null, returnNode);
 }
 
 module.exports = {
@@ -102,6 +100,7 @@ module.exports = {
 		}
 		node.addSubNode(right);
 		node.work = work;
+		node.tokenList = [];
 
 		return cb('', node);
 	}

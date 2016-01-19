@@ -253,16 +253,7 @@ Dice.prototype.execute = function execute(command, callback) {
     });
   });
   lex.setInput(command);
-
-  try {
-    lex.lex();
-  } catch (e) {
-    console.log(e, command);
-    return {
-      command: command,
-      output: command + '::' + e
-    };
-  }
+  lex.lex();
 
   var self = this;
   var cb = callback;

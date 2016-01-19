@@ -8,51 +8,58 @@ var WeaponNamespace    = require('../namespaces/weapon-namespace.js');
 var Variable           = require('../base/variable.js');
 
 function work(stateHolder, state, cb) {
+	if (typeof(cb) != 'function') throw new Error('cb is not a function' + typeof(cb));
 	if (this.nodes.length != 2) {
 		throw new Error('. expects two sub-nodes. How did this even happen??');
 	}
 
 	var leftNode = this.nodes[0];
-	leftNode.work(stateHolder, state, function(error, value) {
-		if (error) return cb(error);
+	if (!leftNode.work) {
+		console.log('leftNode', leftNode);
+	}
+	leftNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
+}
 
-		var leftHandSide = value;
+function work2(cb, stateHolder, state, error, value) {
+	if (error) return cb(error);
 
-		var rightNode = this.nodes[1];
-		rightNode.work(stateHolder, state, function(error, value) {
-			try {
-				var rightHandSide = value;
+	var leftHandSide = value;
+	var rightNode = this.nodes[1];
+	rightNode.work(stateHolder, state, work3.bind(this, cb, leftHandSide, stateHolder));
+}
 
-				if (leftHandSide.type == "STRING") {
-					switch (leftHandSide.strRep) {
-						case 'channel':
-							var namespace = new ChannelNamespace(stateHolder);
-							break;
-						case 'server':
-							var namespace = new ServerNamespace(stateHolder);
-							break;
-						case 'user':
-						case 'me':
-							var namespace = new UserNamespace(stateHolder);
-							break;
-						case 'character':
-							var namespace = new CharacterNamespace(stateHolder);
-							break;
-						case 'weapon':
-							var namespace = new WeaponNamespace(stateHolder);
-							break;
-						default:
-							return cb(leftHandSide + ' not recognized as a namespace that variables can live in.');
-					}
-				}
+function work3(cb, leftHandSide, stateHolder, error, value) {
+	try {
+		var rightHandSide = value;
 
-				var variable = new Variable(namespace, rightHandSide.strRep);
-				cb(null, variable);
-			} catch (e) {
-				return cb(e.stack);
+		if (leftHandSide.type == "STRING") {
+			switch (leftHandSide.strRep) {
+				case 'channel':
+					var namespace = new ChannelNamespace(stateHolder);
+					break;
+				case 'server':
+					var namespace = new ServerNamespace(stateHolder);
+					break;
+				case 'user':
+				case 'me':
+					var namespace = new UserNamespace(stateHolder);
+					break;
+				case 'character':
+					var namespace = new CharacterNamespace(stateHolder);
+					break;
+				case 'weapon':
+					var namespace = new WeaponNamespace(stateHolder);
+					break;
+				default:
+					return cb(leftHandSide + ' not recognized as a namespace that variables can live in.');
 			}
-		});
-	});
+		}
+
+		var variable = new Variable(namespace, rightHandSide.strRep);
+		cb(null, variable);
+	} catch (e) {
+		return cb(e.stack);
+	}
 }
 
 module.exports = {

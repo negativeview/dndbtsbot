@@ -7,8 +7,10 @@ var SyntaxTreeNode = require('./syntax-tree-node.js');
 
 var patterns = [
 	patterns.curlyBraces,
-	patterns.ifElse,
 	patterns.semicolon,
+	patterns.ifBranch,
+	patterns.elseBranch,
+	patterns.foreach,
 	patterns.echo,
 	patterns.parenthesis,
 	patterns.assignment,
@@ -287,7 +289,7 @@ EmbeddedCodeHandler.prototype.executeProcessed = function(externalCallback, code
 	}
 	
 	console.log('TOP LEVEL NODE', JSON.stringify(topLevelNode, ['type', 'strRep', 'nodes', 'tokenList', 'rawValue'], '  '));
-	topLevelNode.work(this.stateHolder, codeState, topLevelNode, function(error) {
+	topLevelNode.work(this.stateHolder, codeState, function(error) {
 		return externalCallback(error, codeState);
 	});
 };
@@ -303,7 +305,6 @@ EmbeddedCodeHandler.prototype.processSingle = function(doneProcessing, parentNod
 			this._processSingleDone.bind(this, parentNode, doneProcessing, codeState)
 		);
 	} catch (e) {
-		console.log('Error I am trying to pass back', e);
 		return this._processSingleDone(parentNode, doneProcessing, codeState, e.stack);
 	}
 };

@@ -13,8 +13,7 @@ function varGetAll(pieces, stateHolder, next) {
 	setupVarParameters(parameters, namespace, stateHolder, function(err) {
 		ret.varModel.find(parameters).exec(function(err, res) {
 			if (err) {
-				console.log(err);
-				next();
+				throw new Error(err);
 			}
 
 			for (var i = 0; i < res.length; i++) {
@@ -59,15 +58,12 @@ function varGet(pieces, stateHolder, next) {
 
 	setupVarParameters(parameters, namespace, stateHolder, function(err) {
 		if (err) {
-			console.log(err);
-			stateHolder.simpleAddMessage(stateHolder.username, err);
-			return next();
+			throw new Error(err);
 		}
 
 		ret.varModel.find(parameters).exec(function(err, res) {
 			if (err) {
-				console.log(err);
-				next();
+				throw new Error(err);
 			}
 
 			if (res.length) {
@@ -93,15 +89,12 @@ function varDel(pieces, stateHolder, next) {
 
 	setupVarParameters(parameters, namespace, stateHolder, function(err) {
 		if (err) {
-			console.log(err);
-			stateHolder.simpleAddMessage(stateHolder.username, err);
-			return next();
+			throw new Error(err);
 		}
 
 		ret.varModel.find(parameters).exec(function(err, res) {
 			if (err) {
-				console.log(err);
-				return next();
+				throw new Error(err);
 			}
 
 			for (var i = 0; i < res.length; i++) {
@@ -154,15 +147,12 @@ function varSet(pieces, stateHolder, next) {
 
 	setupVarParameters(parameters, namespace, stateHolder, function(err) {
 		if (err) {
-			console.log(err);
-			stateHolder.simpleAddMessage(stateHolder.username, err);
-			return next();
+			throw new Error(err);
 		}
 
 		ret.varModel.find(parameters).exec(function(err, res) {
 			if (err) {
-				console.log(err);
-				return next();
+				throw new Error(err);
 			}
 
 			for (var i = 0; i < res.length; i++) {
@@ -174,8 +164,7 @@ function varSet(pieces, stateHolder, next) {
 			var newVar = new ret.varModel(parameters);
 			newVar.save(function(err) {
 				if (err) {
-					console.log(err);
-					return next();
+					throw new Error(err);
 				}
 
 				stateHolder.simpleAddMessage(stateHolder.username, 'Saved var ' + parameters.name);
