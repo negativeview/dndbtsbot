@@ -13,14 +13,20 @@ function workComplete(cb, codeHandler, state, leftHandSide, rightHandSide) {
 	var returnNode = new SyntaxTreeNode();
 	returnNode.type = 'QUOTED_STRING';
 
-	if (typeof(leftHandSide) == 'string' && leftHandSide.match(/^[-+]?[0-9]+$/))
-		leftHandSide = parseInt(leftHandSide);
-	if (typeof(rightHandSide) == 'string' && rightHandSide.match(/^[-+]?[0-9]+$/))
-		rightHandSide = parseInt(rightHandSide);
+	if (leftHandSide.canNumber() && rightHandSide.canNumber()) {
+		var num = leftHandSide.toNumber() + rightHandSide.toNumber();
+		var ret = new StringNode(this.parent, num);
+		return cb(null, ret);
+	}
 
-	returnNode.strRep = leftHandSide + rightHandSide;
+	if (leftHandSide.canString() && rightHandSide.canString()) {
+		var str = leftHandSide.toString() + rightHandSide.toString();
+		var ret = new StringNode(this.parent, str);
 
-	return cb(null, returnNode);
+		return cb(null, ret);
+	}
+
+	throw new Error('Do not know how to add ' + leftHandSide.type + ' and ' + rightHandSide.type);
 }
 
 function toString() {
