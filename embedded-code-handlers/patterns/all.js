@@ -19,5 +19,6 @@ module.exports = {
 	foreach: require('./foreach.js'),
 	le: require('./le.js'),
 	lessThan: require('./less-than.js'),
-	greaterThan: require('./greater-than.js')
+	greaterThan: require('./greater-than.js'),
+	asterisk: require('./asterisk.js')
 };

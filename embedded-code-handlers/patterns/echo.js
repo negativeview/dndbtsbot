@@ -7,6 +7,7 @@ function work(stateHolder, state, cb) {
 	}
 
 	var subNode = this.nodes[0];
+	console.log('subNode', subNode);
 	subNode.work(stateHolder, state, function(error, value) {
 		if (error) {
 			return cb(error);

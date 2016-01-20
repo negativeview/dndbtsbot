@@ -16,6 +16,8 @@ var patterns = [
 	patterns.assignment,
 	patterns.ignore,
 	patterns.table,
+	
+	patterns.asterisk,
 	patterns.plus,
 	
 	patterns.booleanAnd,
