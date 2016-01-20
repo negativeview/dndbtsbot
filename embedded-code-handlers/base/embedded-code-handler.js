@@ -6,34 +6,49 @@ var tokenizer      = require('./tokenizer.js');
 var SyntaxTreeNode = require('./syntax-tree-node.js');
 
 var patterns = [
-	patterns.curlyBraces,
-	patterns.semicolon,
-	patterns.ifBranch,
-	patterns.elseBranch,
-	patterns.foreach,
-	patterns.echo,
-	patterns.parenthesis,
-	patterns.assignment,
-	patterns.ignore,
-	
-	patterns.table,
-	patterns.roll,
-	
-	patterns.asterisk,
-	patterns.plus,
-	
-	patterns.booleanAnd,
-
-	patterns.doubleEquals,
-	patterns.notEquals,
-	patterns.le,
-	patterns.lessThan,
-	patterns.greaterThan,
-
-	patterns.squareBrackets,
-	patterns.dot,
-	patterns.simpleString,
-	patterns.macroArgument,
+	[
+		patterns.curlyBraces,
+	],
+	[
+		patterns.semicolon,
+	],
+	[
+		patterns.assignment,
+		patterns.echo,
+		patterns.ignore,	
+		patterns.ifBranch,
+	],
+	[
+		patterns.booleanAnd,
+	],
+	[
+		patterns.doubleEquals,
+		patterns.notEquals,
+		patterns.le,
+		patterns.lessThan,
+		patterns.greaterThan
+	],
+	[
+		patterns.parenthesis
+	],
+	[
+		patterns.asterisk,
+		patterns.plus,
+	],
+	[
+		patterns.squareBrackets,	// before dot
+	],
+	[
+		patterns.dot, // after square brackets
+	],
+	[
+		patterns.elseBranch,
+		patterns.foreach,
+		patterns.table,
+		patterns.roll,
+		patterns.simpleString,
+		patterns.macroArgument,
+	]
 ];
 
 function EmbeddedCodeHandler(stateHolder, handlerRegistry) {
@@ -242,12 +257,35 @@ EmbeddedCodeHandler.prototype.recursiveProcess = function(syntaxTreeNode, codeSt
  *****/
 EmbeddedCodeHandler.prototype.findPattern = function(foundCallback, tokenArray, next) {
 	for (var i = 0; i < patterns.length; i++) {
-		var pattern = patterns[i];
-		var found = false;
-		found = pattern.matches(tokenArray);
+		var patternGroup = patterns[i];
 
-		if (found !== false) {
-			return foundCallback(found, pattern);
+		var matches = [];
+		for (p = 0; p < patternGroup.length; p++) {
+			var pattern = patternGroup[p];
+			var found = pattern.matches(tokenArray);
+			if (found !== false) {
+				matches.push({pattern: pattern, index: found});
+			}
+		}
+
+		if (matches.length == 1) {
+			return foundCallback(matches[0].index, matches[0].pattern);
+		} else if (matches.length > 1) {
+			if (i == 3) {
+				var match = null;
+				for (var p = 0; p < matches.length; p++) {
+					if (match == null || matches[p].index > match.index) {
+						match = matches[p];
+					}
+				}
+				if (match == null) {
+					throw new Error("This should never happen.");
+				}
+
+				return foundCallback(match.index, match.pattern);
+			}
+			console.log('Found multiple', matches, tokenArray);
+			throw new Error("Found multiple");
 		}
 	}
 
@@ -290,13 +328,16 @@ EmbeddedCodeHandler.prototype.executeProcessed = function(externalCallback, code
 	}
 	
 	console.log('TOP LEVEL NODE', JSON.stringify(topLevelNode, ['type', 'strRep', 'nodes', 'tokenList', 'rawValue'], '  '));
-	topLevelNode.work(this.stateHolder, codeState, function(error) {
+	topLevelNode.work(this, codeState, function(error) {
 		return externalCallback(error, codeState);
 	});
 };
 
 EmbeddedCodeHandler.prototype.processSingle = function(doneProcessing, parentNode, codeState, index, pattern) {
 	if (typeof(doneProcessing) != 'function') throw Error('not a function');
+
+	console.log('pattern: ', pattern);
+	console.log('node: ', parentNode.tokenList);
 
 	pattern.process(
 		this,

@@ -279,33 +279,25 @@ module.exports = function(command, cb) {
 
 	lex.setInput(command);
 
-	try {
-		lex.lex();
+	lex.lex();
 
-		fixStrings(
-			tokens,
-			function(error, tokensWithQuotedStrings) {
-				if (error) {
-					return cb(error);
-				}
-
-				removeWhitespace(
-					tokensWithQuotedStrings,
-					function(error, finalizedTokens) {
-						if (error) {
-							return cb(error);
-						}
-
-						return cb(null, finalizedTokens);
-					}
-				);
+	fixStrings(
+		tokens,
+		function(error, tokensWithQuotedStrings) {
+			if (error) {
+				return cb(error);
 			}
-		);
-	} catch (e) {
-		if (e.stack) {
-			return cb(e.stack);
-		} else {
-			return cb(e);
+
+			removeWhitespace(
+				tokensWithQuotedStrings,
+				function(error, finalizedTokens) {
+					if (error) {
+						return cb(error);
+					}
+
+					return cb(null, finalizedTokens);
+				}
+			);
 		}
-	}
+	);
 }

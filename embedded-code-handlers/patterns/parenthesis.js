@@ -1,19 +1,21 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, cb) {
+function work(codeHandler, state, cb) {
 	if (this.nodes.length != 1) {
 		return cb('() expects one sub-node. How did this even happen??');
 	}
 
 	var subNode = this.nodes[0];
-	subNode.work(stateHolder, state, cb)
+	subNode.work(codeHandler, state, cb)
 }
 
 module.exports = {
 	name: 'Parenthesis',
 	matches: function(command) {
 		var foundRight = false;
+		if (command[command.length-1].type != 'RIGHT_PAREN') return false;
+		
 		for (var i = command.length - 1; i >= 0; i--) {
 			if (command[i].type == 'RIGHT_PAREN') {
 				foundRight = true;
@@ -22,9 +24,6 @@ module.exports = {
 				for (var m = i - 1; m >= 0; m--) {
 					if (command[m].type == 'LEFT_PAREN') {
 						if (count == 0) {
-							if (m != 0) {
-								return false;
-							}
 							return m;
 						} else {
 							count--;
@@ -55,7 +54,7 @@ module.exports = {
 			insideArray.push(token);
 		}
 
-		var inside = new SyntaxTreeNode();
+		var inside = new SyntaxTreeNode(node);
 		inside.tokenList = insideArray;
 
 		node.type = 'PARENTHESIS';

@@ -1,7 +1,7 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, cb) {
+function work(codeHandler, state, cb) {
 	return cb(null, this);
 }
 

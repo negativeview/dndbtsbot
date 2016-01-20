@@ -1,13 +1,13 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, cb) {
+function work(codeHandler, state, cb) {
 	if (this.nodes.length != 1) {
 		return cb('echo excepts one sub-nodes. How did this even happen??');
 	}
 
 	var subNode = this.nodes[0];
-	subNode.work(stateHolder, state, function(error, value) {
+	subNode.work(codeHandler, state, function(error, value) {
 		if (error) return cb(error);
 		return cb();
 	});
@@ -32,7 +32,7 @@ module.exports = {
 		for (var i = 1; i < node.tokenList.length; i++) {
 			sub.push(node.tokenList[i]);
 		}
-		var leftNode = new SyntaxTreeNode();
+		var leftNode = new SyntaxTreeNode(node);
 		leftNode.strRep = '';
 		leftNode.tokenList = sub;
 

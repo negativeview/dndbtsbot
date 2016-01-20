@@ -1,14 +1,13 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, cb) {
+function work(codeHandler, state, cb) {
 	if (this.nodes.length != 1) {
 		return cb('echo excepts one sub-nodes. How did this even happen??');
 	}
 
 	var subNode = this.nodes[0];
-	console.log('subNode', subNode);
-	subNode.work(stateHolder, state, function(error, value) {
+	subNode.work(codeHandler, state, function(error, value) {
 		if (error) {
 			return cb(error);
 		}
@@ -16,16 +15,16 @@ function work(stateHolder, state, cb) {
 		if (value.type == 'VARIABLE') {
 			value.getScalarValue(
 				function(error, res) {
-					stateHolder.simpleAddMessage(stateHolder.channelID, res);
+					stateHolder.simpleAddMessage(codeHandler.stateHolder.channelID, res);
 					return cb();
 				}
 			);
 			return;
 		} else if (value.type == 'QUOTED_STRING') {
-			stateHolder.simpleAddMessage(stateHolder.channelID, value.strRep);
+			codeHandler.stateHolder.simpleAddMessage(codeHandler.stateHolder.channelID, value.strRep);
 			return cb();
 		} else if (value.type == 'STRING') {
-			stateHolder.simpleAddMessage(stateHolder.channelID, state.variables[value.strRep]);
+			codeHandler.stateHolder.simpleAddMessage(codeHandler.stateHolder.channelID, state.variables[value.strRep]);
 			return cb();
 		} else {
 			throw new Error('Do not know how to echo a ' + value.type + ', expecting a variable or a QUOTED_STRING');
@@ -60,7 +59,7 @@ module.exports = {
 			sub.push(node.tokenList[i]);
 		}
 
-		var childStn = new SyntaxTreeNode();
+		var childStn = new SyntaxTreeNode(node);
 		childStn.tokenList = sub;
 
 		node.addSubNode(childStn);

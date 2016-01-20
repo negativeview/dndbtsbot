@@ -1,12 +1,12 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, cb) {
+function work(codeHandler, state, cb) {
 	var comparison = this.nodes[0];
-	comparison.work(stateHolder, state, work2.bind(this, cb, comparison, stateHolder, state));
+	comparison.work(codeHandler, state, work2.bind(this, cb, comparison, codeHandler, state));
 }
 
-function work2(cb, comparison, stateHolder, state, error, value) {
+function work2(cb, comparison, codeHandler, state, error, value) {
 	if (error) return cb(error);
 
 	value.getTable(work3.bind(this, cb));
@@ -80,7 +80,7 @@ module.exports = {
 	process: function(codeHandler, node, state, index, cb) {
 		var command = node.tokenList;
 		
-		var conditional = new SyntaxTreeNode();
+		var conditional = new SyntaxTreeNode(node);
 		conditional.strRep = 'conditional';
 		if (command[index + 1].type != 'LEFT_PAREN') {
 			throw new Error("Missing a left parenthesis after IF statement" + command[index + 1].type);

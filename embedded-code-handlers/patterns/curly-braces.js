@@ -2,16 +2,16 @@ var async  = require('async');
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, cb) {
+function work(codeHandler, state, cb) {
 	if (this.nodes.length != 3) {
 		return cb('{} expects three sub-nodes. How did this even happen??');
 	}
 
 	var beforeNode = this.nodes[0];
-	beforeNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
+	beforeNode.work(codeHandler, state, work2.bind(this, cb, codeHandler, state));
 }
 
-function work2(cb, stateHolder, state, error, value) {
+function work2(cb, codeHandler, state, error, value) {
 	if (error) return cb(error);
 
 	var insideNode = this.nodes[1];
@@ -19,42 +19,42 @@ function work2(cb, stateHolder, state, error, value) {
 		this.wasIf = true;
 		this.booleanValue = value.result;
 		if (value.result) {
-			insideNode.work(stateHolder, state, work3.bind(this, cb, stateHolder, state));
+			insideNode.work(codeHandler, state, work3.bind(this, cb, codeHandler, state));
 		} else {
-			var f = work3.bind(this, cb, stateHolder, state);
+			var f = work3.bind(this, cb, codeHandler, state);
 			return f(null, null);
 		}
 	} else if ('toLoopOver' in value) {
 		var m = this;
 		async.eachSeries(
 			value.toLoopOver,
-			work4.bind(this, stateHolder, state, insideNode),
+			work4.bind(this, codeHandler, state, insideNode),
 			function(error) {
 				afterNode = m.nodes[2];
 				if (afterNode.work) {
-					afterNode.work(stateHolder, state, cb);
+					afterNode.work(codeHandler, state, cb);
 				} else {
 					return cb(error, m);
 				}
 			}
 		);
 	} else {
-		insideNode.work(stateHolder, state, work3.bind(this, cb, stateHolder, state));
+		insideNode.work(codeHandler, state, work3.bind(this, cb, codeHandler, state));
 	}
 }
 
-function work4(stateHolder, state, insideNode, variableOverrides, cb) {
+function work4(codeHandler, state, insideNode, variableOverrides, cb) {
 	var keys = Object.keys(variableOverrides);
 	for (var i = 0; i < keys.length; i++) {
 		state.variables[keys[i]] = variableOverrides[keys[i]];
 	}
 
-	insideNode.work(stateHolder, state, function(error, res) {
+	insideNode.work(codeHandler, state, function(error, res) {
 		return cb(error);
 	});
 }
 
-function work3(cb, stateHolder, state, error, value) {
+function work3(cb, codeHandler, state, error, value) {
 	if (error) return cb(error);
 	if (this.nodes[2].type == 'unparsed-node-list' && this.nodes[2].tokenList.length == 0) return cb();
 
@@ -64,7 +64,7 @@ function work3(cb, stateHolder, state, error, value) {
 	}
 
 	if (afterNode.work) {
-		afterNode.work(stateHolder, state, cb);
+		afterNode.work(codeHandler, state, cb);
 	}
 }
 
@@ -106,14 +106,14 @@ module.exports = {
 		return false;
 	},
 	process: function(codeHandler, node, state, index, cb) {
-		var before = new SyntaxTreeNode();
+		var before = new SyntaxTreeNode(node);
 		for (var i = 0; i < index; i++) {
 			var token = node.tokenList[i];
 			before.tokenList.push(token);
 		}
 		node.addSubNode(before);
 
-		var inside = new SyntaxTreeNode();
+		var inside = new SyntaxTreeNode(node);
 		var count = 0;
 		for (var i = index + 1; i < node.tokenList.length; i++) {
 			var token = node.tokenList[i];
@@ -130,7 +130,7 @@ module.exports = {
 		}
 		node.addSubNode(inside);
 
-		var after = new SyntaxTreeNode();
+		var after = new SyntaxTreeNode(node);
 		for (i = i + 1; i < node.tokenList.length; i++) {
 			var token = node.tokenList[i];
 			after.tokenList.push(token);

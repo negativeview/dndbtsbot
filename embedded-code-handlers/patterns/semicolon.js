@@ -1,7 +1,7 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, cb) {
+function work(codeHandler, state, cb) {
 	if (typeof(cb) != 'function') throw new Error('cb is not a function: ', typeof(cb));
 
 	var leftNode = this.nodes[0];
@@ -9,17 +9,17 @@ function work(stateHolder, state, cb) {
 		throw new Error('Node not processed correctly');
 	}
 
-	leftNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
+	leftNode.work(codeHandler, state, work2.bind(this, cb, codeHandler, state));
 }
 
-function work2(cb, stateHolder, state, error, value) {
+function work2(cb, codeHandler, state, error, value) {
 	if (error) return cb(error);
 
 	if (this.nodes.length > 1) {
 		if (this.nodes[1].type == 'unparsed-node-list' && this.nodes[1].tokenList.length == 0) return cb();
 
 		var rightNode = this.nodes[1];
-		rightNode.work(stateHolder, state, work3.bind(this, cb));
+		rightNode.work(codeHandler, state, work3.bind(this, cb));
 	} else {
 		return cb();
 	}
@@ -61,14 +61,14 @@ module.exports = {
 			left.push(node.tokenList[i]);
 		}
 
-		var leftNode = new SyntaxTreeNode();
+		var leftNode = new SyntaxTreeNode(node);
 		leftNode.strRep = '';
 		leftNode.tokenList = left;
 
 		for (var i = index + 1; i < node.tokenList.length; i++) {
 			right.push(node.tokenList[i]);
 		}
-		var rightNode = new SyntaxTreeNode();
+		var rightNode = new SyntaxTreeNode(node);
 		rightNode.strRep = '';
 		rightNode.tokenList = right;
 

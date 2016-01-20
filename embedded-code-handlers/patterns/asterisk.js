@@ -1,15 +1,15 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, cb) {
+function work(codeHandler, state, cb) {
 	if (this.nodes.length != 2) {
 		return cb('* expects two sub-nodes. How did this even happen??');
 	}
 
-	helper.setupComparisonValues(this, stateHolder, state, workComplete.bind(this, cb));
+	helper.setupComparisonValues(this, codeHandler, state, workComplete.bind(this, cb));
 };
 
-function workComplete(cb, stateHolder, state, leftHandSide, rightHandSide) {
+function workComplete(cb, codeHandler, state, leftHandSide, rightHandSide) {
 	var returnNode = new SyntaxTreeNode();
 	returnNode.type = 'QUOTED_STRING';
 
@@ -41,13 +41,13 @@ module.exports = {
 		node.type = 'ASTERISK';
 		node.strRep = '*';
 
-		var left = new SyntaxTreeNode();
+		var left = new SyntaxTreeNode(node);
 		for (var i = 0; i < index; i++) {
 			left.tokenList.push(node.tokenList[i]);
 		}
 		node.addSubNode(left);
 
-		var right = new SyntaxTreeNode();
+		var right = new SyntaxTreeNode(node);
 		for (var i = index + 1; i < node.tokenList.length; i++) {
 			right.tokenList.push(node.tokenList[i]);
 		}

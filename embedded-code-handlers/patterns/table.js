@@ -1,33 +1,34 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
+var CodeError = require('../base/code-error.js');
 
-function work(stateHolder, state, cb) {
+function work(codeHandler, state, cb) {
 	if (this.nodes.length != 1) {
 		return cb('table expects one sub-node. How did this even happen??');
 	}
 
 	var messageA = null;
 	var messageB = null;
-	if (stateHolder.channelID in stateHolder.messages) {
-		messageA = stateHolder.messages[stateHolder.channelID].message
+	if (codeHandler.stateHolder.channelID in codeHandler.stateHolder.messages) {
+		messageA = codeHandler.stateHolder.messages[codeHandler.stateHolder.channelID].message
 	}
-	if (stateHolder.username in stateHolder.messages) {
-		messageB = stateHolder.messages[stateHolder.username].message
+	if (codeHandler.stateHolder.username in codeHandler.stateHolder.messages) {
+		messageB = codeHandler.stateHolder.messages[codeHandler.stateHolder.username].message
 	}
 
-	this.nodes[0].work(stateHolder, state, function(error, value) {
+	this.nodes[0].work(codeHandler, state, function(error, value) {
 		if (error) return cb(error);
 
-		stateHolder.executionHelper.handle('!table ' + value.strRep, function() {
+		codeHandler.stateHolder.executionHelper.handle('!table ' + value.strRep, function() {
 			if (messageA) {
-				stateHolder.messages[stateHolder.channelID] = messageA;
+				codeHandler.stateHolder.messages[codeHandler.stateHolder.channelID] = messageA;
 			} else {
-				delete stateHolder.messages[stateHolder.channelID];
+				delete codeHandler.stateHolder.messages[codeHandler.stateHolder.channelID];
 			}
 			if (messageB) {
-				stateHolder.messages[stateHolder.username] = messageB;
+				codeHandler.stateHolder.messages[codeHandler.stateHolder.username] = messageB;
 			} else {
-				delete stateHolder.messages[stateHolder.username];
+				delete codeHandler.stateHolder.messages[codeHandler.stateHolder.username];
 			}
 			return cb();
 		});
@@ -37,23 +38,19 @@ function work(stateHolder, state, cb) {
 module.exports = {
 	name: 'Table',
 	matches: function(command) {
-		for (var i = command.length - 1; i >= 0; i--) {
-			if (command[i].type == 'TABLE') {
-				return i;
-			}
-		}
+		if (command.length == 1 && command[0].type == 'TABLE') return 0;
 		return false;
 	},
-	process: function(node, state, index, cb) {
+	process: function(codeHandler, node, state, index, cb) {
 		if (index != 0) {
-			throw "Table does not return anything.";
+			throw new CodeError("Table does not return anything.", codeHandler, node);
 		}
 
 		var sub = [];
 		for (var i = 1; i < node.tokenList.length; i++) {
 			sub.push(node.tokenList[i]);
 		}
-		var leftNode = new SyntaxTreeNode();
+		var leftNode = new SyntaxTreeNode(node);
 		leftNode.strRep = '';
 		leftNode.tokenList = sub;
 

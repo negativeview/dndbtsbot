@@ -1,7 +1,7 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, cb) {
+function work(codeHandler, state, cb) {
 	var retNode = new SyntaxTreeNode();
 	retNode.type = 'BOOLEAN';
 	retNode.strRep = this.booleanValue ? 'true' : 'false';
@@ -31,13 +31,13 @@ module.exports = {
 		for (var i = 0; i < index; i++) {
 			left.push(node.tokenList[i]);
 		}
-		var leftNode = new SyntaxTreeNode();
+		var leftNode = new SyntaxTreeNode(node);
 		leftNode.tokenList = left;
 
 		for (var i = index + 1; i < node.tokenList.length; i++) {
 			right.push(node.tokenList[i]);
 		}
-		var rightNode = new SyntaxTreeNode();
+		var rightNode = new SyntaxTreeNode(node);
 		rightNode.tokenList = right;
 
 		node.type = 'ELSE';

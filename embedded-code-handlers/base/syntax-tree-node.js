@@ -1,5 +1,6 @@
-function SyntaxTreeNode() {
+function SyntaxTreeNode(parent) {
 	this.nodes = [];
+	this.parent = parent;
 	this.strRep = "Unset";
 	this.type = 'unparsed-node-list';
 	this.tokenList = [];

@@ -1,9 +1,9 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-function work(stateHolder, state, cb) {
+function work(codeHandler, state, cb) {
 	var comparison = this.nodes[0];
-	comparison.work(stateHolder, state, work2.bind(this, cb, comparison));
+	comparison.work(codeHandler, state, work2.bind(this, cb, comparison));
 }
 
 function work2(cb, comparison, error, value) {
@@ -75,28 +75,24 @@ module.exports = {
 		return false;
 	},
 	process: function(codeHandler, node, state, index, cb) {
-		try {
-			var command = node.tokenList;
-			
-			var conditional = new SyntaxTreeNode();
-			conditional.strRep = 'conditional';
-			if (command[index + 1].type != 'LEFT_PAREN') {
-				throw new Error("Missing a left parenthesis after IF statement" + command[index + 1].type);
-			}
-
-			var res = goUntil(command, index + 3, +1, command.length, 'LEFT_PAREN', 'RIGHT_PAREN');
-			conditional.tokenList = res.collection.reverse();
-			node.addSubNode(conditional);
-
-			node.work = work;
-			node.strRep = 'If';
-			node.toString = toString;
-			node.type = 'If';
-			node.tokenList = [];
-			node.toString = toString;
-		} catch (e) {
-			return cb(e.stack);
+		var command = node.tokenList;
+		
+		var conditional = new SyntaxTreeNode(node);
+		conditional.strRep = 'conditional';
+		if (command[index + 1].type != 'LEFT_PAREN') {
+			throw new Error("Missing a left parenthesis after IF statement" + command[index + 1].type);
 		}
+
+		var res = goUntil(command, index + 3, +1, command.length, 'LEFT_PAREN', 'RIGHT_PAREN');
+		conditional.tokenList = res.collection.reverse();
+		node.addSubNode(conditional);
+
+		node.work = work;
+		node.strRep = 'If';
+		node.toString = toString;
+		node.type = 'If';
+		node.tokenList = [];
+		node.toString = toString;
 		return cb('', node);
 	}
 };

@@ -1,26 +1,27 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
+var CodeError = require('../base/code-error.js');
 
-function work(stateHolder, state, cb) {
+function work(codeHandler, state, cb) {
 	if (this.nodes.length != 2) {
 		return cb('= excepts two sub-nodes. How did this even happen??');
 	}
 
 	var leftNode = this.nodes[0];
-	leftNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
+	leftNode.work(codeHandler, state, work2.bind(this, cb, codeHandler, state));
 }
 
-function work2(cb, stateHolder, state, error, value) {
+function work2(cb, codeHandler, state, error, value) {
 	if (error) {
 		return cb(error);
 	}
 	
 	var leftHandSide = value;
 	var rightNode = this.nodes[1];
-	rightNode.work(stateHolder, state, work3.bind(this, cb, leftHandSide, state));
+	rightNode.work(codeHandler, state, work3.bind(this, cb, codeHandler, leftHandSide, state));
 }
 
-function work3(cb, leftHandSide, state, error, value) {
+function work3(cb, codeHandler, leftHandSide, state, error, value) {
 	var rightHandSide = value;
 
 	switch (rightHandSide.type) {
@@ -28,7 +29,7 @@ function work3(cb, leftHandSide, state, error, value) {
 			rightHandSide = rightHandSide.strRep;
 			break;
 		default:
-			throw new Error('When assigning to a variable, could not tell what right side was: ' + rightHandSide.type);
+			throw new CodeError('When assigning to a variable, could not tell what right side was', codeHandler, this);
 	}
 
 	if (leftHandSide.type == 'VARIABLE') {
@@ -67,13 +68,13 @@ module.exports = {
 		for (var i = 0; i < index; i++) {
 			left.push(node.tokenList[i]);
 		}
-		var leftNode = new SyntaxTreeNode();
+		var leftNode = new SyntaxTreeNode(node);
 		leftNode.tokenList = left;
 
 		for (var i = index + 1; i < node.tokenList.length; i++) {
 			right.push(node.tokenList[i]);
 		}
-		var rightNode = new SyntaxTreeNode();
+		var rightNode = new SyntaxTreeNode(node);
 		rightNode.tokenList = right;
 
 		node.type = 'ASSIGNMENT';

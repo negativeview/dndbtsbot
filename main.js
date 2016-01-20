@@ -8,16 +8,17 @@ var StateHolder      = require('./utility-classes/state-holder.js');
 var TimeBasedUpdates = require('./time-based-updates.js');
 
 process.on('uncaughtException', function(err) {
+	console.log('uncaughtException', err);
 	if (err.node) {
 		console.log(err.node);
 		var stateHolder = err.codeHandler.stateHolder;
-		var message = err.toString() + "\n" + err.node.toString() + "\n" + err.node.tokenList.map(function(a) { return a.rawValue; }).join(', ');
+		var message = err.toString() + "\n" + err.node.parent.toString() + "\n" + err.node.tokenList.map(function(a) { return a.rawValue; }).join(', ');
 		console.log('SENDING ERROR: ' + message);
 		stateHolder.simpleAddMessage(stateHolder.channelID, message);
 		stateHolder.doFinalOutput();
 		forcePump();
 	} else {
-		console.log(err);
+		console.log(err.stack);
 		process.exit(1);
 	}
 });
