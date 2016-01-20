@@ -14,7 +14,6 @@ function work2(cb, comparison, error, value) {
 			this.result = value.booleanValue;
 			break;
 		default:
-			console.log('comparison that failed to set boolean was ', comparison, this);
 			throw new Error('IF does not know how to evaluate ' + value.type + ' as a boolean::' + this.toString());
 	}
 
@@ -26,6 +25,10 @@ function toString() {
 	ret += this.nodes[0].toString();
 	ret += ')';
 	return ret;
+}
+
+function toString() {
+	return 'if (' + this.nodes[0].toString() + ')';
 }
 
 function goUntil(command, i, mod, limit, typeA, typeB, cb) {
@@ -90,6 +93,7 @@ module.exports = {
 			node.toString = toString;
 			node.type = 'If';
 			node.tokenList = [];
+			node.toString = toString;
 		} catch (e) {
 			return cb(e.stack);
 		}

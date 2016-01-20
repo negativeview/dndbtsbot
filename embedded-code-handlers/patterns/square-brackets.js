@@ -19,16 +19,21 @@ function work2(cb, stateHolder, state, error, value) {
 	}
 
 	var rightNode = this.nodes[1];
-	rightNode.work(stateHolder, state, work3.bind(this, cb, leftHandSide));
+	rightNode.work(stateHolder, state, work3.bind(this, cb, leftHandSide, state));
 }
 
-function work3(cb, leftHandSide, error, value) {
+function work3(cb, leftHandSide, state, error, value) {
 	var rightHandSide = value;
 
 	if (leftHandSide.type == 'VARIABLE') {
 		// NOTE: This works for numbers, but won't work for variables. :()
 		if (rightHandSide.type == 'STRING') {
-			leftHandSide.setIndex(rightHandSide.strRep);
+			var varNameOrNumber = rightHandSide.strRep;
+
+			if (state.variables[varNameOrNumber])
+				varNameOrNumber = state.variables[varNameOrNumber];
+
+			leftHandSide.setIndex(varNameOrNumber);
 
 			return cb(null, leftHandSide);
 		} else if (rightHandSide.type == 'QUOTED_STRING') {
@@ -40,6 +45,10 @@ function work3(cb, leftHandSide, error, value) {
 	} else {
 		return cb('square-brackets: Do not know what to do with ' + typeof(leftHandSide) + ' on the left');
 	}
+}
+
+function toString() {
+	return this.nodes[0].toString() + '[' + this.nodes[1].toString() + ']';
 }
 
 module.exports = {
@@ -87,6 +96,7 @@ module.exports = {
 		node.addSubNode(leftNode);
 		node.addSubNode(rightNode);
 		node.tokenList = [];
+		node.toString = toString;
 
 		return cb('', node);
 	}

@@ -14,9 +14,6 @@ function work(stateHolder, state, cb) {
 	}
 
 	var leftNode = this.nodes[0];
-	if (!leftNode.work) {
-		console.log('leftNode', leftNode);
-	}
 	leftNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
 }
 
@@ -62,6 +59,10 @@ function work3(cb, leftHandSide, stateHolder, error, value) {
 	}
 }
 
+function toString() {
+	return this.nodes[0].toString() + '.' + this.nodes[1].toString();
+}
+
 module.exports = {
 	name: 'Dot',
 	matches: function(command) {
@@ -96,6 +97,7 @@ module.exports = {
 		node.addSubNode(rightNode);
 		node.work = work;
 		node.tokenList = [];
+		node.toString = toString;
 
 		return cb('', node);
 	}

@@ -10,6 +10,10 @@ function work(stateHolder, state, cb) {
 	return cb(null, retNode);
 }
 
+function toString() {
+	return ' else ';
+}
+
 module.exports = {
 	name: 'Else',
 	matches: function(command) {
@@ -42,6 +46,7 @@ module.exports = {
 		node.addSubNode(rightNode);
 		node.work = work;
 		node.tokenList = [];
+		node.toString = toString;
 
 		return cb('', node);
 	}

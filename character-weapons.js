@@ -172,7 +172,7 @@ function doWeaponGrab(pieces, stateHolder, activeCharacter, next) {
 	}
 
 	var weaponStoreModel = ret.mongoose.model('WeaponStore');
-	var server = stateHolder.findServerID(stateHolder.channelID);
+	var server = stateHolder.serverID;
 	if (!server) {
 		stateHolder.simpleAddMessage(stateHolder.username, "This command must be run from a channel.");
 		return next();

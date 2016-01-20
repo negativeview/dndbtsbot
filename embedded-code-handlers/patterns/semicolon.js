@@ -30,6 +30,19 @@ function work3(cb, error, value) {
 	return cb(null, value);
 }
 
+function toString() {
+	var ret = '';
+	if (this.nodes[0]) {
+		ret += this.nodes[0].toString();
+	}
+	ret += ';';
+	if (this.nodes[1]) {
+		ret += this.nodes[1].toString();
+	}
+
+	return ret;
+}
+
 module.exports = {
 	name: 'Semicolon',
 	matches: function(command) {
@@ -62,6 +75,7 @@ module.exports = {
 		node.type = 'SEMICOLON';
 		node.strRep = ';';
 		node.addSubNode(leftNode);
+		node.toString = toString;
 
 		if (rightNode.tokenList.length)
 			node.addSubNode(rightNode);

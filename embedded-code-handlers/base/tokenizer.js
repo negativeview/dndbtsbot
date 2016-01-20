@@ -289,8 +289,6 @@ module.exports = function(command, cb) {
 							return cb(error);
 						}
 
-						console.log(finalizedTokens);
-
 						return cb(null, finalizedTokens);
 					}
 				);

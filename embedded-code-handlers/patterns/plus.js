@@ -6,72 +6,25 @@ function work(stateHolder, state, cb) {
 		return cb('+ expects two sub-nodes. How did this even happen??');
 	}
 
-	var leftNode = this.nodes[0];
-	leftNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
+	helper.setupComparisonValues(this, stateHolder, state, workComplete.bind(this, cb));
 };
 
-function work2(cb, stateHolder, state, error, value) {
-	if (error) return cb(error);
-
-	if (!value) {
-		throw new Error('+ was not given a left value.');
-	}
-
-	var leftValue = value;
-
-	var rightNode = this.nodes[1];
-
-	if (leftValue.type == 'STRING') {
-		leftValue = state.variables[leftValue.strRep];
-	} else if (leftValue.type == 'QUOTED_STRING') {
-		leftValue = leftValue.strRep;
-	} else if (leftValue.type == 'VARIABLE') {
-		var m = this;
-
-		leftValue.getScalarValue(
-			function(error, value) {
-				if (error) return cb(error);
-				return rightNode.work(stateHolder, state, work3.bind(m, cb, value, state));
-			}
-		);
-		return;
-	} else {
-		throw new Error('Left value of + is not a known type of value: ' + leftValue.type);
-	}
-
-	rightNode.work(stateHolder, state, work3.bind(this, cb, leftValue, state));
-}
-
-function work3(cb, leftValue, state, error, value) {
-	if (error) return cb(error);
-
-	var rightValue = value;
-	if (rightValue.type == 'STRING') {
-		rightValue = state.variables[rightValue.strRep];
-	} else if (rightValue.type == 'QUOTED_STRING') {
-		rightValue = rightValue.strRep;
-	} else if (rightValue.type == 'VARIABLE') {
-		var m = this;
-		rightValue.getScalarValue(
-			function(error, value) {
-				if (error) return cb(error);
-
-				return work4(leftValue, value, cb);
-			});
-		return;
-	} else {
-		throw new Error('Right value of + is not a known type of value: ' + rightValue.type);
-	}
-
-	return work4(leftValue, rightValue, cb);
-}
-
-function work4(leftValue, rightValue, cb) {
+function workComplete(cb, stateHolder, state, leftHandSide, rightHandSide) {
 	var returnNode = new SyntaxTreeNode();
 	returnNode.type = 'QUOTED_STRING';
-	returnNode.strRep = leftValue + rightValue;
+
+	if (typeof(leftHandSide) == 'string' && leftHandSide.match(/^[-+]?[0-9]+$/))
+		leftHandSide = parseInt(leftHandSide);
+	if (typeof(rightHandSide) == 'string' && rightHandSide.match(/^[-+]?[0-9]+$/))
+		rightHandSide = parseInt(rightHandSide);
+
+	returnNode.strRep = leftHandSide + rightHandSide;
 
 	return cb(null, returnNode);
+}
+
+function toString() {
+	return this.nodes[0].toString() + ' + ' + this.nodes[1].toString();
 }
 
 module.exports = {
@@ -101,6 +54,7 @@ module.exports = {
 		node.addSubNode(right);
 		node.work = work;
 		node.tokenList = [];
+		node.toString = toString;
 
 		return cb('', node);
 	}

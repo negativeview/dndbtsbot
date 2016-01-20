@@ -14,14 +14,11 @@ function work(stateHolder, state, cb) {
 	if (stateHolder.username in stateHolder.messages) {
 		messageB = stateHolder.messages[stateHolder.username].message
 	}
-	return cb();
 
-
-
-	node.nodes[0].work(stateHolder, state, node.nodes[0], function(error, value) {
+	this.nodes[0].work(stateHolder, state, function(error, value) {
 		if (error) return cb(error);
 
-		stateHolder.executionHelper.handle('!table ' + value, stateHolder, function() {
+		stateHolder.executionHelper.handle('!table ' + value.strRep, function() {
 			if (messageA) {
 				stateHolder.messages[stateHolder.channelID] = messageA;
 			} else {
@@ -38,7 +35,7 @@ function work(stateHolder, state, cb) {
 }
 
 module.exports = {
-	name: 'Echo',
+	name: 'Table',
 	matches: function(command) {
 		for (var i = command.length - 1; i >= 0; i--) {
 			if (command[i].type == 'TABLE') {

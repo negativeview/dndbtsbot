@@ -14,17 +14,20 @@ var patterns = [
 	patterns.echo,
 	patterns.parenthesis,
 	patterns.assignment,
-	patterns.plus,
-	patterns.booleanAnd,
 	patterns.ignore,
+	patterns.table,
+	patterns.plus,
+	
+	patterns.booleanAnd,
 
 	patterns.doubleEquals,
 	patterns.notEquals,
 	patterns.le,
+	patterns.lessThan,
+	patterns.greaterThan,
 
 	patterns.squareBrackets,
 	patterns.dot,
-	patterns.table,
 	patterns.simpleString,
 	patterns.macroArgument,
 ];

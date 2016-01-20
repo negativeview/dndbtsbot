@@ -6,33 +6,26 @@ function work(stateHolder, state, cb) {
 		return cb('== excepts two sub-nodes. How did this even happen??');
 	}
 
-	var leftNode = this.nodes[0];
-	leftNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
+	helper.setupComparisonValues(this, stateHolder, state, workComplete.bind(this, cb));
 }
 
-function work2(cb, stateHolder, state, error, value) {
-	if (error) return cb(error);
+function workComplete(cb, stateHolder, state, leftHandSide, rightHandSide) {
+	var returnNode = new SyntaxTreeNode();
+	returnNode.type = 'BOOLEAN';
 
-	var leftHandSide = value;
+	if (leftHandSide == rightHandSide) {
+		returnNode.strRep = 'true';
+		returnNode.booleanValue = true;
+	} else {
+		returnNode.strRep = 'false';
+		returnNode.booleanValue = false;
+	}
 
-	var rightNode = this.nodes[1];
-	rightNode.work(stateHolder, state, function(error, value) {
-		if (error) return cb(error);
-		var rightHandSide = value;
+	return cb(null, returnNode);
+}
 
-		var returnNode = new SyntaxTreeNode();
-		returnNode.type = 'BOOLEAN';
-
-		if (rightHandSide.strRep == leftHandSide.strRep) {
-			returnNode.strRep = 'true';
-			returnNode.booleanValue = true;
-		} else {
-			returnNode.strRep = 'false';
-			returnNode.booleanValue = false;
-		}
-
-		return cb(null, returnNode);
-	});
+function toString() {
+	return this.nodes[0].toString() + ' == ' + this.nodes[1].toString();
 }
 
 module.exports = {
@@ -67,6 +60,7 @@ module.exports = {
 		node.strRep = '==';
 		node.work = work;
 		node.tokenList = [];
+		node.toString = toString;
 
 		return cb('', node);
 	}

@@ -2,38 +2,46 @@ var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
 function work(stateHolder, state, cb) {
-	throw new Error("Not implemented");
-	
 	if (this.nodes.length != 2) {
-		return cb('= excepts two sub-nodes. How did this even happen??');
+		return cb('&& expects two sub-nodes. How did this even happen??');
 	}
 
 	var leftNode = this.nodes[0];
-	leftNode.work(stateHolder, state, function(error, value) {
-		if (error) {
-			throw new Error(error);
+	leftNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
+}
+
+function work2(cb, stateHolder, state, error, value) {
+	if (error) {
+		throw new Error(error);
+	}
+	
+	var leftHandSide = value;
+	if (leftHandSide.type != 'BOOLEAN') {
+		throw new Error('&& must be applied to boolean arguments');
+	}
+
+	var leftTruthy = leftHandSide.booleanValue;
+	var rightNode = this.nodes[1];
+	rightNode.work(stateHolder, state, function(error, value) {
+		var rightHandSide = value;
+		if (rightHandSide.type != 'BOOLEAN') {
+			throw new Error('&& must be applied to boolean arguments');
 		}
-		var leftHandSide = value;
 
-		var rightNode = this.nodes[1];
-		rightNode.work(stateHolder, state, function(error, value) {
-			var rightHandSide = value;
+		var rightTruthy = rightHandSide.booleanValue;
+		var returnTruthy = leftTruthy && rightTruthy;
 
-			if (leftHandSide.type == 'variable') {
-				leftHandSide.assign(rightHandSide, function(error) {
-					if (error) {
-						return cb(error);
-					}
-					return cb();
-				});
-			} else if (leftHandSide.type == 'STRING') {
-				state.variables[leftHandSide.strRep] = rightHandSide;
-				return cb();
-			} else {
-				return cb('I do not know how to assign to ' + leftHandSide.type);
-			}
-		});
+		var returnValue = new SyntaxTreeNode();
+		returnValue.type = 'BOOLEAN';
+		returnValue.booleanValue = returnTruthy;
+		returnValue.strRep = returnValue.booleanValue ? 'true' : 'false';
+
+		return cb(null, returnValue);
 	});
+}
+
+function toString() {
+	return this.nodes[0].toString() + ' && ' + this.nodes[1].toString();
 }
 
 module.exports = {
@@ -68,6 +76,7 @@ module.exports = {
 		node.addSubNode(rightNode);
 		node.work = work;
 		node.tokenList = [];
+		node.toString = toString;
 
 		return cb('', node);
 	}

@@ -138,7 +138,7 @@ function ldStart(pieces, stateHolder, next) {
 		return next();
 	}
 
-	var serverID = stateHolder.findServerID(stateHolder.channelID);
+	var serverID = stateHolder.serverID;
 	if (!serverID) {
 		stateHolder.simpleAddMessage(stateHolder.username, 'You must run this command from a server.');
 		return next();

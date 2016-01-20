@@ -3,32 +3,30 @@ var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
 function work(stateHolder, state, cb) {
 	var comparison = this.nodes[0];
-	comparison.work(stateHolder, state, work2.bind(this, cb, comparison));
+	comparison.work(stateHolder, state, work2.bind(this, cb, comparison, stateHolder, state));
 }
 
-function work2(cb, comparison, error, value) {
+function work2(cb, comparison, stateHolder, state, error, value) {
 	if (error) return cb(error);
 
-	console.log('Attempt to get table');
+	value.getTable(work3.bind(this, cb));
+}
 
-	value.getTable(function(err, res) {
-		console.log('Got table', err, res);
-		return cb(null, this);
-	});
-	return;
+function work3(cb, err, res) {
+	if (err) return cb(error);
 
-	switch (value) {
-		case 'true':
-			this.result = true;
-			break;
-		case 'false':
-			this.result = false;
-			break;
-		default:
-			console.log('Comparison value did not wind up being truthy or falsey.', value, comparison);
-			return cb('Not true or false.');
+	var toLoopOver = [];
+	for (var i = 0; i < res.length; i++) {
+		var row = res[i];
+
+		var variableOverride = {
+			key: row['key'],
+			value: row['value']
+		};
+		toLoopOver.push(variableOverride);
 	}
 
+	this.toLoopOver = toLoopOver;
 	return cb(null, this);
 }
 
@@ -56,6 +54,10 @@ function goUntil(command, i, mod, limit, typeA, typeB, cb) {
 		m: m,
 		collection: collection
 	};
+}
+
+function toString() {
+	return 'foreach (' + this.nodes[0].toString() + ')';
 }
 
 module.exports = {
@@ -92,6 +94,7 @@ module.exports = {
 		node.strRep = 'Foreach';
 		node.type = 'FOREACH';
 		node.tokenList = [];
+		node.toString = toString;
 		return cb('', node);
 	}
 };

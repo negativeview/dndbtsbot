@@ -7,7 +7,6 @@ function work(stateHolder, state, cb) {
 	}
 
 	var leftNode = this.nodes[0];
-	console.log('assignment left node', leftNode);
 	leftNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
 }
 
@@ -47,6 +46,10 @@ function work3(cb, leftHandSide, state, error, value) {
 	}
 }
 
+function toString() {
+	return this.nodes[0].toString() + ' = ' + this.nodes[1].toString();
+}
+
 module.exports = {
 	name: 'Assignment',
 	matches: function(command) {
@@ -79,6 +82,7 @@ module.exports = {
 		node.addSubNode(rightNode);
 		node.work = work;
 		node.tokenList = [];
+		node.toString = toString;
 
 		return cb('', node);
 	}

@@ -80,11 +80,15 @@ ret.getKeys = function(pieces, stateHolder, next) {
 					return next();
 				}
 
-				for (var i = 0; i < results.length; i++) {
-					if (i != 0) {
-						stateHolder.simpleAddMessage(stateHolder.username, "\n");
+				if (results.length == 0) {
+					stateHolder.simpleAddMessage(stateHolder.username, "No values are stored in that table.");
+				} else {
+					for (var i = 0; i < results.length; i++) {
+						if (i != 0) {
+							stateHolder.simpleAddMessage(stateHolder.username, "\n");
+						}
+						stateHolder.simpleAddMessage(stateHolder.username, name + '.' + results[i].key + ': ' + results[i].value);
 					}
-					stateHolder.simpleAddMessage(stateHolder.username, name + '.' + results[i].key + ': ' + results[i].value);
 				}
 				return next();
 			}

@@ -5,6 +5,11 @@ function work(stateHolder, state, cb) {
 	return cb(null, this);
 }
 
+function toString() {
+	if (this.type == 'QUOTED_STRING') return '"' + this.strRep + '"';
+	return this.strRep;
+}
+
 module.exports = {
 	name: 'Simple String',
 	matches: function(command) {
@@ -19,6 +24,7 @@ module.exports = {
 		node.type = node.tokenList[index].type;
 		node.simpleString = node.tokenList[index].type == 'STRING';
 		node.tokenList = [];
+		node.toString = toString;
 
 		return cb('', node);
 	}

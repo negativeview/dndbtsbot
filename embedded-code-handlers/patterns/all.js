@@ -17,5 +17,7 @@ module.exports = {
 	notEquals: require('./not-equals.js'),
 	elseBranch: require('./else.js'),
 	foreach: require('./foreach.js'),
-	le: require('./le.js')
+	le: require('./le.js'),
+	lessThan: require('./less-than.js'),
+	greaterThan: require('./greater-than.js')
 };

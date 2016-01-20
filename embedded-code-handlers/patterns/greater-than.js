@@ -3,18 +3,17 @@ var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
 function work(stateHolder, state, cb) {
 	if (this.nodes.length != 2) {
-		return cb('!= excepts two sub-nodes. How did this even happen??');
+		return cb('> expects two sub-nodes. How did this even happen??');
 	}
 
 	helper.setupComparisonValues(this, stateHolder, state, workComplete.bind(this, cb));
 }
 
 function workComplete(cb, stateHolder, state, leftHandSide, rightHandSide) {
-	console.log('!= in work', leftHandSide, rightHandSide);
 	var returnNode = new SyntaxTreeNode();
 	returnNode.type = 'BOOLEAN';
 
-	if (leftHandSide != rightHandSide) {
+	if (parseInt(leftHandSide) > parseInt(rightHandSide)) {
 		returnNode.strRep = 'true';
 		returnNode.booleanValue = true;
 	} else {
@@ -25,15 +24,35 @@ function workComplete(cb, stateHolder, state, leftHandSide, rightHandSide) {
 	return cb(null, returnNode);
 }
 
-function toString() {
-	return this.nodes[0].toString() + ' != ' + this.nodes[1].toString();
+function work2(cb, stateHolder, state, error, value) {
+	if (error) return cb(error);
+
+	var leftHandSide = value;
+	var rightNode = this.nodes[1];
+	rightNode.work(stateHolder, state, function(error, value) {
+		if (error) return cb(error);
+		var rightHandSide = value;
+
+		var returnNode = new SyntaxTreeNode();
+		returnNode.type = 'BOOLEAN';
+
+		if (parseInt(leftHandSide.strRep) > parseInt(rightHandSide.strRep)) {
+			returnNode.strRep = 'true';
+			returnNode.booleanValue = true;
+		} else {
+			returnNode.strRep = 'false';
+			returnNode.booleanValue = false;
+		}
+
+		return cb(null, returnNode);
+	});
 }
 
 module.exports = {
-	name: 'Not Equals',
+	name: 'Greater than',
 	matches: function(command) {
 		for (var i = command.length - 1; i > 0; i--) {
-			if (command[i].type == 'NOT_EQUALS') {
+			if (command[i].type == 'RIGHT_ANGLE') {
 				return i;
 			}
 		}
@@ -57,11 +76,10 @@ module.exports = {
 		}
 		node.addSubNode(right);
 
-		node.type = 'NOT EQUALS';
-		node.strRep = '!=';
+		node.type = 'GREATER_THAN';
+		node.strRep = '>';
 		node.work = work;
 		node.tokenList = [];
-		node.toString = toString;
 
 		return cb('', node);
 	}

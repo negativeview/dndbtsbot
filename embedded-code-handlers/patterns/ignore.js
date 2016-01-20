@@ -14,7 +14,7 @@ function work(stateHolder, state, cb) {
 }
 
 module.exports = {
-	name: 'Echo',
+	name: 'Ignore',
 	matches: function(command) {
 		for (var i = command.length - 1; i >= 0; i--) {
 			if (command[i].type == 'IGNORE') {

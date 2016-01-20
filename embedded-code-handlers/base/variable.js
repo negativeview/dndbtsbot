@@ -20,6 +20,8 @@ Variable.prototype.assign = function(value, cb) {
 Variable.prototype.getScalarValue = function(cb) {
 	if (this.index) {
 		this.namespace.getTableValueByKey(this.name, this.index, cb);
+	} else {
+		this.namespace.getScalarValue(this.name, cb);
 	}
 }
 

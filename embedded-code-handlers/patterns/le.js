@@ -3,35 +3,29 @@ var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
 function work(stateHolder, state, cb) {
 	if (this.nodes.length != 2) {
-		return cb('<= excepts two sub-nodes. How did this even happen??');
+		return cb('<= expects two sub-nodes. How did this even happen??');
 	}
 
-	var leftNode = this.nodes[0];
-	leftNode.work(stateHolder, state, work2.bind(this, cb, stateHolder, state));
+	helper.setupComparisonValues(this, stateHolder, state, workComplete.bind(this, cb));
 }
 
-function work2(cb, stateHolder, state, error, value) {
-	if (error) return cb(error);
+function workComplete(cb, stateHolder, state, leftHandSide, rightHandSide) {
+	var returnNode = new SyntaxTreeNode();
+	returnNode.type = 'BOOLEAN';
 
-	var leftHandSide = value;
-	var rightNode = this.nodes[1];
-	rightNode.work(stateHolder, state, function(error, value) {
-		if (error) return cb(error);
-		var rightHandSide = value;
+	if (parseInt(leftHandSide) <= parseInt(rightHandSide)) {
+		returnNode.strRep = 'true';
+		returnNode.booleanValue = true;
+	} else {
+		returnNode.strRep = 'false';
+		returnNode.booleanValue = false;
+	}
 
-		var returnNode = new SyntaxTreeNode();
-		returnNode.type = 'BOOLEAN';
+	return cb(null, returnNode);
+}
 
-		if (parseInt(rightHandSide.strRep) <= parseInt(leftHandSide.strRep)) {
-			returnNode.strRep = 'true';
-			returnNode.booleanValue = true;
-		} else {
-			returnNode.strRep = 'false';
-			returnNode.booleanValue = false;
-		}
-
-		return cb(null, returnNode);
-	});
+function toString() {
+	return this.nodes[0].toString() + ' <= ' + this.nodes[1].toString();
 }
 
 module.exports = {
@@ -66,6 +60,7 @@ module.exports = {
 		node.strRep = '<=';
 		node.work = work;
 		node.tokenList = [];
+		node.toString = toString;
 
 		return cb('', node);
 	}

@@ -35,6 +35,16 @@ Namespace.prototype.getTable = function(tableName, cb) {
 	});
 };
 
+Namespace.prototype.getScalarValue = function(key, cb) {
+	this.parameters.name = key;
+	this.scalarModel.find(this.parameters).exec(function(err, res) {
+		if (err) throw new Error(err);
+		if (res.length == 0) return cb('');
+
+		return cb(res[0].value);
+	});
+}
+
 Namespace.prototype.setScalarValue = function(key, value, cb) {
 	var m = this;
 

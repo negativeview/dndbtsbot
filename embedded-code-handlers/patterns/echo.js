@@ -12,11 +12,9 @@ function work(stateHolder, state, cb) {
 			return cb(error);
 		}
 
-		if (value.type == 'variable') {
+		if (value.type == 'VARIABLE') {
 			value.getScalarValue(
 				function(error, res) {
-					if (error) return cb(error);
-					
 					stateHolder.simpleAddMessage(stateHolder.channelID, res);
 					return cb();
 				}
@@ -25,10 +23,17 @@ function work(stateHolder, state, cb) {
 		} else if (value.type == 'QUOTED_STRING') {
 			stateHolder.simpleAddMessage(stateHolder.channelID, value.strRep);
 			return cb();
+		} else if (value.type == 'STRING') {
+			stateHolder.simpleAddMessage(stateHolder.channelID, state.variables[value.strRep]);
+			return cb();
 		} else {
 			throw new Error('Do not know how to echo a ' + value.type + ', expecting a variable or a QUOTED_STRING');
 		}
 	});
+}
+
+function toString() {
+	return 'echo ' + this.nodes[0].toString();
 }
 
 module.exports = {
@@ -60,6 +65,7 @@ module.exports = {
 		node.addSubNode(childStn);
 		node.work = work;
 		node.tokenList = [];
+		node.toString = toString;
 
 		return cb('', node);
 	}
