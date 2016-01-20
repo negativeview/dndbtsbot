@@ -15,7 +15,9 @@ var patterns = [
 	patterns.parenthesis,
 	patterns.assignment,
 	patterns.ignore,
+	
 	patterns.table,
+	patterns.roll,
 	
 	patterns.asterisk,
 	patterns.plus,
@@ -127,18 +129,14 @@ EmbeddedCodeHandler.prototype.handle = function(pieces, stateHolder, externalCal
  *****/
 EmbeddedCodeHandler.prototype.executeString = function(command, codeState, externalCallback) {
 	// Run the tokenizer and pass the result of that to further steps.
-	try {
-		tokenizer(
-			command,
-			this.handleTokenList.bind(
-				this,
-				externalCallback,
-				codeState
-			)
-		);
-	} catch (e) {
-		return externalCallback(e.stack);
-	}
+	tokenizer(
+		command,
+		this.handleTokenList.bind(
+			this,
+			externalCallback,
+			codeState
+		)
+	);
 };
 
 /*****
@@ -246,11 +244,7 @@ EmbeddedCodeHandler.prototype.findPattern = function(foundCallback, tokenArray, 
 	for (var i = 0; i < patterns.length; i++) {
 		var pattern = patterns[i];
 		var found = false;
-		try {
-			found = pattern.matches(tokenArray);
-		} catch (e) {
-			return next(e.stack);
-		}
+		found = pattern.matches(tokenArray);
 
 		if (found !== false) {
 			return foundCallback(found, pattern);
@@ -304,16 +298,13 @@ EmbeddedCodeHandler.prototype.executeProcessed = function(externalCallback, code
 EmbeddedCodeHandler.prototype.processSingle = function(doneProcessing, parentNode, codeState, index, pattern) {
 	if (typeof(doneProcessing) != 'function') throw Error('not a function');
 
-	try {
-		pattern.process(
-			parentNode,
-			codeState,
-			index,
-			this._processSingleDone.bind(this, parentNode, doneProcessing, codeState)
-		);
-	} catch (e) {
-		return this._processSingleDone(parentNode, doneProcessing, codeState, e.stack);
-	}
+	pattern.process(
+		this,
+		parentNode,
+		codeState,
+		index,
+		this._processSingleDone.bind(this, parentNode, doneProcessing, codeState)
+	);
 };
 
 EmbeddedCodeHandler.prototype._processSingleDone = function(parentNode, doneProcessing, codeState, error, newNode) {

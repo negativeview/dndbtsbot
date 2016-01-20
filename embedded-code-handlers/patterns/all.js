@@ -20,5 +20,6 @@ module.exports = {
 	le: require('./le.js'),
 	lessThan: require('./less-than.js'),
 	greaterThan: require('./greater-than.js'),
-	asterisk: require('./asterisk.js')
+	asterisk: require('./asterisk.js'),
+	roll: require('./roll.js')
 };

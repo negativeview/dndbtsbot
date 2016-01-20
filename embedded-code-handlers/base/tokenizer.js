@@ -44,6 +44,13 @@ module.exports = function(command, cb) {
 			type: 'TABLE'
 		});
 	});
+	lex.addRule(/roll/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			strValue: lexeme,
+			type: 'ROLL'
+		});
+	});
 	lex.addRule(/echo/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,

@@ -7,6 +7,21 @@ var mongooseModels   = require('./mongoose-models.js');
 var StateHolder      = require('./utility-classes/state-holder.js');
 var TimeBasedUpdates = require('./time-based-updates.js');
 
+process.on('uncaughtException', function(err) {
+	if (err.node) {
+		console.log(err.node);
+		var stateHolder = err.codeHandler.stateHolder;
+		var message = err.toString() + "\n" + err.node.toString() + "\n" + err.node.tokenList.map(function(a) { return a.rawValue; }).join(', ');
+		console.log('SENDING ERROR: ' + message);
+		stateHolder.simpleAddMessage(stateHolder.channelID, message);
+		stateHolder.doFinalOutput();
+		forcePump();
+	} else {
+		console.log(err);
+		process.exit(1);
+	}
+});
+
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	if (user == bot.username || user == bot.id) return;
 

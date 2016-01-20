@@ -77,7 +77,7 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(node, state, index, cb) {
+	process: function(codeHandler, node, state, index, cb) {
 		var command = node.tokenList;
 		
 		var conditional = new SyntaxTreeNode();

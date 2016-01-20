@@ -74,7 +74,7 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(node, state, index, cb) {
+	process: function(codeHandler, node, state, index, cb) {
 		try {
 			var command = node.tokenList;
 			

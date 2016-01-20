@@ -37,7 +37,7 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(node, state, index, cb) {
+	process: function(codeHandler, node, state, index, cb) {
 		node.type = 'ASTERISK';
 		node.strRep = '*';
 

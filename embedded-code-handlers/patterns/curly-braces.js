@@ -105,7 +105,7 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(node, state, index, cb) {
+	process: function(codeHandler, node, state, index, cb) {
 		var before = new SyntaxTreeNode();
 		for (var i = 0; i < index; i++) {
 			var token = node.tokenList[i];

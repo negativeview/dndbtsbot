@@ -1,23 +1,34 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
+var CodeError = require('../base/code-error.js');
+var Dice = require('../../dice.js');
 
 function work(stateHolder, state, cb) {
 	if (this.nodes.length != 1) {
-		return cb('echo excepts one sub-nodes. How did this even happen??');
+		return cb('roll expects one sub-node. How did this even happen??');
 	}
 
-	var subNode = this.nodes[0];
-	subNode.work(stateHolder, state, function(error, value) {
+	this.nodes[0].work(stateHolder, state, function(error, value) {
 		if (error) return cb(error);
-		return cb();
+
+		console.log('roll value', value);
+
+		var dice = new Dice();
+		dice.execute(value.strRep, function(result) {
+			console.log('value: ', result);
+			var ret = new SyntaxTreeNode();
+			ret.type = 'QUOTED_STRING';
+			ret.strRep = result.output;
+			return cb(null, ret);
+		});
 	});
 }
 
 module.exports = {
-	name: 'Ignore',
+	name: 'Roll',
 	matches: function(command) {
 		for (var i = command.length - 1; i >= 0; i--) {
-			if (command[i].type == 'IGNORE') {
+			if (command[i].type == 'ROLL') {
 				return i;
 			}
 		}
@@ -25,7 +36,7 @@ module.exports = {
 	},
 	process: function(codeHandler, node, state, index, cb) {
 		if (index != 0) {
-			throw "Ignore does not return anything.";
+			throw new CodeError("Roll does not return anything.", node);
 		}
 
 		var sub = [];
@@ -36,10 +47,10 @@ module.exports = {
 		leftNode.strRep = '';
 		leftNode.tokenList = sub;
 
-		node.strRep = 'ignore';
+		node.type = 'ROLL';
+		node.strRep = 'roll';
 		node.addSubNode(leftNode);
 		node.work = work;
-		node.type = 'IGNORE';
 		node.tokenList = [];
 
 		return cb('', node);

@@ -18,7 +18,7 @@ module.exports = {
 		if (command[0].type == 'STRING') return 0;
 		return false;
 	},
-	process: function(node, state, index, cb) {
+	process: function(codeHandler, node, state, index, cb) {
 		node.strRep = node.tokenList[index].rawValue;
 		node.work = work;
 		node.type = node.tokenList[index].type;

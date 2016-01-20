@@ -47,7 +47,7 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(node, state, index, cb) {
+	process: function(codeHandler, node, state, index, cb) {
 		if (index != 0) {
 			throw "Echo does not return anything.";
 		}
