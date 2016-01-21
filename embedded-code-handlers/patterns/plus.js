@@ -1,5 +1,6 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
+var StringNode = require('../node-types/string-node.js');
 
 function work(codeHandler, state, cb) {
 	if (this.nodes.length != 2) {
@@ -15,13 +16,13 @@ function workComplete(cb, codeHandler, state, leftHandSide, rightHandSide) {
 
 	if (leftHandSide.canNumber() && rightHandSide.canNumber()) {
 		var num = leftHandSide.toNumber() + rightHandSide.toNumber();
-		var ret = new StringNode(this.parent, num);
+		var ret = new StringNode(codeHandler, this.parent, num);
 		return cb(null, ret);
 	}
 
 	if (leftHandSide.canString() && rightHandSide.canString()) {
 		var str = leftHandSide.toString() + rightHandSide.toString();
-		var ret = new StringNode(this.parent, str);
+		var ret = new StringNode(codeHandler, this.parent, str);
 
 		return cb(null, ret);
 	}

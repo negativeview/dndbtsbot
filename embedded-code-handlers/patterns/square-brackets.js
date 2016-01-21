@@ -1,5 +1,6 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
+var SquareBracketNode = require('../node-types/square-bracket-node.js');
 
 function work(codeHandler, state, cb) {
 	if (this.nodes.length != 2) {
@@ -61,42 +62,23 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(codeHandler, node, state, index, cb) {
+	process: function(codeHandler, tokens, state, index, cb) {
+		var node = new SquareBracketNode(codeHandler);
+
 		var left = [];
 		var right = [];
 
 		for (var i = 0; i < index; i++) {
-			left.push(node.tokenList[i]);
+			node.left.push(tokens[i]);
 		}
-		var leftNode = new SyntaxTreeNode(node);
-		leftNode.strRep = '';
-		leftNode.tokenList = left;
 
-		for (var i = index + 1; i < node.tokenList.length; i++) {
-			if (node.tokenList[i].type != 'RIGHT_BRACKET') {
-				right.push(node.tokenList[i]);
+		for (var i = index + 1; i < tokens.length; i++) {
+			if (tokens[i].type != 'RIGHT_BRACKET') {
+				node.right.push(tokens[i]);
 			} else {
 				break;
 			}
 		}
-		var rightNode = new SyntaxTreeNode(node);
-		rightNode.strRep = '';
-		rightNode.tokenList = right;
-
-		if (i != (node.tokenList.length - 1)) {
-			return cb(
-				'Could not finish command: ' +
-				node.tokenList.map(function(item) { return item.strValue; }).join(" ")
-			);
-		}
-
-		node.strRep = '[]';
-		node.type = 'SQUARE BRACKETS';
-		node.work = work;
-		node.addSubNode(leftNode);
-		node.addSubNode(rightNode);
-		node.tokenList = [];
-		node.toString = toString;
 
 		return cb('', node);
 	}

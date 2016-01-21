@@ -1,6 +1,7 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 var CodeError = require('../base/code-error.js');
+var TableNode = require('../node-types/table-node.js');
 
 function work(codeHandler, state, cb) {
 	if (this.nodes.length != 1) {
@@ -41,25 +42,8 @@ module.exports = {
 		if (command.length == 1 && command[0].type == 'TABLE') return 0;
 		return false;
 	},
-	process: function(codeHandler, node, state, index, cb) {
-		if (index != 0) {
-			throw new CodeError("Table does not return anything.", codeHandler, node);
-		}
-
-		var sub = [];
-		for (var i = 1; i < node.tokenList.length; i++) {
-			sub.push(node.tokenList[i]);
-		}
-		var leftNode = new SyntaxTreeNode(node);
-		leftNode.strRep = '';
-		leftNode.tokenList = sub;
-
-		node.type = 'TABLE';
-		node.strRep = 'table';
-		node.addSubNode(leftNode);
-		node.work = work;
-		node.tokenList = [];
-
+	process: function(codeHandler, tokens, state, index, cb) {
+		var node = new TableNode(codeHandler);
 		return cb('', node);
 	}
 };

@@ -26,7 +26,7 @@ process.on('uncaughtException', function(err) {
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	if (user == bot.username || user == bot.id) return;
 
-	timeBasedUpdates.update();
+	//timeBasedUpdates.update();
 
 	if (message[0] != '!') return;
 

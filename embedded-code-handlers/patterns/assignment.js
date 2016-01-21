@@ -1,6 +1,7 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 var CodeError = require('../base/code-error.js');
+var AssignmentNode = require('../node-types/assignment-node.js');
 
 function work(codeHandler, state, cb) {
 	if (this.nodes.length != 2) {
@@ -8,7 +9,23 @@ function work(codeHandler, state, cb) {
 	}
 
 	var leftNode = this.nodes[0];
-	leftNode.work(codeHandler, state, work2.bind(this, cb, codeHandler, state));
+	var rightNode = this.nodes[1];
+
+	switch (leftNode.type) {
+		case 'BARE_STRING':
+			assignToLocalVariable(leftNode, rightNode, cb);
+			break;
+		default:
+			console.log(leftNode);
+			throw new CodeError('Do not know how to assign to ' + leftNode.type, codeHandler, this);
+	}
+}
+
+function assignToLocalVariable(state, leftNode, rightNode, cb) {
+	switch (rightNode.type) {
+		default:
+			throw new CodeError('Do not know how to convert ' + rightNode.type + ' to string.', codeHandler, this);
+	}
 }
 
 function work2(cb, codeHandler, state, error, value) {
@@ -61,29 +78,15 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(codeHandler, node, state, index, cb) {
-		var left = [];
-		var right = [];
+	process: function(codeHandler, tokens, state, index, cb) {
+		var node = new AssignmentNode(codeHandler);
 
 		for (var i = 0; i < index; i++) {
-			left.push(node.tokenList[i]);
+			node.left.push(tokens[i]);
 		}
-		var leftNode = new SyntaxTreeNode(node);
-		leftNode.tokenList = left;
-
-		for (var i = index + 1; i < node.tokenList.length; i++) {
-			right.push(node.tokenList[i]);
+		for (var i = index + 1; i < tokens.length; i++) {
+			node.right.push(tokens[i]);
 		}
-		var rightNode = new SyntaxTreeNode(node);
-		rightNode.tokenList = right;
-
-		node.type = 'ASSIGNMENT';
-		node.strRep = '=';
-		node.addSubNode(leftNode);
-		node.addSubNode(rightNode);
-		node.work = work;
-		node.tokenList = [];
-		node.toString = toString;
 
 		return cb('', node);
 	}

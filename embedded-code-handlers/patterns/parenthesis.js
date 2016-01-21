@@ -1,14 +1,6 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
-
-function work(codeHandler, state, cb) {
-	if (this.nodes.length != 1) {
-		return cb('() expects one sub-node. How did this even happen??');
-	}
-
-	var subNode = this.nodes[0];
-	subNode.work(codeHandler, state, cb)
-}
+var ParenthesisNode = require('../node-types/parenthesis-node.js');
 
 module.exports = {
 	name: 'Parenthesis',
@@ -36,12 +28,16 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(codeHandler, node, state, index, cb) {
-		var insideArray = []
+	process: function(codeHandler, tokens, state, index, cb) {
+		var node = new ParenthesisNode(codeHandler);
+
+		for (var i = 0; i < index; i++) {
+			node.before.push(tokens[i]);
+		}
 
 		var count = 0;
-		for (var i = index + 1; i < node.tokenList.length; i++) {
-			var token = node.tokenList[i];
+		for (var i = index + 1; i < tokens.length; i++) {
+			var token = tokens[i];
 			if (token.type == 'RIGHT_PAREN') {
 				if (count == 0) {
 					break;
@@ -51,17 +47,8 @@ module.exports = {
 			} else if (token.type == 'LEFT_PAREN') {
 				count++;
 			}
-			insideArray.push(token);
+			node.sub.push(token);
 		}
-
-		var inside = new SyntaxTreeNode(node);
-		inside.tokenList = insideArray;
-
-		node.type = 'PARENTHESIS';
-		node.strRep = '()';
-		node.addSubNode(inside);
-		node.work = work;
-		node.tokenList = [];
 
 		return cb('', node);
 	}

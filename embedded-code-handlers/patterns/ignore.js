@@ -1,17 +1,6 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
-
-function work(codeHandler, state, cb) {
-	if (this.nodes.length != 1) {
-		return cb('echo excepts one sub-nodes. How did this even happen??');
-	}
-
-	var subNode = this.nodes[0];
-	subNode.work(codeHandler, state, function(error, value) {
-		if (error) return cb(error);
-		return cb();
-	});
-}
+var IgnoreNode = require('../node-types/ignore-node.js');
 
 module.exports = {
 	name: 'Ignore',
@@ -23,24 +12,15 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(codeHandler, node, state, index, cb) {
+	process: function(codeHandler, tokens, state, index, cb) {
 		if (index != 0) {
 			throw "Ignore does not return anything.";
 		}
 
-		var sub = [];
-		for (var i = 1; i < node.tokenList.length; i++) {
-			sub.push(node.tokenList[i]);
+		var node = new IgnoreNode(codeHandler);
+		for (var i = 1; i < tokens.length; i++) {
+			node.sub.push(tokens[i]);
 		}
-		var leftNode = new SyntaxTreeNode(node);
-		leftNode.strRep = '';
-		leftNode.tokenList = sub;
-
-		node.strRep = 'ignore';
-		node.addSubNode(leftNode);
-		node.work = work;
-		node.type = 'IGNORE';
-		node.tokenList = [];
 
 		return cb('', node);
 	}

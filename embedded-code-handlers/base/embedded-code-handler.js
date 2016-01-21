@@ -179,7 +179,7 @@ EmbeddedCodeHandler.prototype.executeString = function(command, codeState, exter
  * `tokens`
  *    An array of parsed tokens.
  *****/
-EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeState, error, tokens) {
+EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeState, error, tokens, parentElement) {
 	if (error) return externalCallback(error);
 
 	var stn = new SyntaxTreeNode();
@@ -187,7 +187,23 @@ EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeS
 	stn.type = 'program';
 	stn.tokenList = tokens;
 
+	this.findPattern(
+		this.handleTopToken.bind(
+			this,
+			codeState,
+			tokens,
+			function(error, newNode) {
+				if (error) return externalCallback(error);
+				newNode.execute(parentElement ? parentElement : stn, codeState, externalCallback);
+			}
+		),
+		tokens,
+		externalCallback
+	);
+	return;
+
 	this.recursiveProcess(
+		stn,
 		stn,
 		codeState,
 		this.executeProcessed.bind(
@@ -197,6 +213,11 @@ EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeS
 			stn
 		)
 	);
+};
+
+EmbeddedCodeHandler.prototype.handleTopToken = function(codeState, tokens, cb, index, pattern) {
+	console.log('handleTopToken', pattern.name);
+	pattern.process(this, tokens, codeState, index, cb);
 };
 
 /*****
@@ -218,7 +239,7 @@ EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeS
  *       be the node that generated the error. Otherwise, it's still the last
  *       node processed, but that's less important to know if there's no error.
  *****/
-EmbeddedCodeHandler.prototype.recursiveProcess = function(syntaxTreeNode, codeState, executeCallback) {
+EmbeddedCodeHandler.prototype.recursiveProcess = function(rootNode, syntaxTreeNode, codeState, executeCallback) {
 	if (!syntaxTreeNode.tokenList) return executeCallback();
 
 	if (typeof(executeCallback) != 'function') throw Error('not a function');
@@ -226,6 +247,7 @@ EmbeddedCodeHandler.prototype.recursiveProcess = function(syntaxTreeNode, codeSt
 		this.processSingle.bind(
 			this,
 			executeCallback,
+			rootNode,
 			syntaxTreeNode,
 			codeState
 		),
@@ -256,6 +278,8 @@ EmbeddedCodeHandler.prototype.recursiveProcess = function(syntaxTreeNode, codeSt
  *          Any errors that were generated.
  *****/
 EmbeddedCodeHandler.prototype.findPattern = function(foundCallback, tokenArray, next) {
+	if (tokenArray.length == 0) return next();
+
 	for (var i = 0; i < patterns.length; i++) {
 		var patternGroup = patterns[i];
 
@@ -289,7 +313,7 @@ EmbeddedCodeHandler.prototype.findPattern = function(foundCallback, tokenArray, 
 		}
 	}
 
-	return next();
+	return next('No pattern found for ' + tokenArray.map(function(a) { return a.strValue; }).join(', '));
 };
 
 /*****
@@ -326,6 +350,8 @@ EmbeddedCodeHandler.prototype.executeProcessed = function(externalCallback, code
 	if (error) {
 		return externalCallback(error);
 	}
+
+	return externalCallback();
 	
 	console.log('TOP LEVEL NODE', JSON.stringify(topLevelNode, ['type', 'strRep', 'nodes', 'tokenList', 'rawValue'], '  '));
 	topLevelNode.work(this, codeState, function(error) {
@@ -333,7 +359,7 @@ EmbeddedCodeHandler.prototype.executeProcessed = function(externalCallback, code
 	});
 };
 
-EmbeddedCodeHandler.prototype.processSingle = function(doneProcessing, parentNode, codeState, index, pattern) {
+EmbeddedCodeHandler.prototype.processSingle = function(doneProcessing, rootNode, parentNode, codeState, index, pattern) {
 	if (typeof(doneProcessing) != 'function') throw Error('not a function');
 
 	console.log('pattern: ', pattern);
@@ -344,17 +370,18 @@ EmbeddedCodeHandler.prototype.processSingle = function(doneProcessing, parentNod
 		parentNode,
 		codeState,
 		index,
-		this._processSingleDone.bind(this, parentNode, doneProcessing, codeState)
+		this._processSingleDone.bind(this, rootNode, parentNode, doneProcessing, codeState)
 	);
 };
 
-EmbeddedCodeHandler.prototype._processSingleDone = function(parentNode, doneProcessing, codeState, error, newNode) {
+EmbeddedCodeHandler.prototype._processSingleDone = function(rootNode, parentNode, doneProcessing, codeState, error, newNode) {
 	if (error) { return doneProcessing(error); }
 	if (typeof(doneProcessing) != 'function') throw Error('not a function');
 	async.eachSeries(
 		parentNode.nodes,
 		this._executeSingleChild.bind(
 			this,
+			rootNode,
 			this.recursiveProcess.bind(this),
 			codeState
 		),
@@ -364,9 +391,9 @@ EmbeddedCodeHandler.prototype._processSingleDone = function(parentNode, doneProc
 	);
 }
 
-EmbeddedCodeHandler.prototype._executeSingleChild = function(recursive, codeState, index, next) {
+EmbeddedCodeHandler.prototype._executeSingleChild = function(rootNode, recursive, codeState, index, next) {
 	if (index.type == 'unparsed-node-list' && index.tokenList.length) {
-		recursive(index, codeState, function(error) {
+		recursive(rootNode, index, codeState, function(error) {
 			return next(error);
 		});
 	} else {

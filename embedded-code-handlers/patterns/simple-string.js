@@ -1,5 +1,7 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
+var StringNode = require('../node-types/string-node.js');
+var BareStringNode = require('../node-types/bare-string-node.js');
 
 function work(codeHandler, state, cb) {
 	return cb(null, this);
@@ -18,14 +20,12 @@ module.exports = {
 		if (command[0].type == 'STRING') return 0;
 		return false;
 	},
-	process: function(codeHandler, node, state, index, cb) {
-		node.strRep = node.tokenList[index].rawValue;
-		node.work = work;
-		node.type = node.tokenList[index].type;
-		node.simpleString = node.tokenList[index].type == 'STRING';
-		node.tokenList = [];
-		node.toString = toString;
-
-		return cb('', node);
+	process: function(codeHandler, tokens, state, index, cb) {
+		if (tokens[index].type == 'QUOTED_STRING') {
+			var ret = new StringNode(codeHandler, tokens[index].rawValue);
+		} else {
+			var ret = new BareStringNode(codeHandler, tokens[index].rawValue);
+		}
+		return cb('', ret);
 	}
 };

@@ -6,6 +6,7 @@ var UserNamespace      = require('../namespaces/user-namespace.js');
 var CharacterNamespace = require('../namespaces/character-namespace.js');
 var WeaponNamespace    = require('../namespaces/weapon-namespace.js');
 var Variable           = require('../base/variable.js');
+var SquareBracketNode  = require('../node-types/square-bracket-node.js');
 
 function work(codeHandler, state, cb) {
 	if (typeof(cb) != 'function') throw new Error('cb is not a function' + typeof(cb));
@@ -69,32 +70,15 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(codeHandler, node, state, index, cb) {
-		var left = [];
-		var right = [];
+	process: function(codeHandler, tokens, state, index, cb) {
+		var node = new SquareBracketNode(codeHandler);
 
 		for (var i = 0; i < index; i++) {
-			left.push(node.tokenList[i]);
+			node.left.push(tokens[i]);
 		}
-		var leftNode = new SyntaxTreeNode(node);
-		leftNode.strRep = '';
-		leftNode.tokenList = left;
-
-		for (var i = index + 1; i < node.tokenList.length; i++) {
-			right.push(node.tokenList[i]);
+		for (var i = index + 1; i < tokens.length; i++) {
+			node.right.push(tokens[i]);
 		}
-		var rightNode = new SyntaxTreeNode(node);
-		rightNode.strRep = '';
-		rightNode.tokenList = right;
-
-		node.type = 'DOT';
-		node.strRep = '.';
-		node.addSubNode(leftNode);
-		node.addSubNode(rightNode);
-		node.work = work;
-		node.tokenList = [];
-		node.toString = toString;
-
 		return cb('', node);
 	}
 };
