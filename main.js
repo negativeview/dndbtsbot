@@ -87,26 +87,10 @@ function onMongoose(err) {
 
 	mongooseModels(mongoose);
 
-	if (process.argv.length > 2) {
-		var message = '';
-		for (var i = 2; i < process.argv.length; i++) {
-			if (message != '') message += ' ';
-			message += process.argv[i];
-		}
-		console.log('message: ' + message);
-		var stateHolder = new StateHolder(messageQueue, 'user-id', bot, mongoose, 'user-id2', 'channel-id', null);
-		var executionHelper = new ExecutionHelper(stateHolder);
-		executionHelper.handle(message, function(err) {
-			console.log('error:', err);
-			console.log('outgoing messages:', stateHolder.messages);
-			process.exit(0);
-		});
-	} else {
-		bot.on('ready',        onBotReady);
-		bot.on('message',      globalHandlerWrap);
-		bot.on('disconnected', onBotDisconnected);
-		bot.connect();
-	}
+	bot.on('ready',        onBotReady);
+	bot.on('message',      globalHandlerWrap);
+	bot.on('disconnected', onBotDisconnected);
+	bot.connect();
 }
 
 mongoose.connect('mongodb://127.0.0.1/test', onMongoose);

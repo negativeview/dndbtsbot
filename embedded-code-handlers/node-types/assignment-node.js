@@ -20,7 +20,9 @@ AssignmentNode.prototype.execute = function(parent, codeState, cb) {
 
 AssignmentNode.prototype.leftDone = function(cb, codeState, error, result) {
 	this.codeHandler.handleTokenList(
-		this.rightDone.bind(this, cb, codeState, result),
+		(error, result2) => {
+			this.rightDone(cb, codeState, result, error, result2);
+		}
 		codeState,
 		null,
 		this.right

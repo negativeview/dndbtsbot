@@ -151,11 +151,9 @@ EmbeddedCodeHandler.prototype.executeString = function(command, codeState, exter
 	// Run the tokenizer and pass the result of that to further steps.
 	tokenizer(
 		command,
-		this.handleTokenList.bind(
-			this,
-			externalCallback,
-			codeState
-		)
+		(error, tokens, parentElement) => {
+			this.handleTokenList(externalCallback, codeState, error, tokens, parentElement);
+		}
 	);
 };
 
@@ -199,15 +197,18 @@ EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeS
 	}
 
 	this.findPattern(
-		this.handleTopToken.bind(
-			this,
-			codeState,
-			tokens,
-			function(error, newNode) {
-				if (error) return externalCallback(error);
-				newNode.execute(parentElement ? parentElement : stn, codeState, externalCallback);
-			}
-		),
+		(index, pattern) => {
+			this.handleTopToken(
+				codeState,
+				tokens,
+				function(error, newNode) {
+					if (error) return externalCallback(error);
+					newNode.execute(parentElement ? parentElement : stn, codeState, externalCallback);
+				},
+				index,
+				pattern
+			);
+		},
 		tokens,
 		externalCallback
 	);
