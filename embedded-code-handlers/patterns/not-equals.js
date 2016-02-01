@@ -1,32 +1,6 @@
 var helper = require('../helper.js');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
-
-function work(codeHandler, state, cb) {
-	if (this.nodes.length != 2) {
-		return cb('!= excepts two sub-nodes. How did this even happen??');
-	}
-
-	helper.setupComparisonValues(this, codeHandler, state, workComplete.bind(this, cb));
-}
-
-function workComplete(cb, codeHandler, state, leftHandSide, rightHandSide) {
-	var returnNode = new SyntaxTreeNode();
-	returnNode.type = 'BOOLEAN';
-
-	if (leftHandSide != rightHandSide) {
-		returnNode.strRep = 'true';
-		returnNode.booleanValue = true;
-	} else {
-		returnNode.strRep = 'false';
-		returnNode.booleanValue = false;
-	}
-
-	return cb(null, returnNode);
-}
-
-function toString() {
-	return this.nodes[0].toString() + ' != ' + this.nodes[1].toString();
-}
+var ComparisonNode = require('../node-types/comparison-node.js');
 
 module.exports = {
 	name: 'Not Equals',
@@ -38,29 +12,25 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(codeHandler, node, state, index, cb) {
-		var left = [];
-		var right = [];
+	process: function(codeHandler, tokens, state, index, cb) {
+		var node = new ComparisonNode(
+			codeHandler,
+			'!=',
+			function(a, b) {
+				var ret = a != b;
 
-		var left = new SyntaxTreeNode(node);
-		left.strRep = 'left';
+				console.log(a, ' != ', b, ret);
+				return ret;
+			}
+		);
+
 		for (var i = 0; i < index; i++) {
-			left.tokenList.push(node.tokenList[i]);
+			node.left.push(tokens[i]);
 		}
-		node.addSubNode(left);
 
-		var right = new SyntaxTreeNode(node);
-		right.strRep = 'right';
-		for (var i = index + 1; i < node.tokenList.length; i++) {
-			right.tokenList.push(node.tokenList[i]);
+		for (var i = index + 1; i < tokens.length; i++) {
+			node.right.push(tokens[i]);
 		}
-		node.addSubNode(right);
-
-		node.type = 'NOT EQUALS';
-		node.strRep = '!=';
-		node.work = work;
-		node.tokenList = [];
-		node.toString = toString;
 
 		return cb('', node);
 	}

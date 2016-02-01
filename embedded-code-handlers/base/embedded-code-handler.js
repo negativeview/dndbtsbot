@@ -7,6 +7,9 @@ var SyntaxTreeNode = require('./syntax-tree-node.js');
 
 var patterns = [
 	[
+		patterns.elseBranch
+	],
+	[
 		patterns.curlyBraces,
 	],
 	[
@@ -15,8 +18,11 @@ var patterns = [
 	[
 		patterns.assignment,
 		patterns.echo,
-		patterns.ignore,	
+		patterns.ignore,
 		patterns.ifBranch,
+	],
+	[
+		patterns.parenthesis
 	],
 	[
 		patterns.booleanAnd,
@@ -29,11 +35,10 @@ var patterns = [
 		patterns.greaterThan
 	],
 	[
-		patterns.parenthesis
+		patterns.plus
 	],
 	[
-		patterns.asterisk,
-		patterns.plus,
+		patterns.asterisk
 	],
 	[
 		patterns.squareBrackets,	// before dot
@@ -42,12 +47,12 @@ var patterns = [
 		patterns.dot, // after square brackets
 	],
 	[
-		patterns.elseBranch,
 		patterns.foreach,
 		patterns.table,
 		patterns.roll,
 		patterns.simpleString,
 		patterns.macroArgument,
+		patterns.negativeNumber
 	]
 ];
 
@@ -182,10 +187,16 @@ EmbeddedCodeHandler.prototype.executeString = function(command, codeState, exter
 EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeState, error, tokens, parentElement) {
 	if (error) return externalCallback(error);
 
-	var stn = new SyntaxTreeNode();
-	stn.strRep = '<program>';
-	stn.type = 'program';
-	stn.tokenList = tokens;
+	if ('programNode' in codeState) {
+		var stn = codeState.programNode;
+	} else {
+		var stn = new SyntaxTreeNode();
+		stn.strRep = '<program>';
+		stn.type = 'program';
+		stn.tokenList = tokens;
+		stn.codeHandler = this;
+		codeState.programNode = stn;
+	}
 
 	this.findPattern(
 		this.handleTopToken.bind(
@@ -200,62 +211,11 @@ EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeS
 		tokens,
 		externalCallback
 	);
-	return;
-
-	this.recursiveProcess(
-		stn,
-		stn,
-		codeState,
-		this.executeProcessed.bind(
-			this,
-			externalCallback,
-			codeState,
-			stn
-		)
-	);
 };
 
 EmbeddedCodeHandler.prototype.handleTopToken = function(codeState, tokens, cb, index, pattern) {
-	console.log('handleTopToken', pattern.name);
+	console.log('Found pattern ' + pattern.name);
 	pattern.process(this, tokens, codeState, index, cb);
-};
-
-/*****
- * Takes a SyntaxTreeNode and processes it and its children.
- *
- * `syntaxTreeNode`
- *    The SyntaxTreeNode that we want to start our processing with.
- * `codeState`
- *    A CodeState instance that represents the state of the virtual machine. As
- *    an input it can pre-define local variables or set the arguments that the
- *    code will see as being passed.
- * `executeCallback`
- *    What to call when we are done creating the syntax tree and want to
- *    execute it instead. The callback takes the following arguments:
- *    `error`
- *       The error that may hvae been generated from the previous step.
- *    `lastNodeProcessed`
- *       The last node that was processed. If an error was generated, this will
- *       be the node that generated the error. Otherwise, it's still the last
- *       node processed, but that's less important to know if there's no error.
- *****/
-EmbeddedCodeHandler.prototype.recursiveProcess = function(rootNode, syntaxTreeNode, codeState, executeCallback) {
-	if (!syntaxTreeNode.tokenList) return executeCallback();
-
-	if (typeof(executeCallback) != 'function') throw Error('not a function');
-	this.findPattern(
-		this.processSingle.bind(
-			this,
-			executeCallback,
-			rootNode,
-			syntaxTreeNode,
-			codeState
-		),
-		syntaxTreeNode.tokenList,
-		function(error) {
-			return executeCallback(error, syntaxTreeNode);
-		}
-	);
 };
 
 /*****
@@ -313,92 +273,7 @@ EmbeddedCodeHandler.prototype.findPattern = function(foundCallback, tokenArray, 
 		}
 	}
 
-	return next('No pattern found for ' + tokenArray.map(function(a) { return a.strValue; }).join(', '));
-};
-
-/*****
- * Takes a fully processed syntax tree node and executes it.
- *
- * This is actually conceptually very simple. We simply call `work` on the top
- * node and it should tell its children to execute in the approrpiate order and
- * manner depending on what that node represents. The nodes are doing all the
- * work here.
- *
- * `externalCallback`
- *    The callback to call when this is done executing. The callback takes the
- *    following arguments:
- *
- *    `error`
- *       Either null, or an error message meant ot be displayed to the end user.
- *    `codeState`
- *       The state of the internal execution environment. Using this, you can
- *       tell what the various local variables are, making it feasible to use
- *       EmbededCodeHandler as an extension mechanism.
- * `codeState`
- *    A CodeState instance that represents the state of the virtual machine. As
- *    an input it can pre-define local variables or set the arguments that the
- *    code will see as being passed.
- * `topLevelNode`
- *    The SyntaxTreeNode that is the very very top level node.
- * `error`
- *    null if there's no error, or a string representing the error.
- * `lastNodeProcessed`
- *    The last node that was processed. If there was an erorr, this should be
- *    the node most closely associated with the error.
- *****/
-EmbeddedCodeHandler.prototype.executeProcessed = function(externalCallback, codeState, topLevelNode, error, lastNodeProcessed) {
-	if (error) {
-		return externalCallback(error);
-	}
-
-	return externalCallback();
-	
-	console.log('TOP LEVEL NODE', JSON.stringify(topLevelNode, ['type', 'strRep', 'nodes', 'tokenList', 'rawValue'], '  '));
-	topLevelNode.work(this, codeState, function(error) {
-		return externalCallback(error, codeState);
-	});
-};
-
-EmbeddedCodeHandler.prototype.processSingle = function(doneProcessing, rootNode, parentNode, codeState, index, pattern) {
-	if (typeof(doneProcessing) != 'function') throw Error('not a function');
-
-	console.log('pattern: ', pattern);
-	console.log('node: ', parentNode.tokenList);
-
-	pattern.process(
-		this,
-		parentNode,
-		codeState,
-		index,
-		this._processSingleDone.bind(this, rootNode, parentNode, doneProcessing, codeState)
-	);
-};
-
-EmbeddedCodeHandler.prototype._processSingleDone = function(rootNode, parentNode, doneProcessing, codeState, error, newNode) {
-	if (error) { return doneProcessing(error); }
-	if (typeof(doneProcessing) != 'function') throw Error('not a function');
-	async.eachSeries(
-		parentNode.nodes,
-		this._executeSingleChild.bind(
-			this,
-			rootNode,
-			this.recursiveProcess.bind(this),
-			codeState
-		),
-		function(error) {
-			return doneProcessing(error, codeState)
-		}
-	);
-}
-
-EmbeddedCodeHandler.prototype._executeSingleChild = function(rootNode, recursive, codeState, index, next) {
-	if (index.type == 'unparsed-node-list' && index.tokenList.length) {
-		recursive(rootNode, index, codeState, function(error) {
-			return next(error);
-		});
-	} else {
-		return next();
-	}
+	throw new Error('No pattern found for ' + tokenArray.map(function(a) { return a.stringValue; }).join(', '));
 };
 
 EmbeddedCodeHandler.prototype.debug = function(pieces, next) {

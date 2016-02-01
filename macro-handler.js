@@ -1,7 +1,7 @@
 var ret = {
 };
 
-ret.get = function(isAdmin, pieces, next) {
+ret.get = function(isAdmin, pieces, stateHolder, next) {
 	var model = isAdmin ? stateHolder.mongoose.model('AdminMacro') : stateHolder.mongoose.model('Macro');
 	var params = {};
 	if (isAdmin) params.server = stateHolder.bot.serverFromChannel(stateHolder.channelID);

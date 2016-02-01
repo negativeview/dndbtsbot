@@ -1,50 +1,5 @@
 var helper = require('../helper.js');
-var SyntaxTreeNode = require('../base/syntax-tree-node.js');
-
-function work(codeHandler, state, cb) {
-	if (this.nodes.length != 2) {
-		return cb('&& expects two sub-nodes. How did this even happen??');
-	}
-
-	var leftNode = this.nodes[0];
-	leftNode.work(codeHandler, state, work2.bind(this, cb, codeHandler, state));
-}
-
-function work2(cb, codeHandler, state, error, value) {
-	if (error) {
-		throw new Error(error);
-	}
-	
-	var leftHandSide = value;
-	if (leftHandSide.type != 'BOOLEAN') {
-		console.log('&& left side', leftHandSide);
-		throw new Error('&& must be applied to boolean arguments');
-	}
-
-	var leftTruthy = leftHandSide.booleanValue;
-	var rightNode = this.nodes[1];
-	rightNode.work(codeHandler, state, function(error, value) {
-		var rightHandSide = value;
-		if (rightHandSide.type != 'BOOLEAN') {
-			console.log('&& right side', rightHandSide);
-			throw new Error('&& must be applied to boolean arguments');
-		}
-
-		var rightTruthy = rightHandSide.booleanValue;
-		var returnTruthy = leftTruthy && rightTruthy;
-
-		var returnValue = new SyntaxTreeNode();
-		returnValue.type = 'BOOLEAN';
-		returnValue.booleanValue = returnTruthy;
-		returnValue.strRep = returnValue.booleanValue ? 'true' : 'false';
-
-		return cb(null, returnValue);
-	});
-}
-
-function toString() {
-	return this.nodes[0].toString() + ' && ' + this.nodes[1].toString();
-}
+var ComparisonNode = require('../node-types/comparison-node.js');
 
 module.exports = {
 	name: 'Boolean AND',
@@ -56,29 +11,27 @@ module.exports = {
 		}
 		return false;
 	},
-	process: function(codeHandler, node, state, index, cb) {
-		var left = [];
-		var right = [];
+	process: function(codeHandler, tokens, state, index, cb) {
+		var node = new ComparisonNode(
+			codeHandler,
+			'&&',
+			function(a, b) {
+				if (a == 'false') a = false;
+				if (b == 'false') b = false;
 
+				var ret = a && b;
+
+				console.log(a, '&&', b, ret);
+				return ret;
+			}
+		);
 		for (var i = 0; i < index; i++) {
-			left.push(node.tokenList[i]);
+			node.left.push(tokens[i]);
 		}
-		var leftNode = new SyntaxTreeNode(node);
-		leftNode.tokenList = left;
 
-		for (var i = index + 1; i < node.tokenList.length; i++) {
-			right.push(node.tokenList[i]);
+		for (var i = index + 1; i < tokens.length; i++) {
+			node.right.push(tokens[i]);
 		}
-		var rightNode = new SyntaxTreeNode(node);
-		rightNode.tokenList = right;
-
-		node.type = 'BOOLEAN_AND';
-		node.strRep = '&&';
-		node.addSubNode(leftNode);
-		node.addSubNode(rightNode);
-		node.work = work;
-		node.tokenList = [];
-		node.toString = toString;
 
 		return cb('', node);
 	}

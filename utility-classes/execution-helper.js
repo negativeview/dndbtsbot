@@ -21,7 +21,8 @@ ExecutionHelper.prototype.handle = function(message, cb) {
 			for (var m = i + 1; m < splitMessages.length; m++) {
 				message += "\n" + splitMessages[m];
 			}
-			messages[messages.length] = message.replace("\n", '');
+			console.log('here:', message);
+			messages[messages.length] = message.replace(/\n/g, '');
 			message = '';
 			break;			
 		}
@@ -37,6 +38,8 @@ ExecutionHelper.prototype.handle = function(message, cb) {
 	if (message.length != 0) {
 		messages[messages.length] = message.replace("\n", '');
 	}
+
+	console.log(messages);
 
 	this.handleParsedMessages(messages, cb);
 };
@@ -66,7 +69,9 @@ ExecutionHelper.prototype.handleParsedMessages = function(messages, cb) {
 		},
 		function(err) {
 			if (err) {
-				throw new Error(err);
+				if (typeof(err) == 'string') {
+					throw new Error(err);
+				}
 			}
 			return cb(err);
 		}

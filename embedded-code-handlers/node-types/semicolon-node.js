@@ -33,12 +33,12 @@ SemicolonNode.prototype.executeRight = function(codeState, cb, error, result) {
 			this.right
 		);
 	} else {
-		cb(this, null, null);
+		cb(null, this);
 	}
 };
 
 SemicolonNode.prototype.executionDone = function(cb, error, result) {
-	return cb(this);
+	return cb(error, result);
 }
 
 module.exports = SemicolonNode;

@@ -5,6 +5,8 @@ var ParenthesisNode = require('../node-types/parenthesis-node.js');
 module.exports = {
 	name: 'Parenthesis',
 	matches: function(command) {
+		var preIfStatements = ['IF', 'FOREACH', 'ELSE', 'TABLE'];
+
 		var foundRight = false;
 		if (command[command.length-1].type != 'RIGHT_PAREN') return false;
 		
@@ -15,7 +17,10 @@ module.exports = {
 
 				for (var m = i - 1; m >= 0; m--) {
 					if (command[m].type == 'LEFT_PAREN') {
-						if (count == 0) {
+						if (
+							count == 0 &&
+							(m == 0 || preIfStatements.indexOf(command[m-1].type) != -1)
+						) {
 							return m;
 						} else {
 							count--;

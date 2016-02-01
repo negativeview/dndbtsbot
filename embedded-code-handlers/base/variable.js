@@ -10,7 +10,7 @@ Variable.prototype.setIndex = function(index) {
 }
 
 Variable.prototype.assign = function(value, cb) {
-	if (this.index) {
+	if (this.index != null) {
 		this.namespace.setTableValue(this.name, this.index, value, cb);
 	} else {
 		this.namespace.setScalarValue(this.name, value, cb);
@@ -18,7 +18,7 @@ Variable.prototype.assign = function(value, cb) {
 }
 
 Variable.prototype.getScalarValue = function(cb) {
-	if (this.index) {
+	if (this.index != null) {
 		this.namespace.getTableValueByKey(this.name, this.index, cb);
 	} else {
 		this.namespace.getScalarValue(this.name, cb);

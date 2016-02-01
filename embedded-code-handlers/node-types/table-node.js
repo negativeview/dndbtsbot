@@ -8,36 +8,27 @@ function TableNode(codeHandler) {
 util.inherits(TableNode, SyntaxTreeNode);
 
 TableNode.prototype.execute = function(parent, codeState, cb) {
+	console.log('table.execute');
 	switch (parent.type) {
 		case 'PARENTHESIS':
-			parent.handler = this.handleString.bind(this);
 			break;
 		default:
 			throw new Error('Table not followed by parenthesis.');
 			break;
 	}
 
-	return cb(this);
+	return cb(null, this);
 };
 
-TableNode.prototype.handleString = function(cb, error, value) {
+TableNode.prototype.executeString = function(stringValue, cb) {
 	var executionHelper = this.codeHandler.stateHolder.executionHelper;
-
+	var m = this;
 	executionHelper.handle(
-		"!table " + value,
+		"!table " + stringValue,
 		function(error) {
-			if (error) return cb(this, error);
-
-			console.log('got return from table', error);
-
-			return cb(this);
+			return cb(error, m);
 		}
 	);
-};
-
-TableNode.prototype._execute = function(cb, theNode, error, value) {
-	console.log('Got to table-node:', theNode, error, value);
-	return cb(this, null, null);
 };
 
 module.exports = TableNode;

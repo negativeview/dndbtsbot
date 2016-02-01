@@ -1,5 +1,5 @@
 var helper = require('../helper.js');
-var SyntaxTreeNode = require('../base/syntax-tree-node.js');
+var ArgumentNode = require('../node-types/argument-node.js');
 var CodeError = require('../base/code-error.js');
 
 function work(codeHandler, state, cb) {
@@ -17,30 +17,17 @@ function toString() {
 module.exports = {
 	name: 'Macro',
 	matches: function(command) {
-		for (var i = command.length - 1; i >= 0; i--) {
-			if (command[i].type == 'MACRO_ARGUMENT') {
-				return i;
-			}
-		}
+		if (command.length == 1 && command[0].type == 'MACRO_ARGUMENT') return 0;
 		return false;
 	},
-	process: function(codeHandler, node, state, index, cb) {
-		if (node.tokenList.length != 1) {
-			throw new CodeError('Macro argument was not by itself when parsing.', codeHandler, node);
-		}
-		var token = node.tokenList[index];
-
+	process: function(codeHandler, tokens, state, index, cb) {
+		var token = tokens[0];
 		var matches = token.rawValue.match(/\{([0-9]+)(\+?)\}/);
-		node.rawValue = token.rawValue;
-		if (matches) {
-			node.matches = matches;
+		if (!matches) {
+			throw new Error('Invalid macro argument: ' + token.rawValue);
 		}
-		node.strRep = 'macro argument';
-		node.work = work;
-		node.tokenList = [];
-		node.type = 'MACRO_ARGUMENT';
-		node.toString = toString;
 
+		var node = new ArgumentNode(codeHandler, matches[1]);
 		return cb('', node);
 	}
 };

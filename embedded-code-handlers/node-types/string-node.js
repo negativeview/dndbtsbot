@@ -9,7 +9,7 @@ function StringNode(codeHandler, stringValue) {
 util.inherits(StringNode, SyntaxTreeNode);
 
 StringNode.prototype.execute = function(parent, codeState, cb) {
-	return cb(this, null, this);
+	return cb(null, this);
 }
 
 StringNode.prototype.toString = function() {

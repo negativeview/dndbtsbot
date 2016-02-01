@@ -9,7 +9,6 @@ function BareStringNode(codeHandler, stringValue) {
 util.inherits(BareStringNode, SyntaxTreeNode);
 
 BareStringNode.prototype.toString = function() {
-	console.log('codeHandler', this.codeHandler);
 	return this.stringValue;
 }
 

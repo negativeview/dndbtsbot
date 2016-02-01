@@ -21,5 +21,6 @@ module.exports = {
 	lessThan: require('./less-than.js'),
 	greaterThan: require('./greater-than.js'),
 	asterisk: require('./asterisk.js'),
-	roll: require('./roll.js')
+	roll: require('./roll.js'),
+	negativeNumber: require('./negative-number.js')
 };

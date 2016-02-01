@@ -1,7 +1,7 @@
 var async = require('async');
 
 function Namespace(stateHolder) {
-	this.type = 'namespace';
+	this.type = 'NAMESPACE';
 
 	this.stateHolder   = stateHolder;
 	this.scalarModel   = stateHolder.mongoose.model('Var');

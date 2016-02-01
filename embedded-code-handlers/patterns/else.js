@@ -1,14 +1,5 @@
 var helper = require('../helper.js');
-var SyntaxTreeNode = require('../base/syntax-tree-node.js');
-
-function work(codeHandler, state, cb) {
-	var retNode = new SyntaxTreeNode();
-	retNode.type = 'BOOLEAN';
-	retNode.strRep = this.booleanValue ? 'true' : 'false';
-	retNode.result = this.booleanValue;
-
-	return cb(null, retNode);
-}
+var ElseNode = require('../node-types/else-node.js');
 
 function toString() {
 	return ' else ';
@@ -17,37 +8,22 @@ function toString() {
 module.exports = {
 	name: 'Else',
 	matches: function(command) {
+		if (command.length == 1 && command[0].type == 'ELSE') return 0;
+		return false;
+		
 		for (var i = command.length - 1; i >= 0; i--) {
-			if (command[i].type == 'ELSE') {
-				return i;
-			}
+			if (command[i].type == 'ELSE') return i;
 		}
 		return false;
 	},
-	process: function(codeHandler, node, state, index, cb) {
-		var left = [];
-		var right = [];
-
+	process: function(codeHandler, tokens, state, index, cb) {
+		var node = new ElseNode(codeHandler);
 		for (var i = 0; i < index; i++) {
-			left.push(node.tokenList[i]);
+			node.before.push(tokens[i]);
 		}
-		var leftNode = new SyntaxTreeNode(node);
-		leftNode.tokenList = left;
-
-		for (var i = index + 1; i < node.tokenList.length; i++) {
-			right.push(node.tokenList[i]);
+		for (var i = i + 1; i < tokens.length; i++) {
+			node.after.push(tokens[i]);
 		}
-		var rightNode = new SyntaxTreeNode(node);
-		rightNode.tokenList = right;
-
-		node.type = 'ELSE';
-		node.strRep = '=';
-		node.addSubNode(leftNode);
-		node.addSubNode(rightNode);
-		node.work = work;
-		node.tokenList = [];
-		node.toString = toString;
-
 		return cb('', node);
 	}
 };
