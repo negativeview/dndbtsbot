@@ -215,7 +215,7 @@ EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeS
 };
 
 EmbeddedCodeHandler.prototype.handleTopToken = function(codeState, tokens, cb, index, pattern) {
-	//console.log('Found pattern ' + pattern.name);
+	console.log('Found pattern ' + pattern.name);
 	pattern.process(this, tokens, codeState, index, cb);
 };
 
@@ -274,7 +274,7 @@ EmbeddedCodeHandler.prototype.findPattern = function(foundCallback, tokenArray, 
 		}
 	}
 
-	throw new Error('No pattern found for ' + tokenArray.map(function(a) { return a.stringValue; }).join(', '));
+	throw new Error('No pattern found for ' + tokenArray.map(function(a) { return a.type; }).join(', '));
 };
 
 EmbeddedCodeHandler.prototype.debug = function(pieces, next) {

@@ -3,6 +3,7 @@ var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 var ChannelNamespace = require('../namespaces/channel-namespace.js');
 var ServerNamespace = require('../namespaces/server-namespace.js');
 var Variable = require('../base/variable.js');
+var StringNode = require('./string-node.js');
 
 function DotNode(codeHandler) {
 	SyntaxTreeNode.call(this, codeHandler);
@@ -36,23 +37,48 @@ DotNode.prototype.leftDone = function(cb, codeState, error, result) {
 					namespace = new ServerNamespace(this.codeHandler.stateHolder);
 					break;
 			}
+			if (namespace) {
+				this.codeHandler.handleTokenList(
+					(error, result) => {
+						this.rightDone(cb, namespace, error, result);
+					},
+					codeState,
+					null,
+					this.right
+				);
+			} else if (codeState.variables[result.stringValue]) {
+				return this.leftDone(cb, codeState, error, codeState.variables[result.stringValue]);
+			} else {
+				throw new Error('No namespace.');
+			}
+			break;
+		case 'ROLL_RESULT':
+			this.codeHandler.handleTokenList(
+				(error, result2) => {
+					if (error) return cb(error);
+
+					switch (result2.type) {
+						case 'BARE_STRING':
+							if (result2.stringValue in result) {
+								var stringNode = new StringNode(this.codeHandler, result[result2.stringValue]);
+								return cb(null, stringNode);
+							} else {
+								console.log(result2, result);
+							}
+							break;
+						default:
+							throw new Error('Bad');
+					}
+				},
+				codeState,
+				null,
+				this.right
+			)
 			break;
 		default:
 			throw new Error('Not sure what to do with ' + result.type);
 	}
 
-	if (namespace) {
-		this.codeHandler.handleTokenList(
-			(error, result) => {
-				this.rightDone(cb, namespace, error, result);
-			},
-			codeState,
-			null,
-			this.right
-		);
-	} else {
-		throw new Error('No namespace.');
-	}
 };
 
 DotNode.prototype.rightDone = function(cb, namespace, error, result) {

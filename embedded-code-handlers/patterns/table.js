@@ -1,6 +1,4 @@
 var helper = require('../helper.js');
-var SyntaxTreeNode = require('../base/syntax-tree-node.js');
-var CodeError = require('../base/code-error.js');
 var TableNode = require('../node-types/table-node.js');
 
 module.exports = {

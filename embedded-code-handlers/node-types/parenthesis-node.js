@@ -73,7 +73,18 @@ ParenthesisNode.prototype.executeSecond = function(cb, codeState, error, value) 
 				this.sub,
 				this
 			);
-			break;			
+			break;
+		case 'ROLL':
+			this.codeHandler.handleTokenList(
+				(error, result) => {
+					this.executeForRoll(cb, value, error, result);
+				},
+				codeState,
+				null,
+				this.sub,
+				this
+			);
+			break;
 		default:
 			throw new Error('Not an if: ' + value.type);
 	}
@@ -95,6 +106,17 @@ ParenthesisNode.prototype.executeForTable = function(cb, tableNode, error, node)
 	switch (node.type) {
 		case 'QUOTED_STRING':
 			tableNode.executeString(node.stringValue, cb);
+			break;
+		default:
+			console.log(node);
+			throw new Error('Node!');
+	}
+};
+
+ParenthesisNode.prototype.executeForRoll = function(cb, rollNode, error, node) {
+	switch (node.type) {
+		case 'QUOTED_STRING':
+			rollNode.executeString(node.stringValue, cb);
 			break;
 		default:
 			console.log(node);

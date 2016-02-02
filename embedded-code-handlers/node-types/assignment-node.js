@@ -39,6 +39,9 @@ AssignmentNode.prototype.rightDone = function(cb, codeState, variable, error, re
 					codeState.variables[variable.stringValue] = result.stringValue;
 					return cb(null, result);
 					break;
+				case 'ROLL_RESULT':
+					codeState.variables[variable.stringValue] = result;
+					return cb(null, result);
 				default:
 					throw new Error(result.type);
 					break;
