@@ -11,7 +11,9 @@ util.inherits(PlusNode, SyntaxTreeNode);
 
 PlusNode.prototype.execute = function(parent, codeState, cb) {
 	this.codeHandler.handleTokenList(
-		this.leftDone.bind(this, cb, codeState),
+		(error, value) => {
+			this.leftDone(cb, codeState, error, value)
+		},
 		codeState,
 		null,
 		this.left
@@ -24,13 +26,17 @@ PlusNode.prototype.leftDone = function(cb, codeState, error, value) {
 	switch (value.type) {
 		case 'VARIABLE':
 			value.getScalarValue(
-				this.leftTwo.bind(this, cb, codeState)
+				(error, value) => {
+					this.leftTwo(cb, codeState, error, value);
+				}
 			);
 			return;
 		case 'BARE_STRING':
 			if (parseInt(value.stringValue)) {
 				this.codeHandler.handleTokenList(
-					this.rightDone.bind(this, cb, codeState, value.stringValue),
+					(error, rightNode) => {
+						this.rightDone(cb, codeState, value.stringValue, error, rightNode)
+					},
 					codeState,
 					null,
 					this.right
@@ -39,14 +45,18 @@ PlusNode.prototype.leftDone = function(cb, codeState, error, value) {
 			} else {
 				if (value.stringValue in codeState.variables) {
 					this.codeHandler.handleTokenList(
-						this.rightDone.bind(this, cb, codeState, codeState.variables[value.stringValue]),
+						(error, rightNode) => {
+							this.rightDone(cb, codeState, codeState.variables[value.stringValue], error, rightNode);
+						},
 						codeState,
 						null,
 						this.right
 					);
 				} else {
 					this.codeHandler.handleTokenList(
-						this.rightDone.bind(this, cb, codeState, ''),
+						(error, rightNode) => {
+							this.rightDone(cb, codeState, '', error, rightNode);
+						},
 						codeState,
 						null,
 						this.right
@@ -57,7 +67,9 @@ PlusNode.prototype.leftDone = function(cb, codeState, error, value) {
 			break;
 		case 'QUOTED_STRING':
 			this.codeHandler.handleTokenList(
-				this.rightDone.bind(this, cb, codeState, value.stringValue),
+				(error, rightNode) => {
+					this.rightDone(cb, codeState, value.stringValue, error, rightNode);
+				},
 				codeState,
 				null,
 				this.right
@@ -73,7 +85,9 @@ PlusNode.prototype.leftTwo = function (cb, codeState, err, val) {
 	if (err) return cb(err);
 
 	this.codeHandler.handleTokenList(
-		this.rightDone.bind(this, cb, codeState, val),
+		(error, value) => {
+			this.rightDone(cb, codeState, val, error, value);
+		},
 		codeState,
 		null,
 		this.right
@@ -100,7 +114,9 @@ PlusNode.prototype.rightDone = function(cb, codeState, leftValue, error, rightNo
 			return;
 		case 'VARIABLE':
 			rightNode.getScalarValue(
-				this.totalDone.bind(this, cb, codeState, leftValue)
+				(error, value) => {
+					this.totalDone(cb, codeState, leftValue, error, value);
+				}
 			);
 			return;
 	}

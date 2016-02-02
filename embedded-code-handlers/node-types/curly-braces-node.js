@@ -13,7 +13,9 @@ util.inherits(CurlyBracesNode, SyntaxTreeNode);
 
 CurlyBracesNode.prototype.execute = function(parent, codeState, cb) {
 	this.codeHandler.handleTokenList(
-		this.leftDone.bind(this, cb, codeState),
+		(error, result) => {
+			this.leftDone(cb, codeState, error, result);
+		},
 		codeState,
 		null,
 		this.left
@@ -25,13 +27,19 @@ CurlyBracesNode.prototype.foreachAsync = function(codeState, index, cb) {
 	codeState.variables.value = index.value;
 
 	this.codeHandler.handleTokenList(
-		this.insideDone.bind(
-			this,
-			function(error, ifNode) {
-				return cb();
-			},
-			codeState
-		),
+		(error, result) => {
+			this.insideDone(
+				// foreachAsync thinks that all things passed to cb() means that there's an 
+				// error. handleTokenList always passes something, even when there's no error,
+				// so let's swallow our pride here and wrap it before we tap it.
+				(error, ifNode) => {
+					return cb();
+				},
+				codeState,
+				error,
+				result
+			);
+		},
 		codeState,
 		null,
 		this.inside
@@ -50,14 +58,18 @@ CurlyBracesNode.prototype.leftDone = function(cb, codeState, error, result) {
 					
 					if (this.booleanValue) {
 						this.codeHandler.handleTokenList(
-							this.insideDone.bind(this, cb, codeState),
+							(error, result) => {
+								this.insideDone(cb, codeState, error, result);
+							},
 							codeState,
 							null,
 							this.inside
 						);
 					} else {
 						this.codeHandler.handleTokenList(
-							this.afterDone.bind(this, cb, codeState),
+							(error, result) => {
+								this.afterDone(cb, codeState, error, result);
+							},
 							codeState,
 							null,
 							this.right,
@@ -73,14 +85,16 @@ CurlyBracesNode.prototype.leftDone = function(cb, codeState, error, result) {
 				if (result.loopValue) {
 					//console.log('Foreach with loop value:', this.left, this.inside, this.right);
 					//throw new Error('bomb');
-					var m = this;
-
 					result.loopValue.getTable(
-						function(error, table) {
+						(error, table) => {
 							async.eachSeries(
 								table,
-								m.foreachAsync.bind(m, codeState),
-								m.insideDone.bind(m, cb, codeState, null)
+								(index, cb) => {
+									this.foreachAsync(codeState, index, cb);
+								},
+								(result) => {
+									this.insideDone(cb, codeState, null, result);
+								}
 							);
 						}
 					);
@@ -93,7 +107,9 @@ CurlyBracesNode.prototype.leftDone = function(cb, codeState, error, result) {
 		if (codeState.programNode.booleanValue) {
 			delete codeState.programNode.booleanValue;
 			this.codeHandler.handleTokenList(
-				this.insideDone.bind(this, cb, codeState),
+				(error, result) => {
+					this.insideDone(cb, codeState, error, result)
+				},
 				codeState,
 				null,
 				this.inside
@@ -119,7 +135,9 @@ CurlyBracesNode.prototype.insideDone = function(cb, codeState, error, result) {
 	if (this.right.length == 0) return cb(null, this);
 
 	this.codeHandler.handleTokenList(
-		this.afterDone.bind(this, cb, codeState),
+		(error, result) => {
+			this.afterDone(cb, codeState, error, result);
+		},
 		codeState,
 		null,
 		this.right,
@@ -129,7 +147,6 @@ CurlyBracesNode.prototype.insideDone = function(cb, codeState, error, result) {
 
 CurlyBracesNode.prototype.afterDone = function(cb, codeState, error, result) {
 	return cb(error, result);
-	//return cb(error, null);
 }
 
 module.exports = CurlyBracesNode;

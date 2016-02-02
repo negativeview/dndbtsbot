@@ -113,23 +113,29 @@ function ldCallHandle(game, stateHolder, next) {
 function setupDice(dice, game, stateHolder, next) {
 	game.latestBetNumber = 0;
 	game.latestBetSize = 0;
-	dice.execute(game.userADiceNumber + 'd' + game.diceSize, function(data) {
-		game.userAResults = data.rawResults[0].results;
-		stateHolder.simpleAddMessage(
-			game.userA,
-			game.userAResults.join(', ')
-		);
-
-		dice.execute(game.userBDiceNumber + 'd' + game.diceSize, function(data) {
-			game.userBResults = data.rawResults[0].results;
+	dice.execute(
+		game.userADiceNumber + 'd' + game.diceSize,
+		(data) => {
+			game.userAResults = data.rawResults[0].results;
 			stateHolder.simpleAddMessage(
-				game.userB,
-				game.userBResults.join(', ')
+				game.userA,
+				game.userAResults.join(', ')
 			);
 
-			return next();
-		});
-	});
+			dice.execute(
+				game.userBDiceNumber + 'd' + game.diceSize,
+				(data) => {
+					game.userBResults = data.rawResults[0].results;
+					stateHolder.simpleAddMessage(
+						game.userB,
+						game.userBResults.join(', ')
+					);
+
+					return next();
+				}
+			);
+		}
+	);
 }
 
 function ldStart(pieces, stateHolder, next) {
@@ -173,23 +179,26 @@ function ldStart(pieces, stateHolder, next) {
 	games[games.length] = game;
 
 	var dice = new Dice();
-	dice.execute('1d2', function(data) {
-		var startingPlayer = stateHolder.actualUsername;
-		if (data.totalResult == 1) {
-			game.activePlayer = 1;
-			startingPlayer = stateHolder.memberNumberToName(game.userB);
-		} else {
-			game.activePlayer = 2;
+	dice.execute(
+		'1d2',
+		(data) => {
+			var startingPlayer = stateHolder.actualUsername;
+			if (data.totalResult == 1) {
+				game.activePlayer = 1;
+				startingPlayer = stateHolder.memberNumberToName(game.userB);
+			} else {
+				game.activePlayer = 2;
+			}
+
+			stateHolder.simpleAddMessage(
+				stateHolder.channelID,
+				'Started a game of liars dice between ' + stateHolder.actualUsername + ' and ' + stateHolder.memberNumberToName(game.userB) + "\n" +
+				startingPlayer + ' starts. DMing the players their dice.'
+			);
+
+			setupDice(dice, game, stateHolder, next);
 		}
-
-		stateHolder.simpleAddMessage(
-			stateHolder.channelID,
-			'Started a game of liars dice between ' + stateHolder.actualUsername + ' and ' + stateHolder.memberNumberToName(game.userB) + "\n" +
-			startingPlayer + ' starts. DMing the players their dice.'
-		);
-
-		setupDice(dice, game, stateHolder, next);
-	});
+	);
 }
 
 function ldBetHandle(diceInfo, game, stateHolder, next) {

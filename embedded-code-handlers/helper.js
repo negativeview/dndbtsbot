@@ -55,39 +55,42 @@ ret.doesMatch = function(command, matchDefinition, notEnding) {
 function work2(cb, codeHandler, state, error, value) {
 	if (error) return cb(error);
 
-	var w3 = work3.bind(this);
-
 	var leftHandSide = value;
 	if (leftHandSide.type == 'VARIABLE') {
 		leftHandSide.getScalarValue(
-			function(error, value) {
-				w3(cb, codeHandler, state, value);
+			(error, value) => {
+				work3(cb, codeHandler, state, value);
 			}
 		);
 	} else if (leftHandSide.type == 'STRING') {
 		if (state.variables[leftHandSide.strRep]) {
-			w3(cb, codeHandler, state, state.variables[leftHandSide.strRep]);
+			work3(cb, codeHandler, state, state.variables[leftHandSide.strRep]);
 		} else {
-			w3(cb, codeHandler, state, leftHandSide.strRep);
+			work3(cb, codeHandler, state, leftHandSide.strRep);
 		}
 	} else {
-		w3(cb, codeHandler, state, leftHandSide.strRep);
+		work3(cb, codeHandler, state, leftHandSide.strRep);
 	}
 }
 
 function work3(cb, codeHandler, state, leftHandSide) {
 	var rightNode = this.nodes[1];
-	rightNode.work(codeHandler, state, work4.bind(this, cb, leftHandSide, codeHandler, state));
+	rightNode.work(
+		codeHandler,
+		state,
+		(error, value) => {
+			work4(cb, leftHandSide, codeHandler, state, error, value)
+		}
+	);
 }
 
 function work4(cb, leftHandSide, codeHandler, state, error, value) {
 	if (error) return cb(error);
 	var rightHandSide = value;
 	if (rightHandSide.type == 'VARIABLE') {
-		var cb = cb.bind(this, codeHandler, state, leftHandSide);
 		rightHandSide.getScalarValue(
-			function(error, result) {
-				cb(result);
+			(error, result) => {
+				cb(codeHandler, state, leftHandSide, result);
 			}
 		);
 	} else if (rightHandSide.type == 'STRING') {
@@ -107,12 +110,9 @@ ret.setupComparisonValues = function(node, codeHandler, state, cb) {
 	leftNode.work(
 		codeHandler,
 		state,
-		work2.bind(
-			node,
-			cb,
-			codeHandler,
-			state
-		)
+		(error, value) => {
+			work2(cb, codeHandler, state, error, value);
+		}
 	);
 };
 

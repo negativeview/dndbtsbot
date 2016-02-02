@@ -42,7 +42,7 @@ MessageQueue.prototype.pump = function(bot, finalCallback) {
 
 	async.eachSeries(
 		m.queue,
-		function(queue, queueCallback) {
+		(queue, queueCallback) => {
 			async.whilst(
 				function() {
 					return queue.messages.length > 0;
@@ -66,11 +66,11 @@ MessageQueue.prototype.pump = function(bot, finalCallback) {
 				}
 			);
 		},
-		function() {
+		() => {
 			var totalMessages = 0;
-			for (var i = 0; i < m.queue.length; i++) {
-				totalMessages += m.queue[i].messages.length;
-				queueSizes.push(i + ': ' + m.queue[i].messages.length);
+			for (var i = 0; i < this.queue.length; i++) {
+				totalMessages += this.queue[i].messages.length;
+				queueSizes.push(i + ': ' + this.queue[i].messages.length);
 			}
 
 			if (totalMessages == 0) return finalCallback(0);

@@ -13,32 +13,34 @@ ret.get = function(isAdmin, pieces, stateHolder, next) {
 			params.name = '!' + params.name;
 	}
 
-	model.find(params).exec(function(err, res) {
-		if (err) {
-			stateHolder.simpleAddMessage(stateHolder.username, err);
-			return next();	
-		}
-
-		var answerMessage = '';
-		if (res.length > 0) {
-			for (var i = 0; i < res.length; i++) {
-				if (params.name) {
-					answerMessage += '`' + res[i].name + '` ';
-					answerMessage += res[i].macro;
-					if (i != res.length-1) {
-						answerMessage += "\n";
-					}
-				} else {
-					answerMessage += res[i].name + "\n";
-				}
+	model.find(params).exec(
+		(err, res) => {
+			if (err) {
+				stateHolder.simpleAddMessage(stateHolder.username, err);
+				return next();	
 			}
-		} else {
-			answerMessage = 'No macros defined.';
-		}
 
-		stateHolder.simpleAddMessage(stateHolder.username, answerMessage);
-		return next();
-	});
+			var answerMessage = '';
+			if (res.length > 0) {
+				for (var i = 0; i < res.length; i++) {
+					if (params.name) {
+						answerMessage += '`' + res[i].name + '` ';
+						answerMessage += res[i].macro;
+						if (i != res.length-1) {
+							answerMessage += "\n";
+						}
+					} else {
+						answerMessage += res[i].name + "\n";
+					}
+				}
+			} else {
+				answerMessage = 'No macros defined.';
+			}
+
+			stateHolder.simpleAddMessage(stateHolder.username, answerMessage);
+			return next();
+		}
+	);
 };
 
 ret.set = function(isAdmin, pieces, stateHolder, next) {
@@ -59,40 +61,44 @@ ret.set = function(isAdmin, pieces, stateHolder, next) {
 	if (isAdmin) params.server = stateHolder.bot.serverFromChannel(stateHolder.channelID);
 	if (!isAdmin) params.user = stateHolder.username;
 
-	model.find(params).exec(function(err, res) {
-		if (err) {
-			stateHolder.simpleAddMessage(stateHolder.username, err);
-			return next();
-		}
-
-		if (res.length) {
-			for (var i = 0; i < res.length; i++) {
-				var result = res[i];
-				result.remove();
-			}
-		}
-
-		var macroBody = '';
-		for (var i = 1; i < pieces.length; i++) {
-			macroBody += pieces[i] + ' ';
-		}
-		if (macroBody[0] != '!') {
-			macroBody = '!' + macroBody;
-		}
-
-		params.macro = macroBody;
-
-		var newMacro = new model(params);
-		newMacro.save(function(err) {
+	model.find(params).exec(
+		(err, res) => {
 			if (err) {
-				stateHolder.simpleAddMessage(stateHolder.username, 'Error saving macro: ' + err);
-				return next();
-			} else {
-				stateHolder.simpleAddMessage(stateHolder.username, 'Saved macro `' + macroName + '`');
+				stateHolder.simpleAddMessage(stateHolder.username, err);
 				return next();
 			}
-		});
-	});
+
+			if (res.length) {
+				for (var i = 0; i < res.length; i++) {
+					var result = res[i];
+					result.remove();
+				}
+			}
+
+			var macroBody = '';
+			for (var i = 1; i < pieces.length; i++) {
+				macroBody += pieces[i] + ' ';
+			}
+			if (macroBody[0] != '!') {
+				macroBody = '!' + macroBody;
+			}
+
+			params.macro = macroBody;
+
+			var newMacro = new model(params);
+			newMacro.save(
+				(err) => {
+					if (err) {
+						stateHolder.simpleAddMessage(stateHolder.username, 'Error saving macro: ' + err);
+						return next();
+					} else {
+						stateHolder.simpleAddMessage(stateHolder.username, 'Saved macro `' + macroName + '`');
+						return next();
+					}
+				}
+			);
+		}
+	);
 };
 
 ret.del = function(isAdmin, pieces, stateHolder, next) {
@@ -108,24 +114,26 @@ ret.del = function(isAdmin, pieces, stateHolder, next) {
 
 	params.name = macroName;
 
-	model.find(params).exec(function(err, res) {
-		if (err) {
-			stateHolder.simpleAddMessage(stateHolder.username, err);
-			return next();
-		}
-
-		if (res.length) {
-			for (var i = 0; i < res.length; i++) {
-				var result = res[i];
-				result.remove();
+	model.find(params).exec(
+		(err, res) => {
+			if (err) {
+				stateHolder.simpleAddMessage(stateHolder.username, err);
+				return next();
 			}
-			stateHolder.simpleAddMessage(stateHolder.username, 'Removed macro ' + result.name);
-			return next();
-		} else {
-			stateHolder.simpleAddMessage(stateHolder.username, 'Could not find the macro to remove.');
-			return next();
+
+			if (res.length) {
+				for (var i = 0; i < res.length; i++) {
+					var result = res[i];
+					result.remove();
+				}
+				stateHolder.simpleAddMessage(stateHolder.username, 'Removed macro ' + result.name);
+				return next();
+			} else {
+				stateHolder.simpleAddMessage(stateHolder.username, 'Could not find the macro to remove.');
+				return next();
+			}
 		}
-	});	
+	);
 };
 
 ret.handle = function(pieces, stateHolder, next) {
@@ -188,39 +196,43 @@ ret.attempted = function(pieces, stateHolder, next) {
 	stateHolder.mongoose.model('AdminMacro').find({
 		name: pieces[0],
 		server: stateHolder.bot.serverFromChannel(stateHolder.channelID)
-	}).exec(function(err, res) {
-		if (err) {
-			stateHolder.simpleAddMessage(stateHolder.username, err);
-			if (next)
-				return next();			
-		}
+	}).exec(
+		(err, res) => {
+			if (err) {
+				stateHolder.simpleAddMessage(stateHolder.username, err);
+				if (next)
+					return next();			
+			}
 
-		if (res.length) {
-			command = res[0].macro;
-			stateHolder.adminDetermined = true;
-			stateHolder.isAdmin = true;
-			stateHolder.executionHelper.handle(command, next);
-		} else {
-			var parameters = {
-				name: pieces[0],
-				user: stateHolder.username
-			};
-			stateHolder.mongoose.model('Macro').find(parameters).exec(function(err, res) {
-				if (err) {
-					stateHolder.simpleAddMessage(stateHolder.username, err);
-					if (next)
-						return next();			
-				}
+			if (res.length) {
+				command = res[0].macro;
+				stateHolder.adminDetermined = true;
+				stateHolder.isAdmin = true;
+				stateHolder.executionHelper.handle(command, next);
+			} else {
+				var parameters = {
+					name: pieces[0],
+					user: stateHolder.username
+				};
+				stateHolder.mongoose.model('Macro').find(parameters).exec(
+					(err, res) => {
+						if (err) {
+							stateHolder.simpleAddMessage(stateHolder.username, err);
+							if (next)
+								return next();			
+						}
 
-				if (res.length) {
-					command = res[0].macro;
-					stateHolder.executionHelper.handle(command, next);
-				} else {
-					return next();
-				}
-			});
+						if (res.length) {
+							command = res[0].macro;
+							stateHolder.executionHelper.handle(command, next);
+						} else {
+							return next();
+						}
+					}
+				);
+			}
 		}
-	});
+	);
 };
 
 module.exports = ret;

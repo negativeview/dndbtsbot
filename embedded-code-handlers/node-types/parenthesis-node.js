@@ -12,7 +12,9 @@ util.inherits(ParenthesisNode, SyntaxTreeNode);
 ParenthesisNode.prototype.execute = function(parent, codeState, cb) {
 	if (this.before.length) {
 		this.codeHandler.handleTokenList(
-			this.executeSecond.bind(this, cb, codeState),
+			(error, result) => {
+				this.executeSecond(cb, codeState, error, result);
+			},
 			codeState,
 			null,
 			this.before,
@@ -20,7 +22,9 @@ ParenthesisNode.prototype.execute = function(parent, codeState, cb) {
 		);
 	} else {
 		this.codeHandler.handleTokenList(
-			this.executeInnards.bind(this, cb, codeState),
+			(error, result) => {
+				this.executeInnards(cb, codeState, error, result);
+			},
 			codeState,
 			null,
 			this.sub,
@@ -39,7 +43,9 @@ ParenthesisNode.prototype.executeSecond = function(cb, codeState, error, value) 
 	switch (value.type) {
 		case 'IF':
 			this.codeHandler.handleTokenList(
-				this.executeForIf.bind(this, cb, value),
+				(error, result) => {
+					this.executeForIf(cb, value, error, result);
+				},
 				codeState,
 				null,
 				this.sub,
@@ -48,7 +54,9 @@ ParenthesisNode.prototype.executeSecond = function(cb, codeState, error, value) 
 			break;
 		case 'TABLE':
 			this.codeHandler.handleTokenList(
-				this.executeForTable.bind(this, cb, value),
+				(error, result) => {
+					this.executeForTable(cb, value, error, result);
+				},
 				codeState,
 				null,
 				this.sub,
@@ -57,7 +65,9 @@ ParenthesisNode.prototype.executeSecond = function(cb, codeState, error, value) 
 			break;
 		case 'FOREACH':
 			this.codeHandler.handleTokenList(
-				this.executeForForeach.bind(this, cb, value),
+				(error, result) => {
+					this.executeForForeach(cb, value, error, result);
+				},
 				codeState,
 				null,
 				this.sub,
@@ -93,6 +103,8 @@ ParenthesisNode.prototype.executeForTable = function(cb, tableNode, error, node)
 };
 
 ParenthesisNode.prototype.executeForIf = function(cb, ifNode, error, node) {
+	if (error) return cb(error);
+	
 	switch (node.type) {
 		case 'BOOLEAN':
 			ifNode.booleanValue = node.booleanValue;

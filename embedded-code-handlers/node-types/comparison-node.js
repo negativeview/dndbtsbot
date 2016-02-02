@@ -13,7 +13,9 @@ util.inherits(ComparisonNode, SyntaxTreeNode);
 
 ComparisonNode.prototype.execute = function(parent, codeState, cb) {
 	this.codeHandler.handleTokenList(
-		this.leftDone.bind(this, cb, codeState),
+		(error, result) => {
+			this.leftDone(cb, codeState, error, result);
+		},
 		codeState,
 		null,
 		this.left
@@ -30,16 +32,20 @@ ComparisonNode.prototype.leftDone = function(cb, codeState, error, result) {
 			stringValue = result.stringValue;
 			break;
 		case 'VARIABLE':
-			var m = this;
-			result.getScalarValue(function(error, value) {
-				if (error) return cb(error);
-				m.codeHandler.handleTokenList(
-					m.rightDone.bind(m, cb, codeState, value),
-					codeState,
-					null,
-					m.right
-				);
-			});
+			result.getScalarValue(
+				(error, value) => {
+					if (error) return cb(error);
+
+					this.codeHandler.handleTokenList(
+						(error, result) => {
+							this.rightDone(cb, codeState, value, error, result);
+						},
+						codeState,
+						null,
+						this.right
+					);
+				}
+			);
 			return;
 			break;
 		case 'BARE_STRING':
@@ -49,7 +55,9 @@ ComparisonNode.prototype.leftDone = function(cb, codeState, error, result) {
 			}
 
 			this.codeHandler.handleTokenList(
-				this.rightDone.bind(this, cb, codeState, strValue),
+				(error, result) => {
+					this.rightDone(cb, codeState, strValue, error, result);
+				},
 				codeState,
 				null,
 				this.right
@@ -65,7 +73,9 @@ ComparisonNode.prototype.leftDone = function(cb, codeState, error, result) {
 	}
 
 	this.codeHandler.handleTokenList(
-		this.rightDone.bind(this, cb, codeState, stringValue),
+		(error, result) => {
+			this.rightDone(cb, codeState, stringValue, error, result);
+		},
 		codeState,
 		null,
 		this.right

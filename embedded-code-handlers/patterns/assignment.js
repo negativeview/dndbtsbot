@@ -35,7 +35,13 @@ function work2(cb, codeHandler, state, error, value) {
 	
 	var leftHandSide = value;
 	var rightNode = this.nodes[1];
-	rightNode.work(codeHandler, state, work3.bind(this, cb, codeHandler, leftHandSide, state));
+	rightNode.work(
+		codeHandler,
+		state,
+		(error, value) => {
+			work3(cb, codeHandler, leftHandSide, state, error, value)
+		}
+	);
 }
 
 function work3(cb, codeHandler, leftHandSide, state, error, value) {

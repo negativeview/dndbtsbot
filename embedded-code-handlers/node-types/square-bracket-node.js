@@ -12,7 +12,9 @@ util.inherits(SquareBracketNode, SyntaxTreeNode);
 
 SquareBracketNode.prototype.execute = function(parent, codeState, cb) {
 	this.codeHandler.handleTokenList(
-		this.leftDone.bind(this, cb, codeState),
+		(error, result) => {
+			this.leftDone(cb, codeState, error, result);
+		},
 		codeState,
 		null,
 		this.left
@@ -34,7 +36,9 @@ SquareBracketNode.prototype.leftDone = function(cb, codeState, error, result) {
 			break;
 		case 'VARIABLE':
 			this.codeHandler.handleTokenList(
-				this.rightDone.bind(this, cb, codeState, result),
+				(error, result2) => {
+					this.rightDone(cb, codeState, result, error, result2);
+				},
 				codeState,
 				null,
 				this.right

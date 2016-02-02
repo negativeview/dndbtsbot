@@ -8,19 +8,22 @@ var StateHolder      = require('./utility-classes/state-holder.js');
 var TimeBasedUpdates = require('./time-based-updates.js');
 var bot              = auth.bot;
 
-process.on('uncaughtException', function(err) {
-	if (err.node) {
-		console.log('uncaughtException', err.node);
-		var stateHolder = err.codeHandler.stateHolder;
-		var message = err.toString() + "\n" + err.node.parent.toString() + "\n" + err.node.tokenList.map(function(a) { return a.rawValue; }).join(', ');
-		stateHolder.simpleAddMessage(stateHolder.channelID, message);
-		stateHolder.doFinalOutput();
-		forcePump();
-	} else {
-		console.log(err.stack);
-		process.exit(1);
+process.on(
+	'uncaughtException',
+	(err) => {
+		if (err.node) {
+			console.log('uncaughtException', err.node);
+			var stateHolder = err.codeHandler.stateHolder;
+			var message = err.toString() + "\n" + err.node.parent.toString() + "\n" + err.node.tokenList.map(function(a) { return a.rawValue; }).join(', ');
+			stateHolder.simpleAddMessage(stateHolder.channelID, message);
+			stateHolder.doFinalOutput();
+			forcePump();
+		} else {
+			console.log(err.stack);
+			process.exit(1);
+		}
 	}
-});
+);
 
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	if (user == bot.username || user == bot.id) return;
@@ -31,16 +34,19 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 
 	var stateHolder = new StateHolder(messageQueue, user, bot, mongoose, userID, channelID, rawEvent);
 	var executionHelper = new ExecutionHelper(stateHolder);
-	executionHelper.handle(message, function(err) {
-		if (err) {
-			console.log('error', err);
-			stateHolder.simpleAddMessage(channelID, 'ERROR:' + err);
+	executionHelper.handle(
+		message,
+		(err) => {
+			if (err) {
+				console.log('error', err);
+				stateHolder.simpleAddMessage(channelID, 'ERROR:' + err);
+			}
+			stateHolder.doFinalOutput();
+			forcePump();
+			if (err) return;
+			bot.deleteMessage({channel: rawEvent.d.channel_id, messageID: rawEvent.d.id});
 		}
-		stateHolder.doFinalOutput();
-		forcePump();
-		if (err) return;
-		bot.deleteMessage({channel: rawEvent.d.channel_id, messageID: rawEvent.d.id});
-	});
+	);
 }
 
 var lastUpdate = '';
@@ -66,11 +72,14 @@ function onBotDisconnected() {
 var timeoutID = null;
 function pump() {
 	timeoutID = null;
-	messageQueue.pump(bot, function(timeout) {
-		if (timeout && timeoutID == null) {
-			timeoutID = setTimeout(pump, timeout);
+	messageQueue.pump(
+		bot,
+		(timeout) => {
+			if (timeout && timeoutID == null) {
+				timeoutID = setTimeout(pump, timeout);
+			}
 		}
-	});
+	);
 }
 
 function forcePump() {

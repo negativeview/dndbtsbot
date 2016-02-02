@@ -62,7 +62,7 @@ var ret = {
 
 function getCharacterWrapper(stateHolder, parameters, fail, pass) {
 	ret.characterModel.find(parameters).exec(
-		function(err, res) {
+		(err, res) => {
 			if (err) {
 				stateHolder.simpleAddMessage(stateHolder.username, err);
 				return fail();
@@ -84,9 +84,14 @@ function getActiveCharacter(stateHolder, fail, pass) {
 		isCurrent: true
 	};
 
-	return getCharacterWrapper(stateHolder, parameters, fail, function(res) {
-		return pass(res[0]);
-	});
+	return getCharacterWrapper(
+		stateHolder,
+		parameters,
+		fail,
+		(res) => {
+			return pass(res[0]);
+		}
+	);
 }
 
 function handleSaveRoll(pieces, stateHolder, next) {
@@ -96,36 +101,43 @@ function handleSaveRoll(pieces, stateHolder, next) {
 		return next();
 	}
 
-	getActiveCharacter(stateHolder, next, function(activeCharacter) {
-		stateHolder.simpleAddMessage(stateHolder.channelID, "```" + activeCharacter.name + " Rolling " + save + "```");
+	getActiveCharacter(
+		stateHolder,
+		next,
+		(activeCharacter) => {
+			stateHolder.simpleAddMessage(stateHolder.channelID, "```" + activeCharacter.name + " Rolling " + save + "```");
 
-		var roll = '1d20';
-		if (pieces.length > 1 && pieces[1] == 'advantage') {
-			roll = '2d20kh1';
-		} else if (pieces.length > 1 && pieces[1] == 'disadvantage') {
-			roll = '2d20-L';
+			var roll = '1d20';
+			if (pieces.length > 1 && pieces[1] == 'advantage') {
+				roll = '2d20kh1';
+			} else if (pieces.length > 1 && pieces[1] == 'disadvantage') {
+				roll = '2d20-L';
+			}
+
+			roll +=  '+' + scoreToModifier(activeCharacter[save]);
+
+			var proficiency = 0;
+			if (activeCharacter.newProficiencies && activeCharacter.newProficiencies[save]) {
+				proficiency = activeCharacter.newProficiencies[save];
+			} else if (activeCharacter.proficiencies.indexOf(save) !== -1) {
+				proficiency = 1;
+			}
+
+			if (proficiency) {
+				roll += '+' + (activeCharacter.proficiencyBonus * parseInt(proficiency));
+			}
+			
+			var dice = new Dice();
+			dice.execute(
+				roll,
+				(output) => {
+					var skillResult = output.output;
+					stateHolder.simpleAddMessage(stateHolder.channelID, skillResult);
+					return next();
+				}
+			);
 		}
-
-		roll +=  '+' + scoreToModifier(activeCharacter[save]);
-
-		var proficiency = 0;
-		if (activeCharacter.newProficiencies && activeCharacter.newProficiencies[save]) {
-			proficiency = activeCharacter.newProficiencies[save];
-		} else if (activeCharacter.proficiencies.indexOf(save) !== -1) {
-			proficiency = 1;
-		}
-
-		if (proficiency) {
-			roll += '+' + (activeCharacter.proficiencyBonus * parseInt(proficiency));
-		}
-		
-		var dice = new Dice();
-		dice.execute(roll, function(output) {
-			var skillResult = output.output;
-			stateHolder.simpleAddMessage(stateHolder.channelID, skillResult);
-			return next();
-		});
-	});	
+	);
 }
 
 function handleSkillRoll(pieces, stateHolder, next) {
@@ -135,34 +147,41 @@ function handleSkillRoll(pieces, stateHolder, next) {
 		return next();
 	}
 
-	getActiveCharacter(stateHolder, next, function(activeCharacter) {
-		stateHolder.simpleAddMessage(stateHolder.channelID, "```" + activeCharacter.name + " Rolling " + skill + "```");
+	getActiveCharacter(
+		stateHolder,
+		next,
+		(activeCharacter) => {
+			stateHolder.simpleAddMessage(stateHolder.channelID, "```" + activeCharacter.name + " Rolling " + skill + "```");
 
-		var roll = '1d20';
-		if (pieces.length > 1 && pieces[1] == 'advantage') {
-			roll = '2d20kh1';
-		} else if (pieces.length > 1 && pieces[1] == 'disadvantage') {
-			roll = '2d20-L';
-		}
-		roll +=  '+' + scoreToModifier(activeCharacter[skills[skill]]);
-		var proficiency = 0;
-		if (activeCharacter.newProficiencies && activeCharacter.newProficiencies[skill]) {
-			proficiency = activeCharacter.newProficiencies[skill];
-		} else if (activeCharacter.proficiencies.indexOf(skill) !== -1) {
-			proficiency = 1;
-		}
+			var roll = '1d20';
+			if (pieces.length > 1 && pieces[1] == 'advantage') {
+				roll = '2d20kh1';
+			} else if (pieces.length > 1 && pieces[1] == 'disadvantage') {
+				roll = '2d20-L';
+			}
+			roll +=  '+' + scoreToModifier(activeCharacter[skills[skill]]);
+			var proficiency = 0;
+			if (activeCharacter.newProficiencies && activeCharacter.newProficiencies[skill]) {
+				proficiency = activeCharacter.newProficiencies[skill];
+			} else if (activeCharacter.proficiencies.indexOf(skill) !== -1) {
+				proficiency = 1;
+			}
 
-		if (proficiency) {
-			roll += '+' + (activeCharacter.proficiencyBonus * parseInt(proficiency));
+			if (proficiency) {
+				roll += '+' + (activeCharacter.proficiencyBonus * parseInt(proficiency));
+			}
+			
+			var dice = new Dice();
+			dice.execute(
+				roll,
+				(output) => {
+					var skillResult = output.output;
+					stateHolder.simpleAddMessage(stateHolder.channelID, skillResult);
+					return next();
+				}
+			);
 		}
-		
-		var dice = new Dice();
-		dice.execute(roll, function(output) {
-			var skillResult = output.output;
-			stateHolder.simpleAddMessage(stateHolder.channelID, skillResult);
-			return next();
-		});
-	});
+	);
 }
 
 ret.init = function(mongoose, handlers) {
@@ -192,7 +211,7 @@ function doListCharacters(pieces, stateHolder, next) {
 	};
 
 	ret.characterModel.find(parameters).exec(
-		function(err, res) {
+		(err, res) => {
 			if (err) {
 				stateHolder.simpleAddMessage(stateHolder.username, err);
 				return next();
@@ -237,9 +256,11 @@ function doSet(pieces, stateHolder, activeCharacter, next) {
 			}
 		}
 
-		activeCharacter.save(function(err) {
-			return next(err);
-		});
+		activeCharacter.save(
+			(err) => {
+				return next(err);
+			}
+		);
 		return;
 	}
 
@@ -263,10 +284,14 @@ function doSet(pieces, stateHolder, activeCharacter, next) {
 
 function doCurrent(pieces, stateHolder, next) {
 	if (pieces.length == 2) {
-		getActiveCharacter(stateHolder, next, function(activeCharacter) {
-			stateHolder.simpleAddMessage(stateHolder.username, activeCharacter.name);
-			return next();
-		});
+		getActiveCharacter(
+			stateHolder,
+			next,
+			(activeCharacter) => {
+				stateHolder.simpleAddMessage(stateHolder.username, activeCharacter.name);
+				return next();
+			}
+		);
 		return;
 	}
 
@@ -276,7 +301,7 @@ function doCurrent(pieces, stateHolder, next) {
 	};
 
 	ret.characterModel.find(parameters).exec(
-		function(err, res) {
+		(err, res) => {
 			if (err) {
 				stateHolder.simpleAddMessage(stateHolder.username, err);
 				return next();
@@ -292,10 +317,15 @@ function doCurrent(pieces, stateHolder, next) {
 				name: pieces[2]
 			};
 
-			getCharacterWrapper(stateHolder, parameters, next, function(res) {
-				res[0].isCurrent = true;
-				res[0].save();
-			});
+			getCharacterWrapper(
+				stateHolder,
+				parameters,
+				next,
+				(res) => {
+					res[0].isCurrent = true;
+					res[0].save();
+				}
+			);
 		}
 	);
 }
@@ -310,59 +340,68 @@ function doView(pieces, stateHolder, next) {
 		user: stateHolder.username
 	};
 
-	getCharacterWrapper(stateHolder, parameters, next, function(res) {
-		var character = res[0];
+	getCharacterWrapper(
+		stateHolder,
+		parameters,
+		next,
+		(res) => {
+			var character = res[0];
 
-		stateHolder.simpleAddMessage(stateHolder.username, "```Basic Stats```\n");
-		for (var i = 0; i < keys.length; i++) {
-			var key = keys[i];
+			stateHolder.simpleAddMessage(stateHolder.username, "```Basic Stats```\n");
+			for (var i = 0; i < keys.length; i++) {
+				var key = keys[i];
 
-			stateHolder.simpleAddMessage(stateHolder.username, "__" + key + "__ -- " + character[key] + "\n");
-		}
-
-		weapons.outputWeapons(stateHolder, character, function() {
-			stateHolder.simpleAddMessage(stateHolder.username, "\n```Skills```");
-			var skillKeys = Object.keys(skills).sort();
-			for (var i = 0; i < skillKeys.length; i++) {
-				if (i != 0) {
-					stateHolder.simpleAddMessage(stateHolder.username, "\n");
-				}
-				var skillValue = scoreToModifier(character[skills[skillKeys[i]]]);
-				if (character.proficiencies.indexOf(skillKeys[i]) !== -1) {
-					skillValue += character.proficiencyBonus;
-				} else if (character.newProficiencies && character.newProficiencies[skillKeys[i]]) {
-					skillValue += (character.proficiencyBonus * parseInt(character.newProficiencies[skillKeys[i]]));
-				}
-				stateHolder.squashAddMessage(stateHolder.username, "__" + skillKeys[i] + "__: " + skillValue);
+				stateHolder.simpleAddMessage(stateHolder.username, "__" + key + "__ -- " + character[key] + "\n");
 			}
 
-			stateHolder.simpleAddMessage(stateHolder.username, "\n\n```Proficiencies```");
-			if (character.proficiencies.length == 0 && (!character.newProficiencies || character.newProficiencies.length == 0)) {
-				stateHolder.simpleAddMessage(stateHolder.username, "\nSadly, none.");
-			} else {
-				var outputString = '';
-				for (var i = 0; i < character.proficiencies.length; i++) {
-					if (i != 0) outputString += ', ';
-					outputString += character.proficiencies[i] + '[1]';
-				}
-
-				var keys = [];
-				if (character.newProficiencies) {
-					keys = Object.keys(character.newProficiencies);
-				}
-				for (var i = 0; i < keys.length; i++) {
-					if (!(i == 0 && character.proficiencies.length == 0)) {
-						outputString += ', ';
+			weapons.outputWeapons(
+				stateHolder,
+				character,
+				() => {
+					stateHolder.simpleAddMessage(stateHolder.username, "\n```Skills```");
+					var skillKeys = Object.keys(skills).sort();
+					for (var i = 0; i < skillKeys.length; i++) {
+						if (i != 0) {
+							stateHolder.simpleAddMessage(stateHolder.username, "\n");
+						}
+						var skillValue = scoreToModifier(character[skills[skillKeys[i]]]);
+						if (character.proficiencies.indexOf(skillKeys[i]) !== -1) {
+							skillValue += character.proficiencyBonus;
+						} else if (character.newProficiencies && character.newProficiencies[skillKeys[i]]) {
+							skillValue += (character.proficiencyBonus * parseInt(character.newProficiencies[skillKeys[i]]));
+						}
+						stateHolder.squashAddMessage(stateHolder.username, "__" + skillKeys[i] + "__: " + skillValue);
 					}
-					outputString += keys[i] + '[' + character.newProficiencies[keys[i]] + ']';
+
+					stateHolder.simpleAddMessage(stateHolder.username, "\n\n```Proficiencies```");
+					if (character.proficiencies.length == 0 && (!character.newProficiencies || character.newProficiencies.length == 0)) {
+						stateHolder.simpleAddMessage(stateHolder.username, "\nSadly, none.");
+					} else {
+						var outputString = '';
+						for (var i = 0; i < character.proficiencies.length; i++) {
+							if (i != 0) outputString += ', ';
+							outputString += character.proficiencies[i] + '[1]';
+						}
+
+						var keys = [];
+						if (character.newProficiencies) {
+							keys = Object.keys(character.newProficiencies);
+						}
+						for (var i = 0; i < keys.length; i++) {
+							if (!(i == 0 && character.proficiencies.length == 0)) {
+								outputString += ', ';
+							}
+							outputString += keys[i] + '[' + character.newProficiencies[keys[i]] + ']';
+						}
+
+						stateHolder.squashAddMessage(stateHolder.username, outputString);
+					}
+
+					return next();
 				}
-
-				stateHolder.squashAddMessage(stateHolder.username, outputString);
-			}
-
-			return next();
-		});
-	});
+			);
+		}
+	);
 }
 
 function doProficiency(pieces, stateHolder, activeCharacter, next) {
@@ -381,9 +420,11 @@ function doProficiency(pieces, stateHolder, activeCharacter, next) {
 		}
 		delete activeCharacter.newProficiencies[pieces[2]];
 		activeCharacter.markModified('newProficiencies');
-		activeCharacter.save(function(err, postSave) {
-			return next(err);
-		});
+		activeCharacter.save(
+			(err, postSave) => {
+				return next(err);
+			}
+		);
 	} else if (pieces[3] == 'on' || pieces[3] == '1') {
 		var indexOf = activeCharacter.proficiencies.indexOf(pieces[2]);
 		if (indexOf != -1) {
@@ -391,9 +432,11 @@ function doProficiency(pieces, stateHolder, activeCharacter, next) {
 		}
 		activeCharacter.newProficiencies[pieces[2]] = 1;
 		activeCharacter.markModified('newProficiencies');
-		activeCharacter.save(function(err, postSave) {
-			return next(err);
-		});
+		activeCharacter.save(
+			(err, postSave) => {
+				return next(err);
+			}
+		);
 	} else if (pieces[3] == '2') {
 		var indexOf = activeCharacter.proficiencies.indexOf(pieces[2]);
 		if (indexOf != -1) {
@@ -401,9 +444,11 @@ function doProficiency(pieces, stateHolder, activeCharacter, next) {
 		}
 		activeCharacter.newProficiencies[pieces[2]] = 2;
 		activeCharacter.markModified('newProficiencies');
-		activeCharacter.save(function(err, postSave) {
-			return next(err);
-		});
+		activeCharacter.save(
+			(err, postSave) => {
+				return next(err);
+			}
+		);
 	}
 }
 
@@ -414,12 +459,19 @@ function doDelete(pieces, stateHolder, next) {
 		user: stateHolder.username
 	};
 
-	getCharacterWrapper(stateHolder, parameters, next, function(res) {
-		res[0].remove(function() {
-			stateHolder.simpleAddMessage(stateHolder.username, 'Deleted ' + characterName);
-			return next();
-		});
-	});
+	getCharacterWrapper(
+		stateHolder,
+		parameters,
+		next,
+		(res) => {
+			res[0].remove(
+				() => {
+					stateHolder.simpleAddMessage(stateHolder.username, 'Deleted ' + characterName);
+					return next();
+				}
+			);
+		}
+	);
 }
 
 function doCreate(pieces, stateHolder, next) {
@@ -434,7 +486,7 @@ function doCreate(pieces, stateHolder, next) {
 	};
 
 	ret.characterModel.find(parameters).exec(
-		function(err, res) {
+		(err, res) => {
 			if (err) {
 				stateHolder.simpleAddMessage(stateHolder.username, err);
 				return next();
@@ -445,15 +497,17 @@ function doCreate(pieces, stateHolder, next) {
 			}
 
 			var newCharacter = new ret.characterModel(parameters);
-			newCharacter.save(function(err) {
-				if (err) {
-					stateHolder.simpleAddMessage(stateHolder.username, err);
+			newCharacter.save(
+				(err) => {
+					if (err) {
+						stateHolder.simpleAddMessage(stateHolder.username, err);
+						return next();
+					}
+
+					stateHolder.simpleAddMessage(stateHolder.username, 'Created character.');
 					return next();
 				}
-
-				stateHolder.simpleAddMessage(stateHolder.username, 'Created character.');
-				return next();
-			});
+			);
 		}
 	);
 }
@@ -482,19 +536,23 @@ ret.handle = function(pieces, stateHolder, next) {
 		}
 	}
 
-	getActiveCharacter(stateHolder, next, function(activeCharacter) {
-		switch(command) {
-			case 'proficiency':
-				return doProficiency(pieces, stateHolder, activeCharacter, next);
-			case 'weapon':
-				return weapons.doWeapon(pieces, stateHolder, activeCharacter, next);
-			case 'set':
-				return doSet(pieces, stateHolder, activeCharacter, next);
-			default:
-				stateHolder.simpleAddMessage(stateHolder.username, 'No such character command: ' + pieces[1]);
-				return next();
+	getActiveCharacter(
+		stateHolder,
+		next,
+		(activeCharacter) => {
+			switch(command) {
+				case 'proficiency':
+					return doProficiency(pieces, stateHolder, activeCharacter, next);
+				case 'weapon':
+					return weapons.doWeapon(pieces, stateHolder, activeCharacter, next);
+				case 'set':
+					return doSet(pieces, stateHolder, activeCharacter, next);
+				default:
+					stateHolder.simpleAddMessage(stateHolder.username, 'No such character command: ' + pieces[1]);
+					return next();
+			}
 		}
-	});
+	);
 };
 
 module.exports = ret;

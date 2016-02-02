@@ -8,7 +8,13 @@ function work(codeHandler, state, cb) {
 	}
 
 	var leftNode = this.nodes[0];
-	leftNode.work(codeHandler, state, work2.bind(this, cb, codeHandler, state));
+	leftNode.work(
+		codeHandler,
+		state,
+		(error, value) => {
+			work2(cb, codeHandler, state, error, value);
+		}
+	);
 }
 
 function work2(cb, codeHandler, state, error, value) {
@@ -20,7 +26,13 @@ function work2(cb, codeHandler, state, error, value) {
 	}
 
 	var rightNode = this.nodes[1];
-	rightNode.work(codeHandler, state, work3.bind(this, cb, leftHandSide, state));
+	rightNode.work(
+		codeHandler,
+		state,
+		(error, value) => {
+			work3(cb, leftHandSide, state, error, value);
+		}
+	);
 }
 
 function work3(cb, leftHandSide, state, error, value) {

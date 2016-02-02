@@ -15,7 +15,9 @@ SemicolonNode.prototype.execute = function(parent, codeState, cb) {
 
 SemicolonNode.prototype.executeLeft = function(codeState, cb) {
 	this.codeHandler.handleTokenList(
-		this.executeRight.bind(this, codeState, cb),
+		(error, value) => {
+			this.executeRight(codeState, cb, error, value);
+		},
 		codeState,
 		null,
 		this.left
@@ -27,7 +29,9 @@ SemicolonNode.prototype.executeRight = function(codeState, cb, error, result) {
 
 	if (this.right.length) {
 		this.codeHandler.handleTokenList(
-			this.executionDone.bind(this, cb),
+			(error, value) => {
+				this.executionDone(cb, error, value)
+			},
 			codeState,
 			null,
 			this.right

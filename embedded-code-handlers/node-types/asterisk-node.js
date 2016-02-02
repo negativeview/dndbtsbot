@@ -11,7 +11,9 @@ util.inherits(AsteriskNode, SyntaxTreeNode);
 
 AsteriskNode.prototype.execute = function(parent, codeState, cb) {
 	this.codeHandler.handleTokenList(
-		this.leftDone.bind(this, cb, codeState),
+		(error, value) => {
+			this.leftDone(cb, codeState, error, value);
+		},
 		codeState,
 		null,
 		this.left
@@ -24,13 +26,17 @@ AsteriskNode.prototype.leftDone = function(cb, codeState, error, value) {
 	switch (value.type) {
 		case 'VARIABLE':
 			value.getScalarValue(
-				this.leftTwo.bind(this, cb, codeState)
+				(error, value) => {
+					this.leftTwo(cb, codeState, error, value);
+				}
 			);
 			return;
 		case 'BARE_STRING':
 			if (parseInt(value.stringValue)) {
 				this.codeHandler.handleTokenList(
-					this.rightDone.bind(this, cb, codeState, value.stringValue),
+					(error, value2) => {
+						this.rightDone(cb, codeState, value.stringValue, error, value2);
+					},
 					codeState,
 					null,
 					this.right
@@ -40,7 +46,9 @@ AsteriskNode.prototype.leftDone = function(cb, codeState, error, value) {
 			break;
 		case 'QUOTED_STRING':
 			this.codeHandler.handleTokenList(
-				this.rightDone.bind(this, cb, codeState, value.stringValue),
+				(error, value2) => {
+					this.rightDone(cb, codeState, value.stringValue, error, value2);
+				},
 				codeState,
 				null,
 				this.right
@@ -55,7 +63,9 @@ AsteriskNode.prototype.leftTwo = function (cb, codeState, err, val) {
 	if (err) return cb(err);
 
 	this.codeHandler.handleTokenList(
-		this.rightDone.bind(this, cb, codeState, val),
+		(error, rightNode) => {
+			this.rightDone(cb, codeState, val, error, rightNode);
+		},
 		codeState,
 		null,
 		this.right
@@ -82,7 +92,9 @@ AsteriskNode.prototype.rightDone = function(cb, codeState, leftValue, error, rig
 			return;
 		case 'VARIABLE':
 			rightNode.getScalarValue(
-				this.totalDone.bind(this, cb, codeState, leftValue)
+				(error, rightValue) => {
+					this.totalDone(cb, codeState, leftValue, error, rightValue)
+				}
 			);
 			return;
 	}

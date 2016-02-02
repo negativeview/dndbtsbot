@@ -290,7 +290,7 @@ module.exports = function(command, cb) {
 
 			removeWhitespace(
 				tokensWithQuotedStrings,
-				function(error, finalizedTokens) {
+				(error, finalizedTokens) => {
 					if (error) {
 						return cb(error);
 					}

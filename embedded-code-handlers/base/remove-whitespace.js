@@ -5,9 +5,11 @@
  */
 
 module.exports = function(command, callback) {
-	var res = command.filter(function(token) {
-		return (token.type != 'WHITESPACE');
-	});
+	var res = command.filter(
+		(token) => {
+			return (token.type != 'WHITESPACE');
+		}
+	);
 
 	return callback(null, res);
 }

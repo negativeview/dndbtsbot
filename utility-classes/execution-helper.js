@@ -45,29 +45,28 @@ ExecutionHelper.prototype.handle = function(message, cb) {
 };
 
 ExecutionHelper.prototype.handleParsedMessages = function(messages, cb) {
-	var m = this;
 	async.eachSeries(
 		messages,
-		function(statement, next) {
+		(statement, next) => {
 			var pieces = statement.split(" ");
 			var command = pieces[0];
 
-			var commandFound = m.handlers.findCommand(command);
+			var commandFound = this.handlers.findCommand(command);
 			if (commandFound) {
-				m.handlers.execute(
+				this.handlers.execute(
 					command,
 					pieces,
 					next
 				);
 			} else {
-				m.handlers.macro(
+				this.handlers.macro(
 					command,
 					pieces,
 					next
 				);
 			}
 		},
-		function(err) {
+		(err) => {
 			if (err) {
 				if (typeof(err) == 'string') {
 					throw new Error(err);

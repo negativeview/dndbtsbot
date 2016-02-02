@@ -452,13 +452,15 @@ ret.init = function(mongoose) {
 };
 
 function weaponFindWrap(parameters, stateHolder, earlyReturn, successReturn) {
-	ret.weaponStoreModel.find(parameters).exec(function(err, weapons) {
-		if (err) {
-			throw new Error(err);
-		}
+	ret.weaponStoreModel.find(parameters).exec(
+		(err, weapons) => {
+			if (err) {
+				throw new Error(err);
+			}
 
-		return successReturn(weapons);
-	});
+			return successReturn(weapons);
+		}
+	);
 }
 
 function add(pieces, stateHolder, serverID, next) {
@@ -482,45 +484,57 @@ function add(pieces, stateHolder, serverID, next) {
 		shortName: shortName
 	};
 
-	weaponFindWrap(parameters, stateHolder, next, function(weapons) {
-		if (weapons.length != 0) {
-			stateHolder.simpleAddMessage(stateHolder.username, 'Weapon `' + shortName + '` is already defined on this server.');
-			return next();
-		}
-
-		parameters.name = longName;
-		var newWeapon = new ret.weaponStoreModel(parameters);
-		newWeapon.save(function(err) {
-			if (err) {
-				stateHolder.simpleAddMessage(stateHolder.username, err);
+	weaponFindWrap(
+		parameters,
+		stateHolder,
+		next,
+		(weapons) => {
+			if (weapons.length != 0) {
+				stateHolder.simpleAddMessage(stateHolder.username, 'Weapon `' + shortName + '` is already defined on this server.');
 				return next();
 			}
 
-			stateHolder.simpleAddMessage(stateHolder.username, 'Weapon stored.');
-			return next();
-		});
-	});
+			parameters.name = longName;
+			var newWeapon = new ret.weaponStoreModel(parameters);
+			newWeapon.save(
+				(err) => {
+					if (err) {
+						stateHolder.simpleAddMessage(stateHolder.username, err);
+						return next();
+					}
+
+					stateHolder.simpleAddMessage(stateHolder.username, 'Weapon stored.');
+					return next();
+				}
+			);
+		}
+	);
 }
 
 function list(pieces, stateHolder, serverID, next) {
 	var parameters = { server: serverID };
-	weaponFindWrap(parameters, stateHolder, next, function(weapons) {
-		if (weapons.length == 0) {
-			stateHolder.simpleAddMessage(stateHolder.username, 'There are no weapons defined on this server.');
+	weaponFindWrap(
+		parameters,
+		stateHolder,
+		next,
+		(weapons) => {
+			if (weapons.length == 0) {
+				stateHolder.simpleAddMessage(stateHolder.username, 'There are no weapons defined on this server.');
+				return next();
+			}
+
+			var msg = '';
+
+			for (var i = 0; i < weapons.length; i++) {
+				msg += "\n";
+				msg += weapons[i].shortName + ' (' + weapons[i].complexity + ' ' + weapons[i].range + ')' + " - ";
+				msg += weapons[i].damageRoll + ' ' + weapons[i].damageType;
+			}
+
+			stateHolder.simpleAddMessage(stateHolder.username, msg);
 			return next();
 		}
-
-		var msg = '';
-
-		for (var i = 0; i < weapons.length; i++) {
-			msg += "\n";
-			msg += weapons[i].shortName + ' (' + weapons[i].complexity + ' ' + weapons[i].range + ')' + " - ";
-			msg += weapons[i].damageRoll + ' ' + weapons[i].damageType;
-		}
-
-		stateHolder.simpleAddMessage(stateHolder.username, msg);
-		return next();
-	});
+	);
 };
 
 function formatPrice(inputPrice) {
@@ -545,76 +559,89 @@ function view(pieces, stateHolder, serverID, next) {
 		shortName: shortName
 	};
 
-	weaponFindWrap(parameters, stateHolder, next, function(weapons) {
-		if (weapons.length == 0) {
-			stateHolder.simpleAddMessage(stateHolder.username, 'No such weapon.');
+	weaponFindWrap(
+		parameters,
+		stateHolder,
+		next,
+		(weapons) => {
+			if (weapons.length == 0) {
+				stateHolder.simpleAddMessage(stateHolder.username, 'No such weapon.');
+				return next();
+			}
+
+			var weapon = weapons[0];
+			var result  = "\n";
+			    result += weapon.name + ' (' + weapon.shortName + ')' + "\n";
+			    result += weapon.complexity + ' ' + weapon.range + "\n";
+			    result += weapon.damageRoll + ' ' + weapon.damageType + "\n";
+			    result += weapon.weight + 'lbs' + "\n";
+			    result += formatPrice(weapon.cost) + "\n";
+			    result += '[' + weapon.properties.join(', ') + ']' + "\n";
+
+			stateHolder.simpleAddMessage(stateHolder.username, result);
 			return next();
 		}
-
-		var weapon = weapons[0];
-		var result  = "\n";
-		    result += weapon.name + ' (' + weapon.shortName + ')' + "\n";
-		    result += weapon.complexity + ' ' + weapon.range + "\n";
-		    result += weapon.damageRoll + ' ' + weapon.damageType + "\n";
-		    result += weapon.weight + 'lbs' + "\n";
-		    result += formatPrice(weapon.cost) + "\n";
-		    result += '[' + weapon.properties.join(', ') + ']' + "\n";
-
-		stateHolder.simpleAddMessage(stateHolder.username, result);
-		return next();
-	});
+	);
 }
 
 function init(pieces, stateHolder, serverID, next) {
 	var parameters = {
 		server: serverID
 	};
-	weaponFindWrap(parameters, stateHolder, next, function(weapons) {
-		async.eachSeries(
-			bookWeapons,
-			function(bookWeapon, callback) {
-				var shortName = bookWeapon.shortName;
-				var found = false;
-				var existingWeapon;
 
-				for (var m = 0; m < weapons.length; m++) {
-					existingWeapon = weapons[m];
+	weaponFindWrap(
+		parameters,
+		stateHolder,
+		next,
+		(weapons) => {
+			async.eachSeries(
+				bookWeapons,
+				(bookWeapon, callback) => {
+					var shortName = bookWeapon.shortName;
+					var found = false;
+					var existingWeapon;
 
-					if (existingWeapon.shortName == bookWeapon.shortName) {
-						found = true;
+					for (var m = 0; m < weapons.length; m++) {
+						existingWeapon = weapons[m];
 
-						break;
-					}
-				}
+						if (existingWeapon.shortName == bookWeapon.shortName) {
+							found = true;
 
-				if (!found) {
-					var existingWeapon = new ret.weaponStoreModel();
-					existingWeapon.server = serverID;
-					existingWeapon.shortName = shortName;
-				}
-
-				existingWeapon.name = bookWeapon.name;
-				existingWeapon.complexity = bookWeapon.complexity;
-				existingWeapon.range = bookWeapon.range;
-				existingWeapon.cost = bookWeapon.cost;
-				existingWeapon.damageRoll = bookWeapon.damageRoll;
-				existingWeapon.damageType = bookWeapon.damageType;
-				existingWeapon.weight = bookWeapon.weight;
-				existingWeapon.properties = bookWeapon.properties;
-
-				existingWeapon.save(function(err) {
-					if (err) {
-						throw new Error(err);
+							break;
+						}
 					}
 
-					return callback();
-				});
-			},
-			function(err) {
-				return next();
-			}
-		);
-	});
+					if (!found) {
+						var existingWeapon = new ret.weaponStoreModel();
+						existingWeapon.server = serverID;
+						existingWeapon.shortName = shortName;
+					}
+
+					existingWeapon.name = bookWeapon.name;
+					existingWeapon.complexity = bookWeapon.complexity;
+					existingWeapon.range = bookWeapon.range;
+					existingWeapon.cost = bookWeapon.cost;
+					existingWeapon.damageRoll = bookWeapon.damageRoll;
+					existingWeapon.damageType = bookWeapon.damageType;
+					existingWeapon.weight = bookWeapon.weight;
+					existingWeapon.properties = bookWeapon.properties;
+
+					existingWeapon.save(
+						(err) => {
+							if (err) {
+								throw new Error(err);
+							}
+
+							return callback();
+						}
+					);
+				},
+				(err) => {
+					return next();
+				}
+			);
+		}
+	);
 }
 
 ret.handle = function(pieces, stateHolder, next) {

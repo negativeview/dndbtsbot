@@ -23,8 +23,10 @@ TimeBasedUpdates.prototype.update = function() {
 
 	async.eachSeries(
 		Object.keys(this.bot.servers),
-		this.updateSingleServer.bind(this),
-		function() { return; }
+		(serverID, cb) => {
+			this.updateSingleServer();
+		},
+		() => { return; }
 	);
 };
 
@@ -33,8 +35,10 @@ TimeBasedUpdates.prototype.updateSingleServer = function(serverID, cb) {
 
 	async.eachSeries(
 		channels,
-		this.updateSingleChannel.bind(this, serverID),
-		function() { return; }
+		(channelID, cb) => {
+			this.updateSingleChannel(serverID, channelID, cb);
+		},
+		() => { return; }
 	);
 };
 
@@ -47,7 +51,9 @@ TimeBasedUpdates.prototype.updateSingleChannel = function(serverID, channelID, c
 	};
 
 	model.find(params).exec(
-		this.updateSingleChannelBasedOnSettings.bind(this, cb, channelID, serverID)
+		(error, table) => {
+			this.updateSingleChannelBasedOnSettings(cb, channelID, serverID, error, table);
+		}
 	);
 };
 
@@ -63,7 +69,11 @@ TimeBasedUpdates.prototype.updateSingleChannelBasedOnSettings = function(cb, cha
 		table: settings.id
 	};
 
-	model.find(parameters).exec(this.updateSingleChannelBasedOnRows.bind(this, cb, channelID, serverID));
+	model.find(parameters).exec(
+		(error, rows) => {
+			this.updateSingleChannelBasedOnRows(cb, channelID, serverID, error, rows);
+		}
+	);
 };
 
 TimeBasedUpdates.prototype.updateSingleChannelBasedOnRows = function(cb, channelID, serverID, error, rows) {
@@ -106,7 +116,7 @@ TimeBasedUpdates.prototype.updateSingleChannelBasedOnRows = function(cb, channel
 		embeddedCodeHandler.executeString(
 			tableRebuild.title,
 			codeState,
-			function(error, res) {
+			(error, res) => {
 				if (error) {
 					throw new Error(error);
 				}

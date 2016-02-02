@@ -14,7 +14,9 @@ util.inherits(DotNode, SyntaxTreeNode);
 
 DotNode.prototype.execute = function(parent, codeState, cb) {
 	this.codeHandler.handleTokenList(
-		this.leftDone.bind(this, cb, codeState),
+		(error, result) => {
+			this.leftDone(cb, codeState, error, result)
+		},
 		codeState,
 		null,
 		this.left
@@ -41,7 +43,9 @@ DotNode.prototype.leftDone = function(cb, codeState, error, result) {
 
 	if (namespace) {
 		this.codeHandler.handleTokenList(
-			this.rightDone.bind(this, cb, namespace),
+			(error, result) => {
+				this.rightDone(cb, namespace, error, result);
+			},
 			codeState,
 			null,
 			this.right

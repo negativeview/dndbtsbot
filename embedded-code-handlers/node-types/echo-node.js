@@ -10,7 +10,9 @@ util.inherits(EchoNode, SyntaxTreeNode);
 
 EchoNode.prototype.execute = function(parent, codeState, cb) {
 	this.codeHandler.handleTokenList(
-		this.executeDone.bind(this, cb, codeState),
+		(error, result) => {
+			this.executeDone(cb, codeState, error, result);
+		},
 		codeState,
 		null,
 		this.sub
@@ -26,15 +28,16 @@ EchoNode.prototype.executeDone = function(cb, codeState, error, result) {
 			);
 			return cb();
 		case 'VARIABLE':
-			var m = this;
-			result.getScalarValue(function(error, value) {
-				if (error) return cb(error);
-				m.codeHandler.stateHolder.simpleAddMessage(
-					m.codeHandler.stateHolder.channelID, 
-					value
-				);
-				return cb();
-			});
+			result.getScalarValue(
+				(error, value) => {
+					if (error) return cb(error);
+					this.codeHandler.stateHolder.simpleAddMessage(
+						this.codeHandler.stateHolder.channelID, 
+						value
+					);
+					return cb();
+				}
+			);
 			return;
 		case 'BARE_STRING':
 			if (result.stringValue in codeState.variables) {

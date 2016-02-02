@@ -11,7 +11,9 @@ util.inherits(AssignmentNode, SyntaxTreeNode);
 
 AssignmentNode.prototype.execute = function(parent, codeState, cb) {
 	this.codeHandler.handleTokenList(
-		this.leftDone.bind(this, cb, codeState),
+		(error, result) => {
+			this.leftDone(cb, codeState, error, result);
+		},
 		codeState,
 		null,
 		this.left
@@ -22,7 +24,7 @@ AssignmentNode.prototype.leftDone = function(cb, codeState, error, result) {
 	this.codeHandler.handleTokenList(
 		(error, result2) => {
 			this.rightDone(cb, codeState, result, error, result2);
-		}
+		},
 		codeState,
 		null,
 		this.right

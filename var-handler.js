@@ -10,31 +10,40 @@ function varGetAll(pieces, stateHolder, next) {
 	var parameters = {};
 
 	var namespace = pieces[2];
-	setupVarParameters(parameters, namespace, stateHolder, function(err) {
-		ret.varModel.find(parameters).exec(function(err, res) {
-			if (err) {
-				throw new Error(err);
-			}
+	setupVarParameters(
+		parameters,
+		namespace,
+		stateHolder,
+		(err) => {
+			ret.varModel.find(parameters).exec(
+				(err, res) => {
+					if (err) {
+						throw new Error(err);
+					}
 
-			for (var i = 0; i < res.length; i++) {
-				if (i != 0)
-					stateHolder.simpleAddMessage(stateHolder.username, "\n");
-				stateHolder.simpleAddMessage(stateHolder.username, res[i].name + ': ' + res[i].value);
-			}
+					for (var i = 0; i < res.length; i++) {
+						if (i != 0)
+							stateHolder.simpleAddMessage(stateHolder.username, "\n");
+						stateHolder.simpleAddMessage(stateHolder.username, res[i].name + ': ' + res[i].value);
+					}
 
-			return next();
-		});
-	});
+					return next();
+				}
+			);
+		}
+	);
 }
 
 /**
  * TODO: `var get me` to list all variables.
  **/
 function varGet(pieces, stateHolder, next) {
-	pieces = pieces.filter(function(element, index, array) {
-		if (element) return true;
-		return false;
-	});
+	pieces = pieces.filter(
+		(element, index, array) => {
+			if (element) return true;
+			return false;
+		}
+	);
 
 	if (pieces.length == 3) {
 		return varGetAll(pieces, stateHolder, next);
@@ -56,24 +65,31 @@ function varGet(pieces, stateHolder, next) {
 		value += pieces[i];
 	}
 
-	setupVarParameters(parameters, namespace, stateHolder, function(err) {
-		if (err) {
-			throw new Error(err);
-		}
-
-		ret.varModel.find(parameters).exec(function(err, res) {
+	setupVarParameters(
+		parameters,
+		namespace,
+		stateHolder,
+		(err) => {
 			if (err) {
 				throw new Error(err);
 			}
 
-			if (res.length) {
-				stateHolder.simpleAddMessage(stateHolder.channelID, res[0].value);
-			} else {
-				stateHolder.simpleAddMessage(stateHolder.username, 'No such variable ' + parameters.name + '.');
-			}
-			next();
-		});
-	});
+			ret.varModel.find(parameters).exec(
+				(err, res) => {
+					if (err) {
+						throw new Error(err);
+					}
+
+					if (res.length) {
+						stateHolder.simpleAddMessage(stateHolder.channelID, res[0].value);
+					} else {
+						stateHolder.simpleAddMessage(stateHolder.username, 'No such variable ' + parameters.name + '.');
+					}
+					next();
+				}
+			);
+		}
+	);
 }
 
 function varDel(pieces, stateHolder, next) {
@@ -87,21 +103,28 @@ function varDel(pieces, stateHolder, next) {
 
 	var namespace = pieces[2];
 
-	setupVarParameters(parameters, namespace, stateHolder, function(err) {
-		if (err) {
-			throw new Error(err);
-		}
-
-		ret.varModel.find(parameters).exec(function(err, res) {
+	setupVarParameters(
+		parameters,
+		namespace,
+		stateHolder,
+		(err) => {
 			if (err) {
 				throw new Error(err);
 			}
 
-			for (var i = 0; i < res.length; i++) {
-				res[i].remove();
-			}
-		});
-	});
+			ret.varModel.find(parameters).exec(
+				(err, res) => {
+					if (err) {
+						throw new Error(err);
+					}
+
+					for (var i = 0; i < res.length; i++) {
+						res[i].remove();
+					}
+				}
+			);
+		}
+	);
 }
 
 function setupVarParameters(parameters, namespace, stateHolder, next) {
@@ -117,16 +140,18 @@ function setupVarParameters(parameters, namespace, stateHolder, next) {
 			user: stateHolder.username,
 			isCurrent: true
 		};
-		characterModel.find(p2).exec(function(err, res) {
-			if (err) return next(err);
+		characterModel.find(p2).exec(
+			(err, res) => {
+				if (err) return next(err);
 
-			if (res.length == 0) {
-				return next('No current character.');
+				if (res.length == 0) {
+					return next('No current character.');
+				}
+
+				parameters.character = res[0].id;
+				return next();
 			}
-
-			parameters.character = res[0].id;
-			return next();
-		});
+		);
 	}
 }
 
@@ -145,33 +170,42 @@ function varSet(pieces, stateHolder, next) {
 	}
 	parameters.name = pieces[3];
 
-	setupVarParameters(parameters, namespace, stateHolder, function(err) {
-		if (err) {
-			throw new Error(err);
-		}
-
-		ret.varModel.find(parameters).exec(function(err, res) {
+	setupVarParameters(
+		parameters,
+		namespace,
+		stateHolder,
+		(err) => {
 			if (err) {
 				throw new Error(err);
 			}
 
-			for (var i = 0; i < res.length; i++) {
-				res[i].remove();
-			}
+			ret.varModel.find(parameters).exec(
+				(err, res) => {
+					if (err) {
+						throw new Error(err);
+					}
 
-			parameters.value = value;
+					for (var i = 0; i < res.length; i++) {
+						res[i].remove();
+					}
 
-			var newVar = new ret.varModel(parameters);
-			newVar.save(function(err) {
-				if (err) {
-					throw new Error(err);
+					parameters.value = value;
+
+					var newVar = new ret.varModel(parameters);
+					newVar.save(
+						(err) => {
+							if (err) {
+								throw new Error(err);
+							}
+
+							stateHolder.simpleAddMessage(stateHolder.username, 'Saved var ' + parameters.name);
+							next();
+						}
+					);
 				}
-
-				stateHolder.simpleAddMessage(stateHolder.username, 'Saved var ' + parameters.name);
-				next();
-			});
-		});
-	});
+			);
+		}
+	);
 }
 
 ret.handle = function(pieces, stateHolder, next) {

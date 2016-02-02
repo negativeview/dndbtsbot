@@ -14,25 +14,27 @@ Namespace.prototype.canEdit = function(cb) {
 };
 
 Namespace.prototype.getTable = function(tableName, cb) {
-	var m = this;
-
 	this.parameters.name = tableName;
-	this.tableModel.find(this.parameters).exec(function(err, res) {
-		if (err) return cb(err);
-		if (res.length == 0) return cb('No such table: ' + tableName);
-
-		var id = res[0].id;
-
-		var parameters = {
-			table: id
-		};
-
-		m.tableRowModel.find(parameters).exec(function(err, res) {
+	this.tableModel.find(this.parameters).exec(
+		(err, res) => {
 			if (err) return cb(err);
+			if (res.length == 0) return cb('No such table: ' + tableName);
 
-			return cb(null, res);
-		});
-	});
+			var id = res[0].id;
+
+			var parameters = {
+				table: id
+			};
+
+			this.tableRowModel.find(parameters).exec(
+				(err, res) => {
+					if (err) return cb(err);
+
+					return cb(null, res);
+				}
+			);
+		}
+	);
 };
 
 Namespace.prototype.getScalarValue = function(key, cb) {
@@ -41,101 +43,114 @@ Namespace.prototype.getScalarValue = function(key, cb) {
 		if (err) throw new Error(err);
 		if (res.length == 0) return cb('');
 
-		return cb(res[0].value);
+		return cb(null, res[0].value);
 	});
 }
 
 Namespace.prototype.setScalarValue = function(key, value, cb) {
-	var m = this;
-
-	this.canEdit(function(err, canEdit) {
-		if (err) return cb(err);
-		if (!canEdit) return cb('Cannot edit');
-
-		m.parameters.name = key;
-		m.scalarModel.find(m.parameters).exec(function(err, res) {
+	this.canEdit(
+		(err, canEdit) => {
 			if (err) return cb(err);
+			if (!canEdit) return cb('Cannot edit');
 
-			async.eachSeries(
-				res,
-				function(index, next) {
-					index.remove(next);
-				},
-				function(err) {
+			this.parameters.name = key;
+			this.scalarModel.find(this.parameters).exec(
+				function(err, res) {
 					if (err) return cb(err);
 
-					m.parameters.value = value;
+					async.eachSeries(
+						res,
+						function(index, next) {
+							index.remove(next);
+						},
+						function(err) {
+							if (err) return cb(err);
 
-					var scalar = new m.scalarModel(m.parameters);
-					return scalar.save(cb);
+							this.parameters.value = value;
+
+							var scalar = new this.scalarModel(this.parameters);
+							return scalar.save(cb);
+						}
+					)
 				}
-			)
-		});
-	});
+			);
+		}
+	);
 };
 
 Namespace.prototype.getTableRow = function(tableName, key, cb) {
-	var m = this;
-
-	this.canEdit(function(err, canEdit) {
-		if (err) return cb(err);
-		if (!canEdit) return cb('Cannot edit');
-
-		m.parameters.name = tableName;
-
-		m.tableModel.find(m.parameters).exec(function(err, res) {
+	this.canEdit(
+		(err, canEdit) => {
 			if (err) return cb(err);
+			if (!canEdit) return cb('Cannot edit');
 
-			if (res.length == 0) {
-				return cb('No such table: ' + tableName);
-			}
+			this.parameters.name = tableName;
 
-			var table = res[0].id;
+			this.tableModel.find(this.parameters).exec(
+				(err, res) => {
+					if (err) return cb(err);
 
-			var parameters = {
-				table: table,
-				key: key
-			};
+					if (res.length == 0) {
+						return cb('No such table: ' + tableName);
+					}
 
-			m.tableRowModel.find(parameters).exec(function(err, res) {
-				if (err) return cb(err);
+					var table = res[0].id;
 
-				return cb(null, table, res);
-			});
-		});
-	});
+					var parameters = {
+						table: table,
+						key: key
+					};
+
+					this.tableRowModel.find(parameters).exec(
+						(err, res) => {
+							if (err) return cb(err);
+
+							return cb(null, table, res);
+						}
+					);
+				}
+			);
+		}
+	);
 };
 
 Namespace.prototype.setTableValue = function(tableName, key, value, cb) {
-	var m = this;
-	this.getTableRow(tableName, key, function(error, table, res) {
-		if (error) return cb(error);
+	this.getTableRow(
+		tableName,
+		key,
+		(error, table, res) => {
+			if (error) return cb(error);
 
-		async.eachSeries(
-			res,
-			function(index, next) {
-				index.remove(next);
-			},
-			function(err) {
-				if (err) return cb(err);
-				var parameters = {
-					table: table,
-					key: key,
-					value: value
-				};
-				var tableRow = new m.tableRowModel(parameters);
-				return tableRow.save(cb);
-			}
-		);
-	});
+			async.eachSeries(
+				res,
+				(index, next) => {
+					index.remove(next);
+				},
+				(err) => {
+					if (err) return cb(err);
+					var parameters = {
+						table: table,
+						key: key,
+						value: value
+					};
+					var tableRow = new this.tableRowModel(parameters);
+					return tableRow.save(cb);
+				}
+			);
+		}
+	);
 };
 
 Namespace.prototype.getTableValueByKey = function(tableName, key, cb) {
-	this.getTableRow(tableName, key, function(error, table, res) {
-		if (error) return cb(error);
-		if (res.length == 0) return cb(null, '');
-		return cb(null, res[0].value);
-	});
+	this.getTableRow(
+		tableName,
+		key,
+		(error, table, res) => {
+			if (error) return cb(error);
+			if (res.length == 0) return cb(null, '');
+			return cb(null, res[0].value);
+		}
+	);
 };
 
 module.exports = Namespace;
