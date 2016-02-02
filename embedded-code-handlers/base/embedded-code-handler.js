@@ -215,7 +215,7 @@ EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeS
 };
 
 EmbeddedCodeHandler.prototype.handleTopToken = function(codeState, tokens, cb, index, pattern) {
-	console.log('Found pattern ' + pattern.name);
+	//console.log('Found pattern ' + pattern.name);
 	pattern.process(this, tokens, codeState, index, cb);
 };
 

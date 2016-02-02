@@ -28,17 +28,7 @@ CurlyBracesNode.prototype.foreachAsync = function(codeState, index, cb) {
 
 	this.codeHandler.handleTokenList(
 		(error, result) => {
-			this.insideDone(
-				// foreachAsync thinks that all things passed to cb() means that there's an 
-				// error. handleTokenList always passes something, even when there's no error,
-				// so let's swallow our pride here and wrap it before we tap it.
-				(error, ifNode) => {
-					return cb();
-				},
-				codeState,
-				error,
-				result
-			);
+			return cb();
 		},
 		codeState,
 		null,
@@ -48,6 +38,8 @@ CurlyBracesNode.prototype.foreachAsync = function(codeState, index, cb) {
 
 CurlyBracesNode.prototype.leftDone = function(cb, codeState, error, result) {
 	if (error) return cb(error);
+
+	console.log('leftDone', result.type);
 
 	if (result) {
 		switch (result.type) {
@@ -83,7 +75,7 @@ CurlyBracesNode.prototype.leftDone = function(cb, codeState, error, result) {
 				return;
 			case 'FOREACH':
 				if (result.loopValue) {
-					//console.log('Foreach with loop value:', this.left, this.inside, this.right);
+					//console.log('Foreach with loop value:', result.loopValue);
 					//throw new Error('bomb');
 					result.loopValue.getTable(
 						(error, table) => {

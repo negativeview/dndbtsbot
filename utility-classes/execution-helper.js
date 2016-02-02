@@ -21,8 +21,8 @@ ExecutionHelper.prototype.handle = function(message, cb) {
 			for (var m = i + 1; m < splitMessages.length; m++) {
 				message += "\n" + splitMessages[m];
 			}
-			console.log('here:', message);
-			messages[messages.length] = message.replace(/\n/g, '');
+			//console.log('here:', message);
+			messages[messages.length] = message.replace(/\n/, '');
 			message = '';
 			break;			
 		}

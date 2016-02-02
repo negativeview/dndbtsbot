@@ -21,7 +21,6 @@ module.exports = {
 
 				var ret = a && b;
 
-				console.log(a, '&&', b, ret);
 				return ret;
 			}
 		);

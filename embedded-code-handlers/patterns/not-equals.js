@@ -18,8 +18,6 @@ module.exports = {
 			'!=',
 			function(a, b) {
 				var ret = a != b;
-
-				console.log(a, ' != ', b, ret);
 				return ret;
 			}
 		);
