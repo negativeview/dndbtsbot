@@ -31,6 +31,16 @@ PlusNode.prototype.leftDone = function(cb, codeState, error, value) {
 				}
 			);
 			return;
+		case 'ROLL_RESULT':
+			this.codeHandler.handleTokenList(
+				(error, rightNode) => {
+					this.rightDone(cb, codeState, value.output, error, rightNode);
+				},
+				codeState,
+				null,
+				this.right
+			);
+			return;
 		case 'BARE_STRING':
 			if (parseInt(value.stringValue)) {
 				this.codeHandler.handleTokenList(
@@ -98,6 +108,9 @@ PlusNode.prototype.rightDone = function(cb, codeState, leftValue, error, rightNo
 	if (error) return cb(error);
 
 	switch (rightNode.type) {
+		case 'ROLL_RESULT':
+			this.totalDone(cb, codeState, leftValue, null, rightNode.output);
+			return;
 		case 'BARE_STRING':
 			if (parseInt(rightNode.stringValue) != NaN) {
 				this.totalDone(cb, codeState, leftValue, null, rightNode.stringValue);
