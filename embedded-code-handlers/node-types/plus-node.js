@@ -54,14 +54,18 @@ PlusNode.prototype.leftDone = function(cb, codeState, error, value) {
 				return;				
 			} else {
 				if (value.stringValue in codeState.variables) {
-					this.codeHandler.handleTokenList(
-						(error, rightNode) => {
-							this.rightDone(cb, codeState, codeState.variables[value.stringValue], error, rightNode);
-						},
-						codeState,
-						null,
-						this.right
-					);
+					if (typeof(toEcho) == 'string') {
+						this.codeHandler.handleTokenList(
+							(error, rightNode) => {
+								this.rightDone(cb, codeState, codeState.variables[value.stringValue], error, rightNode);
+							},
+							codeState,
+							null,
+							this.right
+						);
+					} else {
+						return this.leftDone(cb, codeState, error, codeState.variables[result.stringValue]);
+					}
 				} else {
 					this.codeHandler.handleTokenList(
 						(error, rightNode) => {
@@ -117,8 +121,12 @@ PlusNode.prototype.rightDone = function(cb, codeState, leftValue, error, rightNo
 				return;				
 			} else {
 				if (rightNode.stringValue in codeState.variables) {
-					this.totalDone(cb, codeState, leftValue, null, codeState.variables[rightNode.stringValue]);
-					return;
+					if (typeof(toEcho) == 'string') {
+						this.totalDone(cb, codeState, leftValue, null, codeState.variables[rightNode.stringValue]);
+						return;
+					} else {
+						return this.rightDdone(cb, codeState, leftValue, error, codeState.variables[rightNode.stringValue]);
+					}
 				}
 			}
 			break;
