@@ -6,6 +6,8 @@ var handlers         = require('./handler-registry.js');
 var stateHolderClass = require('./state-holder.js');
 var messageQueue     = require('./message-queue.js');
 
+var bot = bot.bot;
+
 /**
  * Highest-level validation that we even want to process this message further.
  * If we do, it passes the message to globalHandlerMiddle.
