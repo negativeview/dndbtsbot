@@ -28,6 +28,8 @@ EchoNode.prototype.execute = function(parent, codeState, cb) {
 };
 
 EchoNode.prototype.executeDone = function(cb, codeState, error, result) {
+	if (error) return cb(error);
+	
 	switch (result.type) {
 		case 'ROLL_RESULT':
 			this.codeHandler.stateHolder.simpleAddMessage(

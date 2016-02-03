@@ -58,7 +58,7 @@ function onBotReady() {
 	messageQueue = new MessageQueue();
 	timeBasedUpdates = new TimeBasedUpdates(bot, mongoose, messageQueue);
 
-	var currentRelease = 'Boogie Woogie';
+	var currentRelease = 'Blues';
 
 	console.log(bot.username + " - (" + bot.id + ")");
 	bot.setPresence({game: currentRelease});

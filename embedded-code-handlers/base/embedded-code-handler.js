@@ -38,7 +38,8 @@ var patterns = [
 		patterns.plus
 	],
 	[
-		patterns.asterisk
+		patterns.asterisk,
+		patterns.divide
 	],
 	[
 		patterns.squareBrackets,	// before dot
@@ -196,22 +197,26 @@ EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeS
 		codeState.programNode = stn;
 	}
 
-	this.findPattern(
-		(index, pattern) => {
-			this.handleTopToken(
-				codeState,
-				tokens,
-				function(error, newNode) {
-					if (error) return externalCallback(error);
-					newNode.execute(parentElement ? parentElement : stn, codeState, externalCallback);
-				},
-				index,
-				pattern
-			);
-		},
-		tokens,
-		externalCallback
-	);
+	try {
+		this.findPattern(
+			(index, pattern) => {
+				this.handleTopToken(
+					codeState,
+					tokens,
+					function(error, newNode) {
+						if (error) return externalCallback(error);
+						newNode.execute(parentElement ? parentElement : stn, codeState, externalCallback);
+					},
+					index,
+					pattern
+				);
+			},
+			tokens,
+			externalCallback
+		);
+	} catch (e) {
+		return externalCallback(e);
+	}
 };
 
 EmbeddedCodeHandler.prototype.handleTopToken = function(codeState, tokens, cb, index, pattern) {
@@ -274,7 +279,7 @@ EmbeddedCodeHandler.prototype.findPattern = function(foundCallback, tokenArray, 
 		}
 	}
 
-	throw new Error('No pattern found for ' + tokenArray.map(function(a) { return a.type; }).join(', '));
+	throw new Error('No pattern found for ' + tokenArray.map(function(a) { return a.stringValue; }).join(', '));
 };
 
 EmbeddedCodeHandler.prototype.debug = function(pieces, next) {
