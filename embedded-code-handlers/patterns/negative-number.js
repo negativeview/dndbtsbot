@@ -6,7 +6,7 @@ module.exports = {
 	matches: function(command) {
 		if (command.length != 2) return false;
 		if (command[0].type != 'MINUS') return false;
-		if (command[1].type != 'STRING') return false;
+		if (command[1].type != 'BARE_STRING') return false;
 		return true;
 	},
 	process: function(codeHandler, tokens, state, index, cb) {

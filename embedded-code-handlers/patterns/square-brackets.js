@@ -40,7 +40,7 @@ function work3(cb, leftHandSide, state, error, value) {
 
 	if (leftHandSide.type == 'VARIABLE') {
 		// NOTE: This works for numbers, but won't work for variables. :()
-		if (rightHandSide.type == 'STRING') {
+		if (rightHandSide.type == 'BARE_STRING') {
 			var varNameOrNumber = rightHandSide.strRep;
 
 			if (state.variables[varNameOrNumber])

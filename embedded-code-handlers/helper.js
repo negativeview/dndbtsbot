@@ -62,7 +62,7 @@ function work2(cb, codeHandler, state, error, value) {
 				work3(cb, codeHandler, state, value);
 			}
 		);
-	} else if (leftHandSide.type == 'STRING') {
+	} else if (leftHandSide.type == 'BARE_STRING') {
 		if (state.variables[leftHandSide.strRep]) {
 			work3(cb, codeHandler, state, state.variables[leftHandSide.strRep]);
 		} else {
@@ -93,7 +93,7 @@ function work4(cb, leftHandSide, codeHandler, state, error, value) {
 				cb(codeHandler, state, leftHandSide, result);
 			}
 		);
-	} else if (rightHandSide.type == 'STRING') {
+	} else if (rightHandSide.type == 'BARE_STRING') {
 		if (state.variables[rightHandSide.strRep]) {
 			cb(codeHandler, state, leftHandSide, state.variables[rightHandSide.strRep]);
 		} else {

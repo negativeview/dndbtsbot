@@ -63,7 +63,7 @@ DotNode.prototype.leftDone = function(cb, codeState, error, result) {
 								var stringNode = new StringNode(this.codeHandler, result[result2.stringValue]);
 								return cb(null, stringNode);
 							} else {
-								console.log(result2, result);
+								console.log('dot node', result2, result);
 							}
 							break;
 						default:

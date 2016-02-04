@@ -21,6 +21,8 @@ AssignmentNode.prototype.execute = function(parent, codeState, cb) {
 };
 
 AssignmentNode.prototype.leftDone = function(cb, codeState, error, result) {
+	if (error) return cb(error);
+
 	this.codeHandler.handleTokenList(
 		(error, result2) => {
 			this.rightDone(cb, codeState, result, error, result2);
@@ -32,16 +34,29 @@ AssignmentNode.prototype.leftDone = function(cb, codeState, error, result) {
 };
 
 AssignmentNode.prototype.rightDone = function(cb, codeState, variable, error, result) {
+	if (error) return cb(error);
+	
 	switch (variable.type) {
 		case 'BARE_STRING':
 			switch (result.type) {
 				case 'QUOTED_STRING':
 					codeState.variables[variable.stringValue] = result.stringValue;
 					return cb(null, result);
-					break;
 				case 'ROLL_RESULT':
 					codeState.variables[variable.stringValue] = result;
 					return cb(null, result);
+				case 'BARE_STRING':
+					if (!isNaN(parseInt(result.stringValue))) {
+						codeState.variables[variable.stringValue] = result.stringValue;
+						return cb(null, result);
+					} else {
+						if (result.stringValue in codeState.variables) {
+							codeState.variables[variable.stringValue] = codeState.variables[result.stringValue];
+							return cb(null, result);
+						} else {
+							throw new Error(result.stringValue + ' is not previously a variable');
+						}
+					}
 				default:
 					throw new Error(result.type);
 					break;

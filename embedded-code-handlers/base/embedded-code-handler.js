@@ -150,10 +150,14 @@ EmbeddedCodeHandler.prototype.handle = function(pieces, stateHolder, externalCal
  *****/
 EmbeddedCodeHandler.prototype.executeString = function(command, codeState, externalCallback) {
 	// Run the tokenizer and pass the result of that to further steps.
-	tokenizer(
-		command,
-		(error, tokens, parentElement) => {
-			this.handleTokenList(externalCallback, codeState, error, tokens, parentElement);
+	process.nextTick(
+		() => {
+			tokenizer(
+				command,
+				(error, tokens, parentElement) => {
+					this.handleTokenList(externalCallback, codeState, error, tokens, parentElement);
+				}
+			);
 		}
 	);
 };
@@ -215,12 +219,12 @@ EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeS
 			externalCallback
 		);
 	} catch (e) {
-		return externalCallback(e);
+		return externalCallback(e.stack);
 	}
 };
 
 EmbeddedCodeHandler.prototype.handleTopToken = function(codeState, tokens, cb, index, pattern) {
-	console.log('Found pattern ' + pattern.name);
+	//console.log('Found pattern ' + pattern.name);
 	pattern.process(this, tokens, codeState, index, cb);
 };
 

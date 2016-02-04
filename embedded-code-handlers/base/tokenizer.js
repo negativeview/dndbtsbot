@@ -265,7 +265,7 @@ module.exports = function(command, cb) {
 		tokens.push({
 			rawValue: lexeme,
 			stringValue: lexeme,
-			type: 'STRING',
+			type: 'BARE_STRING',
 			value: lexeme
 		});
 	});
@@ -273,7 +273,7 @@ module.exports = function(command, cb) {
 		tokens.push({
 			rawValue: lexeme,
 			stringValue: lexeme,
-			type: 'STRING'
+			type: 'BARE_STRING'
 		});
 	});
 

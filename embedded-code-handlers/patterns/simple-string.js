@@ -17,7 +17,7 @@ module.exports = {
 	matches: function(command) {
 		if (command.length != 1) return false;
 		if (command[0].type == 'QUOTED_STRING') return 0;
-		if (command[0].type == 'STRING') return 0;
+		if (command[0].type == 'BARE_STRING') return 0;
 		return false;
 	},
 	process: function(codeHandler, tokens, state, index, cb) {

@@ -114,12 +114,14 @@ ParenthesisNode.prototype.executeForTable = function(cb, tableNode, error, node)
 };
 
 ParenthesisNode.prototype.executeForRoll = function(cb, rollNode, error, node) {
+	if (error) return cb(error);
+	
 	switch (node.type) {
 		case 'QUOTED_STRING':
 			rollNode.executeString(node.stringValue, cb);
 			break;
 		default:
-			console.log(node);
+			console.log('node??', node);
 			throw new Error('Node!');
 	}
 };

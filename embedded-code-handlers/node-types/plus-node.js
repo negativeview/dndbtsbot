@@ -54,6 +54,7 @@ PlusNode.prototype.leftDone = function(cb, codeState, error, value) {
 				return;				
 			} else {
 				if (value.stringValue in codeState.variables) {
+					var toEcho = codeState.variables[value.stringValue];
 					if (typeof(toEcho) == 'string') {
 						this.codeHandler.handleTokenList(
 							(error, rightNode) => {
@@ -64,7 +65,7 @@ PlusNode.prototype.leftDone = function(cb, codeState, error, value) {
 							this.right
 						);
 					} else {
-						return this.leftDone(cb, codeState, error, codeState.variables[result.stringValue]);
+						return this.leftDone(cb, codeState, error, codeState.variables[value.stringValue]);
 					}
 				} else {
 					this.codeHandler.handleTokenList(
@@ -91,7 +92,7 @@ PlusNode.prototype.leftDone = function(cb, codeState, error, value) {
 			return;
 	}
 
-	console.log(value);
+	console.log('value', value);
 	throw new Error(value);
 };
 
@@ -116,16 +117,17 @@ PlusNode.prototype.rightDone = function(cb, codeState, leftValue, error, rightNo
 			this.totalDone(cb, codeState, leftValue, null, rightNode.output);
 			return;
 		case 'BARE_STRING':
-			if (parseInt(rightNode.stringValue) != NaN) {
+			if (!isNaN(parseInt(rightNode.stringValue))) {
 				this.totalDone(cb, codeState, leftValue, null, rightNode.stringValue);
 				return;				
 			} else {
 				if (rightNode.stringValue in codeState.variables) {
-					if (typeof(toEcho) == 'string') {
+					var toEcho = codeState.variables[rightNode.stringValue];
+					if (typeof(toEcho) == 'string' || typeof(toEcho) == 'number') {
 						this.totalDone(cb, codeState, leftValue, null, codeState.variables[rightNode.stringValue]);
 						return;
 					} else {
-						return this.rightDdone(cb, codeState, leftValue, error, codeState.variables[rightNode.stringValue]);
+						return this.rightDone(cb, codeState, leftValue, error, codeState.variables[rightNode.stringValue]);
 					}
 				}
 			}
@@ -140,14 +142,20 @@ PlusNode.prototype.rightDone = function(cb, codeState, leftValue, error, rightNo
 				}
 			);
 			return;
+		default:
+			console.log('rightNode broken', rightNode);
 	}
-	console.log(rightNode);
+	console.log('rightNode', rightNode);
 	throw new Error('GOT HERE');
 };
 
 PlusNode.prototype.totalDone = function(cb, codeState, leftValue, error, rightValue) {
-	if (leftValue.match(/^[\-\+]?[0-9]+$/)) {
-		if (rightValue.match(/^[\-\+]?[0-9]+$/)) {
+	if (error) return cb(error);
+
+	//if (!leftValue.match) { console.log(leftValue, typeof(leftValue)); throw new Error('Got here'); }
+
+	if (typeof(leftValue) == 'number' || leftValue.match(/^[\-\+]?[0-9]+$/)) {
+		if (typeof(rightValue) == 'number' || rightValue.match(/^[\-\+]?[0-9]+$/)) {
 			var retNode = new SyntaxTreeNode(codeState.programNode.codeHandler);
 			retNode.type = 'QUOTED_STRING';
 			retNode.stringValue = parseInt(leftValue) + parseInt(rightValue);

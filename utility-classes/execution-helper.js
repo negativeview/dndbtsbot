@@ -39,7 +39,7 @@ ExecutionHelper.prototype.handle = function(message, cb) {
 		messages[messages.length] = message.replace("\n", '');
 	}
 
-	console.log(messages);
+	console.log('messages', messages);
 
 	this.handleParsedMessages(messages, cb);
 };

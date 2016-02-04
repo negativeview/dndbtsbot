@@ -62,7 +62,7 @@ function work3(cb, codeHandler, leftHandSide, state, error, value) {
 			}
 			return cb();
 		});
-	} else if (leftHandSide.type == 'STRING') {
+	} else if (leftHandSide.type == 'BARE_STRING') {
 		state.variables[leftHandSide.strRep] = rightHandSide;
 		return cb();
 	} else {

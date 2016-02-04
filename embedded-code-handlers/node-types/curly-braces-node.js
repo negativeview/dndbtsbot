@@ -39,8 +39,6 @@ CurlyBracesNode.prototype.foreachAsync = function(codeState, index, cb) {
 CurlyBracesNode.prototype.leftDone = function(cb, codeState, error, result) {
 	if (error) return cb(error);
 
-	console.log('leftDone', result.type);
-
 	if (result) {
 		switch (result.type) {
 			case 'IF':
