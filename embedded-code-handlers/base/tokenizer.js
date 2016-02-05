@@ -213,7 +213,7 @@ module.exports = function(command, cb) {
 			value: lexeme
 		});
 	});
-	lex.addRule(/[^ '"\[\]\.\(\)\t\n;]+/gm, function(lexeme) {
+	lex.addRule(/[^ '"\[\]\.\(\)\t\n\{\};]+/gm, function(lexeme) {
 		switch (lexeme) {
 			case 'roll':
 				tokens.push({
