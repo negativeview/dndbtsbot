@@ -13,7 +13,9 @@ util.inherits(SquareBracketNode, SyntaxTreeNode);
 SquareBracketNode.prototype.execute = function(parent, codeState, cb) {
 	this.codeHandler.handleTokenList(
 		(error, result) => {
-			this.leftDone(cb, codeState, error, result);
+			if (error) return cb(error);
+
+			this.leftDone(cb, codeState, null, result);
 		},
 		codeState,
 		null,

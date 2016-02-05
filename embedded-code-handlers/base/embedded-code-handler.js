@@ -156,7 +156,15 @@ EmbeddedCodeHandler.prototype.executeString = function(command, codeState, exter
 			tokenizer(
 				command,
 				(error, tokens, parentElement) => {
-					this.handleTokenList(externalCallback, codeState, error, tokens, parentElement);
+					if (error) return externalCallback(error);
+
+					process.nextTick(() => {
+//						try {
+							this.handleTokenList(externalCallback, codeState, null, tokens, parentElement);
+//						} catch (e) {
+//							return externalCallback(e);
+//						}
+					});
 				}
 			);
 		}
@@ -205,17 +213,26 @@ EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeS
 
 	this.findPattern(
 		(index, pattern) => {
-			this.handleTopToken(
-				codeState,
-				tokens,
-				function(error, newNode) {
-					if (error) return externalCallback(error);
-					console.log('Executing ' + newNode.type);
-					newNode.execute(parentElement ? parentElement : stn, codeState, externalCallback);
-				},
-				index,
-				pattern
-			);
+			process.nextTick(() => {
+				this.handleTopToken(
+					codeState,
+					tokens,
+					function(error, newNode) {
+						if (error) return externalCallback(error);
+						process.nextTick(() => {
+							console.log('Executing ' + newNode.type);
+							try {
+								newNode.execute(parentElement ? parentElement : stn, codeState, externalCallback);
+							} catch (e) {
+								console.log('error', e.stack);
+								return externalCallback(e.stack);
+							}
+						});
+					},
+					index,
+					pattern
+				);
+			});
 		},
 		tokens,
 		(a, b) => {

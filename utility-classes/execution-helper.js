@@ -67,11 +67,6 @@ ExecutionHelper.prototype.handleParsedMessages = function(messages, cb) {
 			}
 		},
 		(err) => {
-			if (err) {
-				if (typeof(err) == 'string') {
-					throw new Error(err);
-				}
-			}
 			return cb(err);
 		}
 	);

@@ -39,7 +39,7 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 		(err) => {
 			if (err) {
 				console.log('error', err);
-				stateHolder.simpleAddMessage(channelID, 'ERROR:' + err);
+				stateHolder.simpleAddMessage(channelID, err);
 			}
 			stateHolder.doFinalOutput();
 			forcePump();

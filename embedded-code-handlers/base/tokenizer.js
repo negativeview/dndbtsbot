@@ -286,21 +286,25 @@ module.exports = function(command, cb) {
 
 	fixStrings(
 		tokens,
-		function(error, tokensWithQuotedStrings) {
+		(error, tokensWithQuotedStrings) => {
 			if (error) {
 				return cb(error);
 			}
 
-			removeWhitespace(
-				tokensWithQuotedStrings,
-				(error, finalizedTokens) => {
-					if (error) {
-						return cb(error);
-					}
+			process.nextTick(() => {
+				removeWhitespace(
+					tokensWithQuotedStrings,
+					(error, finalizedTokens) => {
+						if (error) {
+							return cb(error);
+						}
 
-					return cb(null, finalizedTokens);
-				}
-			);
+						process.nextTick(() => {
+							cb(null, finalizedTokens);
+						});
+					}
+				);
+			});
 		}
 	);
 }

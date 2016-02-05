@@ -40,7 +40,9 @@ Namespace.prototype.getTable = function(tableName, cb) {
 Namespace.prototype.getScalarValue = function(key, cb) {
 	this.parameters.name = key;
 	this.scalarModel.find(this.parameters).exec(function(err, res) {
-		if (err) throw new Error(err);
+		if (err) {
+			return cb(err);
+		}
 		if (res.length == 0) return cb('');
 
 		return cb(null, res[0].value);
