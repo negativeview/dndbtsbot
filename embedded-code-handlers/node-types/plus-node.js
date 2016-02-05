@@ -112,6 +112,11 @@ PlusNode.prototype.leftTwo = function (cb, codeState, err, val) {
 PlusNode.prototype.rightDone = function(cb, codeState, leftValue, error, rightNode) {
 	if (error) return cb(error);
 
+	if (typeof(rightNode) == 'string') {
+		this.totalDone(cb, codeState, leftValue, null, rightNode);
+		return;
+	}
+
 	switch (rightNode.type) {
 		case 'ROLL_RESULT':
 			this.totalDone(cb, codeState, leftValue, null, rightNode.output);
@@ -127,8 +132,12 @@ PlusNode.prototype.rightDone = function(cb, codeState, leftValue, error, rightNo
 						this.totalDone(cb, codeState, leftValue, null, codeState.variables[rightNode.stringValue]);
 						return;
 					} else {
-						return this.rightDone(cb, codeState, leftValue, error, codeState.variables[rightNode.stringValue]);
+						this.rightDone(cb, codeState, leftValue, error, codeState.variables[rightNode.stringValue]);
+						return;
 					}
+				} else {
+					this.rightDone(cb, codeState, leftValue, error, '');
+					return;
 				}
 			}
 			break;
@@ -142,8 +151,6 @@ PlusNode.prototype.rightDone = function(cb, codeState, leftValue, error, rightNo
 				}
 			);
 			return;
-		default:
-			console.log('rightNode broken', rightNode);
 	}
 	console.log('rightNode', rightNode);
 	throw new Error('GOT HERE');

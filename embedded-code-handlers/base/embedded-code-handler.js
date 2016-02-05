@@ -197,7 +197,6 @@ EmbeddedCodeHandler.prototype.executeString = function(command, codeState, exter
  *    An array of parsed tokens.
  *****/
 EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeState, error, tokens, parentElement) {
-	console.log('handleTokenList', tokens);
 	if (error) return externalCallback(error);
 
 	if ('programNode' in codeState) {
@@ -220,8 +219,8 @@ EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeS
 					function(error, newNode) {
 						if (error) return externalCallback(error);
 						process.nextTick(() => {
-							console.log('Executing ' + newNode.type);
 							try {
+								console.log('Executing ' + newNode.type);
 								newNode.execute(parentElement ? parentElement : stn, codeState, externalCallback);
 							} catch (e) {
 								console.log('error', e.stack);

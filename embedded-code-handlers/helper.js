@@ -41,7 +41,7 @@ ret.convertToString = function(thing, codeState, cb) {
 				return cb(null, thing.stringValue);
 			} else {
 				if (thing.stringValue in codeState.variables) {
-					return cb(null, codeState.variables[thing.stringValue]);
+					return ret.convertToString(codeState.variables[thing.stringValue], codeState, cb);
 				} else {
 					return cb(thing.stringValue + ' is not defined.');
 				}
