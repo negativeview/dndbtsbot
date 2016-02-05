@@ -10,14 +10,6 @@ function RollNode(codeHandler) {
 util.inherits(RollNode, SyntaxTreeNode);
 
 RollNode.prototype.execute = function(parent, codeState, cb) {
-	switch (parent.type) {
-		case 'PARENTHESIS':
-			break;
-		default:
-			throw new Error('Roll not followed by parenthesis.');
-			break;
-	}
-
 	return cb(null, this);
 };
 

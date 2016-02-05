@@ -1,9 +1,13 @@
 var util = require('util');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
+var semiColonID = 0;
+
 function SemicolonNode(codeHandler) {
 	SyntaxTreeNode.call(this, codeHandler);
 	this.type = 'SEMICOLON';
+	this.id = semiColonID++;
+	this.didRight = false;
 	this.left = [];
 	this.right = [];
 }
@@ -26,6 +30,9 @@ SemicolonNode.prototype.executeLeft = function(codeState, cb) {
 
 SemicolonNode.prototype.executeRight = function(codeState, cb, error, result) {
 	if (error) return cb(error);
+
+	if (this.didRight) throw new Error('Double right');
+	this.didRight = true;
 
 	if (this.right.length) {
 		this.codeHandler.handleTokenList(

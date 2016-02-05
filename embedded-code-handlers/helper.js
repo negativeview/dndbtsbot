@@ -16,6 +16,43 @@ ret.flatten = function(tokens) {
 	return flat;
 };
 
+ret.recursiveVariable = function(thing, codeState, cb) {
+	if (thing.type != 'BARE_STRING') return cb(null, thing);
+
+	if (!isNaN(parseInt(thing.stringValue))) {
+		return cb(null, thing);
+	} else {
+		if (thing.stringValue in codeState.variables) {
+			return ret.recursiveVariable(codeState.variables[thing.stringValue], codeState, cb);
+		} else {
+			return cb(thing.stringValue + ' is not defined.');
+		}
+	}
+};
+
+ret.convertToString = function(thing, codeState, cb) {
+	switch (thing.type) {
+		case 'QUOTED_STRING':
+			return cb(null, thing.stringValue);
+		case 'ROLL_RESULT':
+			return cb(null, thing.output);
+		case 'BARE_STRING':
+			if (!isNaN(parseInt(thing.stringValue))) {
+				return cb(null, thing.stringValue);
+			} else {
+				if (thing.stringValue in codeState.variables) {
+					return cb(null, codeState.variables[thing.stringValue]);
+				} else {
+					return cb(thing.stringValue + ' is not defined.');
+				}
+			}
+		case 'BOOLEAN':
+			return cb(null, thing.booleanValue ? 'true' : 'false');
+		default:
+			return cb('Do not know how to turn ' + thing.type + ' into a string.');
+	}
+};
+
 ret.setHandlers = function(handlers) {
 	ret.handlers = handlers;
 };

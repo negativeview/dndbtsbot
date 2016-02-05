@@ -37,62 +37,6 @@ module.exports = function(command, cb) {
 			type: 'WHITESPACE'
 		});
 	});
-	lex.addRule(/table/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			stringValue: lexeme,
-			type: 'TABLE'
-		});
-	});
-	lex.addRule(/roll/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			stringValue: lexeme,
-			type: 'ROLL'
-		});
-	});
-	lex.addRule(/echo/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			stringValue: lexeme,
-			type: 'ECHO'
-		});
-	});
-	lex.addRule(/pm/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			stringValue: lexeme,
-			type: 'PM'
-		});
-	});
-	lex.addRule(/ignore/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			stringValue: lexeme,
-			type: 'IGNORE'
-		});
-	});
-	lex.addRule(/foreach/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			stringValue: lexeme,
-			type: 'FOREACH'
-		});
-	});
-	lex.addRule(/if/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			stringValue: lexeme,
-			type: 'IF'
-		});
-	});
-	lex.addRule(/else/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			stringValue: lexeme,
-			type: 'ELSE'
-		});
-	});
 	lex.addRule(/\+/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
@@ -270,11 +214,70 @@ module.exports = function(command, cb) {
 		});
 	});
 	lex.addRule(/[^ '"\[\]\.\(\)\t\n;]+/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			stringValue: lexeme,
-			type: 'BARE_STRING'
-		});
+		switch (lexeme) {
+			case 'roll':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'ROLL'
+				});
+				break;
+			case 'else':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'ELSE'
+				});
+				break;
+			case 'ignore':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'IGNORE'
+				});
+				break;
+			case 'foreach':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'FOREACH'
+				});
+				break;
+			case 'if':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'IF'
+				});
+				break;
+			case 'table':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'TABLE'
+				});
+				break;
+			case 'echo':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'ECHO'
+				});
+				break;
+			case 'pm':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'PM'
+				});
+				break;
+			default:
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'BARE_STRING'
+				});
+		}
 	});
 
 	lex.setInput(command);

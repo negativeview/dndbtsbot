@@ -19,7 +19,7 @@ module.exports = {
 					if (command[m].type == 'LEFT_PAREN') {
 						if (
 							count == 0 &&
-							(m == 0 || preIfStatements.indexOf(command[m-1].type) != -1)
+							(m == 0 || (m == 1 && preIfStatements.indexOf(command[m-1].type) != -1))
 						) {
 							return m;
 						} else {

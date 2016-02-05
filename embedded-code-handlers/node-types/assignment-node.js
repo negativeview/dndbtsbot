@@ -1,5 +1,6 @@
 var util = require('util');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
+var helper = require('../helper.js');
 
 function AssignmentNode(codeHandler) {
 	SyntaxTreeNode.call(this, codeHandler);
@@ -12,6 +13,7 @@ util.inherits(AssignmentNode, SyntaxTreeNode);
 AssignmentNode.prototype.execute = function(parent, codeState, cb) {
 	this.codeHandler.handleTokenList(
 		(error, result) => {
+			console.log('assignment-node.execute.2');
 			this.leftDone(cb, codeState, error, result);
 		},
 		codeState,
@@ -35,44 +37,33 @@ AssignmentNode.prototype.leftDone = function(cb, codeState, error, result) {
 
 AssignmentNode.prototype.rightDone = function(cb, codeState, variable, error, result) {
 	if (error) return cb(error);
-	
+
 	switch (variable.type) {
 		case 'BARE_STRING':
-			switch (result.type) {
-				case 'QUOTED_STRING':
-					codeState.variables[variable.stringValue] = result.stringValue;
-					return cb(null, result);
-				case 'ROLL_RESULT':
+			helper.recursiveVariable(
+				result,
+				codeState,
+				(error, result) => {
 					codeState.variables[variable.stringValue] = result;
 					return cb(null, result);
-				case 'BARE_STRING':
-					if (!isNaN(parseInt(result.stringValue))) {
-						codeState.variables[variable.stringValue] = result.stringValue;
-						return cb(null, result);
-					} else {
-						if (result.stringValue in codeState.variables) {
-							codeState.variables[variable.stringValue] = codeState.variables[result.stringValue];
-							return cb(null, result);
-						} else {
-							throw new Error(result.stringValue + ' is not previously a variable');
-						}
-					}
-				default:
-					throw new Error(result.type);
-					break;
-			}
-			break;
+				}
+			);
+			return;
 		case 'VARIABLE':
-			switch (result.type) {
-				case 'QUOTED_STRING':
-					variable.assign(result.stringValue, function() {
-						cb(null, result);
-					});
-					break;
-				default:
-					throw new Error(result.type);
-			}
-			break;
+			helper.convertToString(
+				result,
+				codeState,
+				(error, stringValue) => {
+					if (error) return cb(error);
+
+					variable.assign(
+						stringValue,
+						() => {
+							return cb(null, result);
+						}
+					);
+				}
+			);
 		default:
 			throw new Error(variable.type);
 			break;

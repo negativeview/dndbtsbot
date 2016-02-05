@@ -14,6 +14,8 @@ util.inherits(CurlyBracesNode, SyntaxTreeNode);
 CurlyBracesNode.prototype.execute = function(parent, codeState, cb) {
 	this.codeHandler.handleTokenList(
 		(error, result) => {
+			if (error) return cb(error);
+
 			this.leftDone(cb, codeState, error, result);
 		},
 		codeState,
@@ -67,7 +69,6 @@ CurlyBracesNode.prototype.leftDone = function(cb, codeState, error, result) {
 						);
 					}
 				} else {
-					console.log('No boolean value in ', result);
 					this.insideDone(cb, codeState, null, result);
 				}
 				return;

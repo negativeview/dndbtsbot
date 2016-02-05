@@ -10,7 +10,13 @@ module.exports = {
 	matches: function(command) {
 		for (var i = command.length - 1; i >= 0; i--) {
 			if (command[i].type == 'PLUS') {
-				return i;
+				var l = 0;
+				var r = 0;
+				for (var m = i; m >= 0; m--) {
+					if (command[m].type == 'LEFT_PAREN') l++;
+					if (command[m].type == 'RIGHT_PAREN') r++;
+				}
+				if (r == l) return i;
 			}
 		}
 		return false;

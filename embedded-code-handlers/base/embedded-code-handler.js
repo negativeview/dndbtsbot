@@ -26,6 +26,7 @@ var patterns = [
 	],
 	[
 		patterns.booleanAnd,
+		patterns.booleanOr
 	],
 	[
 		patterns.doubleEquals,
@@ -188,6 +189,7 @@ EmbeddedCodeHandler.prototype.executeString = function(command, codeState, exter
  *    An array of parsed tokens.
  *****/
 EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeState, error, tokens, parentElement) {
+	console.log('handleTokenList', tokens);
 	if (error) return externalCallback(error);
 
 	if ('programNode' in codeState) {
@@ -201,26 +203,25 @@ EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeS
 		codeState.programNode = stn;
 	}
 
-	try {
-		this.findPattern(
-			(index, pattern) => {
-				this.handleTopToken(
-					codeState,
-					tokens,
-					function(error, newNode) {
-						if (error) return externalCallback(error);
-						newNode.execute(parentElement ? parentElement : stn, codeState, externalCallback);
-					},
-					index,
-					pattern
-				);
-			},
-			tokens,
-			externalCallback
-		);
-	} catch (e) {
-		return externalCallback(e.stack);
-	}
+	this.findPattern(
+		(index, pattern) => {
+			this.handleTopToken(
+				codeState,
+				tokens,
+				function(error, newNode) {
+					if (error) return externalCallback(error);
+					console.log('Executing ' + newNode.type);
+					newNode.execute(parentElement ? parentElement : stn, codeState, externalCallback);
+				},
+				index,
+				pattern
+			);
+		},
+		tokens,
+		(a, b) => {
+			return externalCallback(a, b);
+		}
+	);
 };
 
 EmbeddedCodeHandler.prototype.handleTopToken = function(codeState, tokens, cb, index, pattern) {

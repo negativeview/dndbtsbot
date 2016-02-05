@@ -23,5 +23,6 @@ module.exports = {
 	asterisk: require('./asterisk.js'),
 	roll: require('./roll.js'),
 	negativeNumber: require('./negative-number.js'),
-	divide: require('./divide.js')
+	divide: require('./divide.js'),
+	booleanOr: require('./boolean-or.js')
 };
