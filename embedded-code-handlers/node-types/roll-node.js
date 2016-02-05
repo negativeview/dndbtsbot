@@ -20,7 +20,8 @@ RollNode.prototype.executeString = function(stringValue, cb) {
 
 	dice.execute(
 		stringValue,
-		(data) => {
+		(error, data) => {
+			if (error) return cb(error);
 			var rollResult = new RollResult(data);
 			return cb(null, rollResult);
 		}
