@@ -256,11 +256,16 @@ Dice.prototype.execute = function execute(command, callback) {
     });
   });
   lex.setInput(command);
-  lex.lex();
+  try {
+    lex.lex();
+  } catch (e) {
+    return callback(e);
+  }
 
   var self = this;
   var cb = callback;
 
+  try {
   applyModifiers(tokens, function(tokens) {
     doDiceRolling(tokens, self, function(tokens) {
       var rawResults = tokens;
@@ -318,11 +323,14 @@ Dice.prototype.execute = function execute(command, callback) {
             data.output += ' = `' + result + '`';
             data.totalResult = result;
           }
-          return cb(data);
+          return cb(null, data);
         });
       });
     });
   });
+  } catch (e) {
+    return cb(e);
+  }
 }
 
 // parses a command given in dice notation
