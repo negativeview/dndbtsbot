@@ -130,7 +130,9 @@ function handleSaveRoll(pieces, stateHolder, next) {
 			var dice = new Dice();
 			dice.execute(
 				roll,
-				(output) => {
+				(error, output) => {
+					if (error) return next(error);
+
 					var skillResult = output.output;
 					stateHolder.simpleAddMessage(stateHolder.channelID, skillResult);
 					return next();
@@ -174,7 +176,8 @@ function handleSkillRoll(pieces, stateHolder, next) {
 			var dice = new Dice();
 			dice.execute(
 				roll,
-				(output) => {
+				(error, output) => {
+					if (error) return next(error);
 					var skillResult = output.output;
 					stateHolder.simpleAddMessage(stateHolder.channelID, skillResult);
 					return next();
