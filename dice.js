@@ -35,6 +35,9 @@ function doDiceRolling(tokens, self, cb) {
 
         tokens[i].results = [];
         tokens[i].parsed = parsed;
+        if (parsed.times > 100) {
+          throw new Error('You cannot roll more than 100 dice.');
+        }
         for (var p = 0; p < parsed.times; p++) {
           tokens[i].results.push(self.roll(parsed.faces));
         }

@@ -46,6 +46,14 @@ SquareBracketNode.prototype.leftDone = function(cb, codeState, error, result) {
 				this.right
 			);
 			break;
+		case 'BARE_STRING':
+			switch (result.stringValue) {
+				case 'character':
+					break;
+				default:
+					throw new Error(result.stringValue + ' is not a special variable name.');
+			}
+			break;
 		default:
 			throw new Error('Not sure what to do with ' + result.type);
 	}
