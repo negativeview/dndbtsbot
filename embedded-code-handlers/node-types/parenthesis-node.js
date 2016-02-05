@@ -134,7 +134,7 @@ ParenthesisNode.prototype.executeForIf = function(cb, ifNode, error, node) {
 			ifNode.booleanValue = node.booleanValue;
 			return cb(null, ifNode);
 		default:
-			throw new Error('Got here');
+			throw new Error('If predicate is not a boolean, is ' + node.type);
 	}
 }
 
