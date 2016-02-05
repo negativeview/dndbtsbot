@@ -7,11 +7,13 @@ ret.get = function(isAdmin, pieces, stateHolder, next) {
 	if (isAdmin) params.server = stateHolder.bot.serverFromChannel(stateHolder.channelID);
 	if (!isAdmin) params.user = stateHolder.username;
 
-	if (pieces.length >= 1) {
+	if (pieces.length >= 2) {
 		params.name = pieces[0];
 		if (params.name[0] != '!')
 			params.name = '!' + params.name;
 	}
+
+	console.log(params);
 
 	model.find(params).exec(
 		(err, res) => {
