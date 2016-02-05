@@ -282,7 +282,7 @@ EmbeddedCodeHandler.prototype.findPattern = function(foundCallback, tokenArray, 
 		if (matches.length == 1) {
 			return foundCallback(matches[0].index, matches[0].pattern);
 		} else if (matches.length > 1) {
-			if (i == 3) {
+			if (i == 3 || i == 5) {
 				var match = null;
 				for (var p = 0; p < matches.length; p++) {
 					if (match == null || matches[p].index > match.index) {
