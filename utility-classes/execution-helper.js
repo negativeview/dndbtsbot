@@ -17,11 +17,10 @@ ExecutionHelper.prototype.handle = function(message, cb) {
 	for (var i = 0; i < splitMessages.length; i++) {
 		var newLine = splitMessages[i];
 		if (newLine.indexOf("!macro") === 0 || message.indexOf("!!") === 0) {
-			message += newLine + "\n";
+			message += newLine + " \n";
 			for (var m = i + 1; m < splitMessages.length; m++) {
 				message += "\n" + splitMessages[m];
 			}
-			//console.log('here:', message);
 			messages[messages.length] = message.replace(/\n/, '');
 			message = '';
 			break;			
