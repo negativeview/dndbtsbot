@@ -31,6 +31,10 @@ ret.recursiveVariable = function(thing, codeState, cb) {
 };
 
 ret.convertToString = function(thing, codeState, cb) {
+	if (typeof(thing) == 'string') {
+		return cb(null, thing);
+	}
+	
 	switch (thing.type) {
 		case 'QUOTED_STRING':
 			return cb(null, thing.stringValue);
@@ -46,6 +50,14 @@ ret.convertToString = function(thing, codeState, cb) {
 					return cb(thing.stringValue + ' is not defined.');
 				}
 			}
+			break;
+		case 'VARIABLE':
+			thing.getScalarValue(
+				(error, string) => {
+					return cb(error, string);
+				}
+			);
+			break;
 		case 'BOOLEAN':
 			return cb(null, thing.booleanValue ? 'true' : 'false');
 		default:

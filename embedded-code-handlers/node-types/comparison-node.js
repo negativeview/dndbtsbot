@@ -30,6 +30,7 @@ ComparisonNode.prototype.leftDone = function(cb, codeState, error, result) {
 		result,
 		codeState,
 		(error, stringValue) => {
+			console.log('leftDone', error, stringValue, result);
 			if (error) return cb(error);
 
 			this.codeHandler.handleTokenList(
@@ -53,6 +54,7 @@ ComparisonNode.prototype.rightDone = function(cb, codeState, left, error, result
 		result,
 		codeState,
 		(error, stringValue) => {
+			console.log('rightDone', error, stringValue);
 			var result2 = new SyntaxTreeNode(codeState);
 			result2.type = 'BOOLEAN';
 			result2.booleanValue = this.compareFunction(left, stringValue);

@@ -1,6 +1,7 @@
 var util = require('util');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 var ChannelNamespace = require('../namespaces/channel-namespace.js');
+var helper = require('../helper.js');
 
 function SquareBracketNode(codeHandler) {
 	SyntaxTreeNode.call(this, codeHandler);
@@ -60,26 +61,15 @@ SquareBracketNode.prototype.leftDone = function(cb, codeState, error, result) {
 };
 
 SquareBracketNode.prototype.rightDone = function(cb, codeState, variable, error, result) {
-	switch (result.type) {
-		case 'QUOTED_STRING':
-			variable.index = result.stringValue;
+	helper.convertToString(
+		result,
+		codeState,
+		(error, stringValue) => {
+			if (error) return cb(error);
+			variable.index = stringValue;
 			return cb(null, variable);
-			break;
-		case 'BARE_STRING':
-			if (result.stringValue in codeState.variables) {
-				variable.index = codeState.variables[result.stringValue];
-			} else if (parseInt(result.stringValue) != NaN) {
-				variable.index = parseInt(result.stringValue);
-			} else {
-				variable.index = '';
-			}
-			return cb(null, variable);
-			break;
-		default:
-			console.log(result);
-			throw new Error('Not sure what to do with ' + result.type);
-			break;
-	}
+		}
+	);
 };
 
 module.exports = SquareBracketNode;

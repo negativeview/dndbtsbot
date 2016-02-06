@@ -64,6 +64,7 @@ AssignmentNode.prototype.rightDone = function(cb, codeState, variable, error, re
 					);
 				}
 			);
+			return;
 		default:
 			throw new Error(variable.type);
 			break;

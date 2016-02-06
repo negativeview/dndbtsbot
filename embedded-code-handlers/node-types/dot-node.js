@@ -4,6 +4,7 @@ var ChannelNamespace = require('../namespaces/channel-namespace.js');
 var ServerNamespace = require('../namespaces/server-namespace.js');
 var Variable = require('../base/variable.js');
 var StringNode = require('./string-node.js');
+var helper = require('../helper.js');
 
 function DotNode(codeHandler) {
 	SyntaxTreeNode.call(this, codeHandler);
@@ -28,6 +29,25 @@ DotNode.prototype.leftDone = function(cb, codeState, error, result) {
 	var namespace = null;
 
 	switch (result.type) {
+		case 'VARIBLE':
+			this.codeHandler.handleTokenList(
+				(error, result2) => {
+					if (error) return cb(error);
+
+					helper.convertToString(
+						result,
+						codeState,
+						(error, result3) => {
+							if (error) return cb(error);
+
+							result.setIndex(result3);
+
+							return cb(null, result);
+						}
+					);
+				}
+			);
+			return;
 		case 'BARE_STRING':
 			switch (result.stringValue) {
 				case 'channel':
