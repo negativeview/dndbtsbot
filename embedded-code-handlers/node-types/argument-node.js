@@ -12,12 +12,14 @@ util.inherits(ArgumentNode, SyntaxTreeNode);
 
 ArgumentNode.prototype.execute = function(parent, codeState, cb) {
 	var result = '';
+
 	if (this.index.match(/[0-9]+\+/)) {
 		var start = parseInt(this.index);
 		for (var i = parseInt(this.index); i < codeState.args.length; i++) {
 			if (result != '') {
-				result += ' ' + codeState.args[i];
+				result += ' ';
 			}
+			result += codeState.args[i];
 		}
 	} else if (codeState.args[parseInt(this.index)]) {
 		result = codeState.args[parseInt(this.index)];

@@ -27,7 +27,12 @@ module.exports = {
 			throw new Error('Invalid macro argument: ' + token.rawValue);
 		}
 
-		var node = new ArgumentNode(codeHandler, matches[1]);
+		var argument = matches[1];
+		if (matches.length > 2) {
+			argument += matches[2];
+		}
+
+		var node = new ArgumentNode(codeHandler, argument);
 		return cb('', node);
 	}
 };
