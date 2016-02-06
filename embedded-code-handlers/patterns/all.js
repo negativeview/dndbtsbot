@@ -3,6 +3,7 @@ module.exports = {
 	squareBrackets: require('./square-brackets.js'),
 	dot: require('./dot.js'),
 	echo: require('./echo.js'),
+	pm: require('./pm.js'),
 	ignore: require('./ignore.js'),
 	parenthesis: require('./parenthesis.js'),
 	table: require('./table.js'),

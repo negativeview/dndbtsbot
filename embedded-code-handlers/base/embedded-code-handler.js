@@ -18,6 +18,7 @@ var patterns = [
 	[
 		patterns.assignment,
 		patterns.echo,
+		patterns.pm,
 		patterns.ignore,
 		patterns.ifBranch,
 	],
