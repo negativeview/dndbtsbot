@@ -153,6 +153,7 @@ EmbeddedCodeHandler.prototype.handle = function(pieces, stateHolder, externalCal
  *****/
 EmbeddedCodeHandler.prototype.executeString = function(command, codeState, externalCallback) {
 	// Run the tokenizer and pass the result of that to further steps.
+	this.codeState = codeState;
 	process.nextTick(
 		() => {
 			tokenizer(

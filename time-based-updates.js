@@ -24,7 +24,7 @@ TimeBasedUpdates.prototype.update = function() {
 	async.eachSeries(
 		Object.keys(this.bot.servers),
 		(serverID, cb) => {
-			this.updateSingleServer();
+			this.updateSingleServer(serverID);
 		},
 		() => { return; }
 	);
@@ -114,22 +114,26 @@ TimeBasedUpdates.prototype.updateSingleChannelBasedOnRows = function(cb, channel
 
 	var m = this;
 	if (tableRebuild.title) {
+		console.log(tableRebuild.title);
 		embeddedCodeHandler.executeString(
 			tableRebuild.title,
 			codeState,
-			(error, res) => {
+			(error, topLevelNode) => {
+				console.log('res:', topLevelNode);
 				if (error) {
 					throw new Error(error);
 				}
 
 				var actualTopic = m.bot.servers[serverID].channels[channelID].topic;
-				var newTopic = res.variables.title;
+				var newTopic = topLevelNode.codeHandler.codeState.variables.title;
 
-				if (newTopic && newTopic != actualTopic) {
+				console.log('Setting to ', newTopic);
+
+				if (newTopic && newTopic.stringValue && newTopic.stringValue != actualTopic) {
 					m.bot.editChannelInfo(
 						{
 							channel: channelID,
-							topic: newTopic
+							topic: newTopic.stringValue
 						}
 					);
 				}

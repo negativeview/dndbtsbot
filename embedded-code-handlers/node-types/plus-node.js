@@ -23,6 +23,18 @@ PlusNode.prototype.execute = function(parent, codeState, cb) {
 PlusNode.prototype.leftDone = function(cb, codeState, error, value) {
 	if (error) return cb(error);
 
+	if (typeof(value) == 'string' || typeof(value) == 'number') {
+		this.codeHandler.handleTokenList(
+			(error, rightNode) => {
+				this.rightDone(cb, codeState, value, error, rightNode);
+			},
+			codeState,
+			null,
+			this.right
+		);
+		return;
+	}
+
 	switch (value.type) {
 		case 'VARIABLE':
 			value.getScalarValue(
@@ -112,7 +124,7 @@ PlusNode.prototype.leftTwo = function (cb, codeState, err, val) {
 PlusNode.prototype.rightDone = function(cb, codeState, leftValue, error, rightNode) {
 	if (error) return cb(error);
 
-	if (typeof(rightNode) == 'string') {
+	if (typeof(rightNode) == 'string' || typeof(rightNode) == 'number') {
 		this.totalDone(cb, codeState, leftValue, null, rightNode);
 		return;
 	}
