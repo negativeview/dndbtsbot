@@ -111,7 +111,7 @@ AsteriskNode.prototype.totalDone = function(cb, codeState, leftValue, error, rig
 		}
 	}
 
-	throw new Error('Got here');
+	throw new Error('Multiplying things that are not numbers? What are you thinking??');
 }
 
 module.exports = AsteriskNode;
