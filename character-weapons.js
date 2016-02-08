@@ -426,7 +426,7 @@ function doAttack(activeCharacter, weapon, stateHolder, next) {
 		(modifiedAttackRoll) => {
 			dice.execute(
 				modifiedAttackRoll,
-				(result) => {
+				(error, result) => {
 					var toHitOnDie = 0;
 					for (var i = 0; i < result.rawResults.length; i++) {
 						if (result.rawResults[i].type == 'die') {
@@ -460,7 +460,7 @@ function doAttack(activeCharacter, weapon, stateHolder, next) {
 						(modifiedDamageRoll) => {
 							dice.execute(
 								modifiedDamageRoll,
-								(result) => {
+								(error, result) => {
 									var dieResults = [];
 									for (var i = 0; i < result.rawResults.length; i++) {
 										if (result.rawResults[i].type == 'die') {
