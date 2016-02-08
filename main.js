@@ -19,8 +19,7 @@ process.on(
 			stateHolder.doFinalOutput();
 			forcePump();
 		} else {
-			console.log(err.stack);
-			process.exit(1);
+			console.log(err, err.stack);
 		}
 	}
 );
