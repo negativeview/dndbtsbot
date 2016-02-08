@@ -38,7 +38,7 @@ var patterns = [
 		patterns.greaterThan
 	],
 	[
-		patterns.plus
+		patterns.plusMinus
 	],
 	[
 		patterns.asterisk,
