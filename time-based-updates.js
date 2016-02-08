@@ -24,7 +24,7 @@ TimeBasedUpdates.prototype.update = function() {
 	async.eachSeries(
 		Object.keys(this.bot.servers),
 		(serverID, cb) => {
-			this.updateSingleServer(serverID);
+			this.updateSingleServer(serverID, cb);
 		},
 		() => { return; }
 	);
