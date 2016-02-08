@@ -271,6 +271,13 @@ module.exports = function(command, cb) {
 					type: 'PM'
 				});
 				break;
+			case 'delete':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'DELETE'
+				});
+				break;
 			default:
 				tokens.push({
 					rawValue: lexeme,

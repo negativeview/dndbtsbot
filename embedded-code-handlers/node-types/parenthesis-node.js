@@ -1,5 +1,6 @@
 var util = require('util');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
+var helper = require('../helper.js');
 
 function ParenthesisNode(codeHandler) {
 	SyntaxTreeNode.call(this, codeHandler);
@@ -77,7 +78,7 @@ ParenthesisNode.prototype.executeSecond = function(cb, codeState, error, value) 
 		case 'ROLL':
 			this.codeHandler.handleTokenList(
 				(error, result) => {
-					this.executeForRoll(cb, value, error, result);
+					this.executeForRoll(cb, codeState, value, error, result);
 				},
 				codeState,
 				null,
@@ -113,17 +114,18 @@ ParenthesisNode.prototype.executeForTable = function(cb, tableNode, error, node)
 	}
 };
 
-ParenthesisNode.prototype.executeForRoll = function(cb, rollNode, error, node) {
+ParenthesisNode.prototype.executeForRoll = function(cb, codeState, rollNode, error, node) {
 	if (error) return cb(error);
-	
-	switch (node.type) {
-		case 'QUOTED_STRING':
-			rollNode.executeString(node.stringValue, cb);
-			break;
-		default:
-			console.log('node??', node);
-			throw new Error('Node!');
-	}
+
+	helper.convertToString(
+		node,
+		codeState,
+		(error, stringValue) => {
+			if (error) return cb(error);
+
+			rollNode.executeString(stringValue, cb);
+		}
+	);
 };
 
 ParenthesisNode.prototype.executeForIf = function(cb, ifNode, error, node) {

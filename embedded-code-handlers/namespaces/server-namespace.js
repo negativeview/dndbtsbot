@@ -9,6 +9,17 @@ function ServerNamespace(stateHolder) {
 	};
 }
 
+ServerNamespace.prototype.canEdit = function(cb) {
+	var serverID = this.stateHolder.serverID;
+	if (!serverID) return cb(null, false);
+
+	if (this.stateHolder.isAdmin(this.stateHolder.username)) {
+		return cb(null, true);
+	}
+
+	return cb(null, false);
+}
+
 util.inherits(ServerNamespace, Namespace);
 
 module.exports = ServerNamespace;

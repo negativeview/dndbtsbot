@@ -39,14 +39,13 @@ Namespace.prototype.getTable = function(tableName, cb) {
 
 Namespace.prototype.getScalarValue = function(key, cb) {
 	this.parameters.name = key;
-	this.scalarModel.find(this.parameters).exec(function(err, res) {
-		if (err) {
-			return cb(err);
+	this.scalarModel.find(this.parameters).exec(
+		(err, res) => {
+			if (err) return cb(err);
+			if (res.length == 0) return cb('');
+			return cb(null, res[0].value);
 		}
-		if (res.length == 0) return cb('');
-
-		return cb(null, res[0].value);
-	});
+	);
 }
 
 Namespace.prototype.setScalarValue = function(key, value, cb) {
@@ -57,15 +56,15 @@ Namespace.prototype.setScalarValue = function(key, value, cb) {
 
 			this.parameters.name = key;
 			this.scalarModel.find(this.parameters).exec(
-				function(err, res) {
+				(err, res) => {
 					if (err) return cb(err);
 
 					async.eachSeries(
 						res,
-						function(index, next) {
+						(index, next) => {
 							index.remove(next);
 						},
-						function(err) {
+						(err) => {
 							if (err) return cb(err);
 
 							this.parameters.value = value;

@@ -25,5 +25,6 @@ module.exports = {
 	roll: require('./roll.js'),
 	negativeNumber: require('./negative-number.js'),
 	divide: require('./divide.js'),
-	booleanOr: require('./boolean-or.js')
+	booleanOr: require('./boolean-or.js'),
+	deleteNode: require('./delete-node.js')
 };

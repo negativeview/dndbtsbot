@@ -1,8 +1,6 @@
 var util = require('util');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 
-var count = 0;
-
 function EchoNode(codeHandler) {
 	SyntaxTreeNode.call(this, codeHandler);
 	this.type = 'ECHO';
@@ -11,12 +9,6 @@ function EchoNode(codeHandler) {
 util.inherits(EchoNode, SyntaxTreeNode);
 
 EchoNode.prototype.execute = function(parent, codeState, cb) {
-	count++;
-
-	if (count == 11) {
-		//throw new Error('got here ' + count);
-	}
-
 	this.codeHandler.handleTokenList(
 		(error, result) => {
 			this.executeDone(cb, codeState, error, result);

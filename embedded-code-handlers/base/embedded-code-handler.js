@@ -21,6 +21,7 @@ var patterns = [
 		patterns.pm,
 		patterns.ignore,
 		patterns.ifBranch,
+		patterns.deleteNode
 	],
 	[
 		patterns.parenthesis
