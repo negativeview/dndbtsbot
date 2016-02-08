@@ -42,7 +42,7 @@ PlusNode.prototype.leftDone = function(cb, codeState, error, value) {
 			);
 			return;
 		case 'BARE_STRING':
-			if (parseInt(value.stringValue)) {
+			if (!isNaN(parseInt(value.stringValue))) {
 				this.codeHandler.handleTokenList(
 					(error, rightNode) => {
 						this.rightDone(cb, codeState, value.stringValue, error, rightNode)

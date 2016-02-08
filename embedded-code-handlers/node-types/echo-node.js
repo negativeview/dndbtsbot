@@ -48,21 +48,28 @@ EchoNode.prototype.executeDone = function(cb, codeState, error, result) {
 			);
 			return;
 		case 'BARE_STRING':
-			if (result.stringValue in codeState.variables) {
-				var toEcho = codeState.variables[result.stringValue];
-				if (typeof(toEcho) == 'string') {
+			if (!isNaN(parseInt(value.stringValue))) {
+				if (result.stringValue in codeState.variables) {
+					var toEcho = codeState.variables[result.stringValue];
+					if (typeof(toEcho) == 'string') {
+						this.codeHandler.stateHolder.simpleAddMessage(
+							this.codeHandler.stateHolder.channelID, 
+							codeState.variables[result.stringValue]
+						);
+					} else {
+						return this.executeDone(cb, codeState, error, codeState.variables[result.stringValue]);
+					}
+				} else {
 					this.codeHandler.stateHolder.simpleAddMessage(
 						this.codeHandler.stateHolder.channelID, 
-						codeState.variables[result.stringValue]
-					);
-				} else {
-					return this.executeDone(cb, codeState, error, codeState.variables[result.stringValue]);
+						''
+					);			
 				}
 			} else {
 				this.codeHandler.stateHolder.simpleAddMessage(
-					this.codeHandler.stateHolder.channelID, 
-					''
-				);			
+					this.codeHandler.stateHolder.channelID,
+					value.stringValue
+				);
 			}
 			return cb();
 	}

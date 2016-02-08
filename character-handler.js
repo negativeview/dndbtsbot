@@ -326,7 +326,12 @@ function doCurrent(pieces, stateHolder, next) {
 				next,
 				(res) => {
 					res[0].isCurrent = true;
-					res[0].save();
+					res[0].save(
+						() => {
+							stateHolder.simpleAddMessage(stateHolder.username, 'Character ' + res[0].name + ' set as active character.');
+							return next();
+						}
+					);
 				}
 			);
 		}
