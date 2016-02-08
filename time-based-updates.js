@@ -31,6 +31,7 @@ TimeBasedUpdates.prototype.update = function() {
 };
 
 TimeBasedUpdates.prototype.updateSingleServer = function(serverID, cb) {
+	console.log('Updating server ' + serverID);
 	var channels = Object.keys(this.bot.servers[serverID].channels);
 
 	async.eachSeries(

@@ -47,6 +47,9 @@ EchoNode.prototype.executeDone = function(cb, codeState, error, result) {
 				}
 			);
 			return;
+		case 'TABLE':
+			// `echo table` will currently already work. No need to do anything special.
+			return cb();
 		case 'BARE_STRING':
 			if (isNaN(parseInt(result.stringValue))) {
 				if (result.stringValue in codeState.variables) {
