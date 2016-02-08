@@ -48,7 +48,7 @@ EchoNode.prototype.executeDone = function(cb, codeState, error, result) {
 			);
 			return;
 		case 'BARE_STRING':
-			if (!isNaN(parseInt(value.stringValue))) {
+			if (!isNaN(parseInt(result.stringValue))) {
 				if (result.stringValue in codeState.variables) {
 					var toEcho = codeState.variables[result.stringValue];
 					if (typeof(toEcho) == 'string') {
