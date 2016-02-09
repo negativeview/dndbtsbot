@@ -226,7 +226,7 @@ EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeS
 								console.log('Executing ' + newNode.type);
 								newNode.execute(parentElement ? parentElement : stn, codeState, externalCallback);
 							} catch (e) {
-								console.log('error', e.stack);
+								console.log('error in handleTokenList', e.stack);
 								return externalCallback(e.stack);
 							}
 						});
