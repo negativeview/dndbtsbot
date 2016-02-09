@@ -1,6 +1,7 @@
 var util = require('util');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 var ChannelNamespace = require('../namespaces/channel-namespace.js');
+var UserNamespace = require('../namespaces/user-namespace.js');
 var ServerNamespace = require('../namespaces/server-namespace.js');
 var Variable = require('../base/variable.js');
 var StringNode = require('./string-node.js');
@@ -31,7 +32,7 @@ DotNode.prototype.leftDone = function(cb, codeState, error, result) {
 	var namespace = null;
 
 	switch (result.type) {
-		case 'VARIBLE':
+		case 'VARIABLE':
 			this.codeHandler.handleTokenList(
 				(error, result2) => {
 					if (error) return cb(error);
@@ -47,7 +48,10 @@ DotNode.prototype.leftDone = function(cb, codeState, error, result) {
 							return cb(null, result);
 						}
 					);
-				}
+				},
+				codeState,
+				null,
+				this.right
 			);
 			return;
 		case 'BARE_STRING':
@@ -57,6 +61,9 @@ DotNode.prototype.leftDone = function(cb, codeState, error, result) {
 					break;
 				case 'server':
 					namespace = new ServerNamespace(this.codeHandler.stateHolder);
+					break;
+				case 'user':
+					namespace = new UserNamespace(this.codeHandler.stateHolder);
 					break;
 			}
 			if (namespace) {
@@ -104,6 +111,8 @@ DotNode.prototype.leftDone = function(cb, codeState, error, result) {
 };
 
 DotNode.prototype.rightDone = function(cb, namespace, error, result) {
+	if (error) return cb(error);
+
 	switch (result.type) {
 		case 'BARE_STRING':
 			var variable = new Variable(namespace, result.stringValue);
