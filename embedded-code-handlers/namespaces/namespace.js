@@ -42,7 +42,7 @@ Namespace.prototype.getScalarValue = function(key, cb) {
 	this.scalarModel.find(this.parameters).exec(
 		(err, res) => {
 			if (err) return cb(err);
-			if (res.length == 0) return cb('');
+			if (res.length == 0) return cb(null, '');
 			return cb(null, res[0].value);
 		}
 	);

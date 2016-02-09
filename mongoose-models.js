@@ -1,8 +1,39 @@
 module.exports = function(mongoose) {
-	/**
-	 * Macro Schema
-	 */
 	var Schema = mongoose.Schema;
+
+	var NewVarSchema = new Schema({
+		/**
+		 * Only one of these should be defined at a time.
+		 */
+		namespace: {
+			user: String,
+			channel: String,
+			server: String,
+			character: String,
+		},
+		creator: String,
+		lastEditor: String,
+		created: { type: Date, default: Date.now },
+		lastEdited: { type: Date, default: Date.now },
+
+		/**
+		 * An array of strings that define where it's stored, such as
+		 * server._preferences.users.RockGoliath.food = "apples" might have
+		 * [
+		 *   '_preferences',
+		 *   'users',
+		 *   'RockGoliath',
+		 *   'food'
+		 * ]
+		 */
+		path: [
+			String
+		],
+		value: String,
+		publicEdit: Boolean
+	});
+	mongoose.model('NewVar', NewVarSchema);
+
 	var MacroSchema = new Schema({
 		name: String,
 		user: String,
