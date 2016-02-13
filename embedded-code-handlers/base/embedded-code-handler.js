@@ -123,7 +123,13 @@ EmbeddedCodeHandler.prototype.handle = function(pieces, stateHolder, externalCal
 		codeState.setArguments(command.split(" "));
 	}
 
-	this.executeString(command, codeState, externalCallback);
+	this.executeString(
+		command,
+		codeState,
+		(err, whatever) => {
+			return externalCallback(err, codeState)
+		}
+	);
 };
 
 /*****
@@ -162,11 +168,7 @@ EmbeddedCodeHandler.prototype.executeString = function(command, codeState, exter
 					if (error) return externalCallback(error);
 
 					process.nextTick(() => {
-//						try {
-							this.handleTokenList(externalCallback, codeState, null, tokens, parentElement);
-//						} catch (e) {
-//							return externalCallback(e);
-//						}
+						this.handleTokenList(externalCallback, codeState, null, tokens, parentElement);
 					});
 				}
 			);

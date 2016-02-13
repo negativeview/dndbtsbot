@@ -31,7 +31,7 @@ ret.recursiveVariable = function(thing, codeState, cb) {
 };
 
 ret.convertToString = function(thing, codeState, cb) {
-	if (typeof(thing) == 'string') {
+	if (typeof(thing) == 'string' || typeof(thing) == 'number') {
 		return cb(null, thing);
 	}
 	
@@ -61,6 +61,7 @@ ret.convertToString = function(thing, codeState, cb) {
 		case 'BOOLEAN':
 			return cb(null, thing.booleanValue ? 'true' : 'false');
 		default:
+			console.log(thing);
 			return cb('Do not know how to turn ' + thing.type + ' into a string.');
 	}
 };

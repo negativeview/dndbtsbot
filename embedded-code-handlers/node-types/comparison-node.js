@@ -30,7 +30,6 @@ ComparisonNode.prototype.leftDone = function(cb, codeState, error, result) {
 		result,
 		codeState,
 		(error, stringValue) => {
-			console.log('leftDone', error, stringValue, result);
 			if (error) return cb(error);
 
 			this.codeHandler.handleTokenList(
