@@ -1,100 +1,70 @@
-var executionHelper  = require('./execution-helper.js');
-var mongoose         = require('mongoose');
-var bot              = require('./authenticate.js');
+var auth             = require('./authenticate.js');
 var async            = require('async');
-var handlers         = require('./handler-registry.js');
-var stateHolderClass = require('./state-holder.js');
-var messageQueue     = require('./message-queue.js');
+var ExecutionHelper  = require('./utility-classes/execution-helper.js');
+var MessageQueue     = require('./utility-classes/message-queue.js');
+var mongoose         = require('mongoose');
+var mongooseModels   = require('./mongoose-models.js');
+var StateHolder      = require('./utility-classes/state-holder.js');
+var TimeBasedUpdates = require('./time-based-updates.js');
+var bot              = auth.bot;
 
-var bot = bot.bot;
+process.on(
+	'uncaughtException',
+	(err) => {
+		if (err.node) {
+			console.log('uncaughtException', err.node);
+			var stateHolder = err.codeHandler.stateHolder;
+			var message = err.toString() + "\n" + err.node.parent.toString() + "\n" + err.node.tokenList.map(function(a) { return a.rawValue; }).join(', ');
+			stateHolder.simpleAddMessage(stateHolder.channelID, message);
+			stateHolder.doFinalOutput();
+			forcePump();
+		} else {
+			console.log(err, err.stack);
+		}
+	}
+);
 
 /**
  * Highest-level validation that we even want to process this message further.
  * If we do, it passes the message to globalHandlerMiddle.
  */
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
-	// Ignore messages from ourselves, so that we don't accidentally
-	// send ourselves into an infinite loop.
 	if (user == bot.username || user == bot.id) return;
 
-	updateChannelTitles();
+	//timeBasedUpdates.update();
 
-	// We early return if the message doesn't start with an exclamation point.
 	if (message[0] != '!') return;
 
-	// Now that we're actually comitting to processing the message, set up a
-	// state holder.
-	var stateHolder = stateHolderClass(user, userID, channelID, rawEvent);
-	stateHolder.init(mongoose, bot);
-
-	// Default to verified. It's easier to un-verify when we run user-provided
-	// code than it is to verify all input.
-	stateHolder.verified = true;
-
-	executionHelper.handle(message, stateHolder, function(err) {
-		stateHolder.doFinalOutput();
-		forcePump();
-		if (err) return;
-		bot.deleteMessage({channel: rawEvent.d.channel_id, messageID: rawEvent.d.id});
-	});
+	var stateHolder = new StateHolder(messageQueue, user, bot, mongoose, userID, channelID, rawEvent);
+	var executionHelper = new ExecutionHelper(stateHolder);
+	executionHelper.handle(
+		message,
+		(err) => {
+			if (err) {
+				console.log('error in main:', err);
+				stateHolder.simpleAddMessage(channelID, err);
+			}
+			stateHolder.doFinalOutput();
+			forcePump();
+			if (err) return;
+			bot.deleteMessage({channel: rawEvent.d.channel_id, messageID: rawEvent.d.id});
+		}
+	);
 }
 
 var lastUpdate = '';
 
-function updateChannelTitles() {
-	var announcementChannels = [
-		'123184695289577474',
-		'132594342954139648'
-	];
-
-	var moment = require('moment');
-	var m = moment().utc();
-	m.subtract(7, 'hours');
-
-	var hours = m.hours();
-
-	var amPM = 'AM';
-	if (hours > 12) {
-		hours = hours - 12;
-		amPM = 'PM';
-	}
-
-	if (hours == 0) hours = 12;
-
-	var shouldBeTopic = 'Time: ' + hours + ':XX ' + amPM;
-
-	if (lastUpdate != shouldBeTopic) {
-		lastUpdate = shouldBeTopic;
-
-		for (var i = 0; i < announcementChannels.length; i++) {
-			var toSend = {to: announcementChannels[i], message: lastUpdate};
-			bot.sendMessage(toSend, function(err) {
-				if (err) console.log(err);
-			});
-		}
-	}
-
-	/*
-	if (shouldBeTopic != topic) {
-		bot.editChannelInfo(
-			{
-				channel: '132594342954139648',
-				topic: shouldBeTopic
-			}
-		);
-	}
-	*/
-}
+var messageQueue;
+var timeBasedUpdates;
 
 function onBotReady() {
-	var currentRelease = 'Boogie Woogie';
+	messageQueue = new MessageQueue();
+	timeBasedUpdates = new TimeBasedUpdates(bot, mongoose, messageQueue);
+
+	var currentRelease = 'Blues';
 
 	console.log(bot.username + " - (" + bot.id + ")");
 	bot.setPresence({game: currentRelease});
-}
-
-function updateRoomTopic() {
-
 }
 
 function onBotDisconnected() {
@@ -105,11 +75,14 @@ function onBotDisconnected() {
 var timeoutID = null;
 function pump() {
 	timeoutID = null;
-	messageQueue.pump(bot, function(timeout) {
-		if (timeout && timeoutID == null) {
-			timeoutID = setTimeout(pump, timeout);
+	messageQueue.pump(
+		bot,
+		(timeout) => {
+			if (timeout && timeoutID == null) {
+				timeoutID = setTimeout(pump, timeout);
+			}
 		}
-	});
+	);
 }
 
 function forcePump() {
@@ -124,7 +97,7 @@ function forcePump() {
 function onMongoose(err) {
 	if (err) throw err;
 
-	handlers.init(mongoose, bot);
+	mongooseModels(mongoose);
 
 	bot.on('ready',        onBotReady);
 	bot.on('message',      globalHandlerWrap);

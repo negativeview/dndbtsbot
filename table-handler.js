@@ -1,31 +1,13 @@
 var ret = {};
 
 ret.init = function(mongoose) {
-	var Schema = mongoose.Schema;
-
-	var TableSchema = new Schema({
-		name: String,
-		user: String,
-		channel: String,
-		server: String,
-		publicEdit: Boolean
-	});
-	mongoose.model('Table', TableSchema);
-
 	ret.tableModel = mongoose.model('Table');
-
-	var TableRowSchema = new Schema({
-		table: String,
-		key: String,
-		value: String
-	});
-	mongoose.model('TableRow', TableRowSchema);
 	ret.tableRowModel = mongoose.model('TableRow');
 };
 
 function wrapGetTable(parameters, stateHolder, errNext, goodNext) {
 	ret.tableModel.find(parameters).exec(
-		function(err, results) {
+		(err, results) => {
 			if (err) {
 				stateHolder.simpleAddMessage(stateHolder.username, err);
 				return errNext();
@@ -55,15 +37,20 @@ ret.getAll = function(pieces, stateHolder, next) {
 		return next();
 	}
 
-	wrapGetTable(parameters, stateHolder, next, function(results) {
-		for (var i = 0; i < results.length; i++) {
-			if (i != 0) {
-				stateHolder.simpleAddMessage(stateHolder.username, "\n");
+	wrapGetTable(
+		parameters,
+		stateHolder,
+		next,
+		(results) => {
+			for (var i = 0; i < results.length; i++) {
+				if (i != 0) {
+					stateHolder.simpleAddMessage(stateHolder.username, "\n");
+				}
+				stateHolder.simpleAddMessage(stateHolder.username, results[i].name);
 			}
-			stateHolder.simpleAddMessage(stateHolder.username, results[i].name);
+			return next();
 		}
-		return next();
-	});
+	);
 };
 
 ret.getKeys = function(pieces, stateHolder, next) {
@@ -84,30 +71,39 @@ ret.getKeys = function(pieces, stateHolder, next) {
 		return next();
 	}
 
-	wrapGetTable(parameters, stateHolder, next, function(results) {
-		var table = results[0];
+	wrapGetTable(
+		parameters,
+		stateHolder,
+		next,
+		(results) => {
+			var table = results[0];
 
-		var rowParameters = {
-			table: table._id
-		};
+			var rowParameters = {
+				table: table._id
+			};
 
-		ret.tableRowModel.find(rowParameters).exec(
-			function(err, results) {
-				if (err) {
-					stateHolder.simpleAddMessage(stateHolder.username, err);
+			ret.tableRowModel.find(rowParameters).exec(
+				(err, results) => {
+					if (err) {
+						stateHolder.simpleAddMessage(stateHolder.username, err);
+						return next();
+					}
+
+					if (results.length == 0) {
+						stateHolder.simpleAddMessage(stateHolder.username, "No values are stored in that table.");
+					} else {
+						for (var i = 0; i < results.length; i++) {
+							if (i != 0) {
+								stateHolder.simpleAddMessage(stateHolder.username, "\n");
+							}
+							stateHolder.simpleAddMessage(stateHolder.username, name + '.' + results[i].key + ': ' + results[i].value);
+						}
+					}
 					return next();
 				}
-
-				for (var i = 0; i < results.length; i++) {
-					if (i != 0) {
-						stateHolder.simpleAddMessage(stateHolder.username, "\n");
-					}
-					stateHolder.simpleAddMessage(stateHolder.username, name + '.' + results[i].key + ': ' + results[i].value);
-				}
-				return next();
-			}
-		);
-	});
+			);
+		}
+	);
 };
 
 ret.getRand = function(pieces, stateHolder, next) {
@@ -128,31 +124,36 @@ ret.getRand = function(pieces, stateHolder, next) {
 		return next();
 	}
 
-	wrapGetTable(parameters, stateHolder, next, function(results) {
-		var table = results[0];
+	wrapGetTable(
+		parameters,
+		stateHolder,
+		next,
+		(results) => {
+			var table = results[0];
 
-		var rowParameters = {
-			table: table._id,
-		};
+			var rowParameters = {
+				table: table._id,
+			};
 
-		ret.tableRowModel.find(rowParameters).exec(
-			function(err, results) {
-				if (err) {
-					stateHolder.simpleAddMessage(stateHolder.username, err);
-					return next();						
+			ret.tableRowModel.find(rowParameters).exec(
+				(err, results) => {
+					if (err) {
+						stateHolder.simpleAddMessage(stateHolder.username, err);
+						return next();						
+					}
+
+					var min = 0;
+					var max = results.length - 1;
+					var index = Math.floor(Math.random() * (max - min + 1)) + min;
+
+					var result = results[index];
+
+					stateHolder.simpleAddMessage(stateHolder.channelID, result.value);
+					return next();
 				}
-
-				var min = 0;
-				var max = results.length - 1;
-				var index = Math.floor(Math.random() * (max - min + 1)) + min;
-
-				var result = results[index];
-
-				stateHolder.simpleAddMessage(stateHolder.channelID, result.value);
-				return next();
-			}
-		);
-	});
+			);
+		}
+	);
 };
 
 ret.get = function(pieces, stateHolder, next) {
@@ -174,33 +175,38 @@ ret.get = function(pieces, stateHolder, next) {
 		return next();
 	}
 
-	wrapGetTable(parameters, stateHolder, next, function(results) {
-		var table = results[0];
+	wrapGetTable(
+		parameters,
+		stateHolder,
+		next,
+		(results) => {
+			var table = results[0];
 
-		var rowParameters = {
-			table: table._id,
-			key: key
-		};
+			var rowParameters = {
+				table: table._id,
+				key: key
+			};
 
-		ret.tableRowModel.find(rowParameters).exec(
-			function(err, results) {
-				if (err) {
-					stateHolder.simpleAddMessage(stateHolder.username, err);
-					return next();						
-				}
+			ret.tableRowModel.find(rowParameters).exec(
+				(err, results) => {
+					if (err) {
+						stateHolder.simpleAddMessage(stateHolder.username, err);
+						return next();						
+					}
 
-				if (results.length == 0) {
-					stateHolder.simpleAddMessage(stateHolder.username, 'No such key.');
+					if (results.length == 0) {
+						stateHolder.simpleAddMessage(stateHolder.username, 'No such key.');
+						return next();
+					}
+
+					var result = results[0];
+					
+					stateHolder.simpleAddMessage(stateHolder.channelID, result.value);
 					return next();
 				}
-
-				var result = results[0];
-				
-				stateHolder.simpleAddMessage(stateHolder.channelID, result.value);
-				return next();
-			}
-		);
-	});
+			);
+		}
+	);
 };
 
 ret.set = function(pieces, stateHolder, next) {
@@ -229,55 +235,62 @@ ret.set = function(pieces, stateHolder, next) {
 		return next();
 	}
 
-	wrapGetTable(parameters, stateHolder, next, function(results) {
-		var table = results[0];
+	wrapGetTable(
+		parameters,
+		stateHolder,
+		next,
+		(results) => {
+			var table = results[0];
 
-		if (!(table.publicEdit)) {
-			var serverID = stateHolder.findServerID(stateHolder.channelID);
-			if (pieces[2] == 'channel') {
-				if (!serverID) {
-					stateHolder.simpleAddMessage(stateHolder.username, 'You must use this command from a channel so that I know what server to use.');
-					return next();
-				}
-
-				var admin = stateHolder.isAdmin(serverID, stateHolder.username);
-				if (!admin) {
-					stateHolder.simpleAddMessage(stateHolder.username, 'You cannot edit this table.');
-					return next();
-				}
-			}
-		}
-
-		var rowParameters = {
-			table: table._id,
-			key: key
-		};
-
-		ret.tableRowModel.find(rowParameters).exec(
-			function(err, results) {
-				if (err) {
-					stateHolder.simpleAddMessage(stateHolder.username, err);
-					return next();						
-				}
-
-				for (var i = 0; i < results.length; i++) {
-					results[i].remove();
-				}
-
-				rowParameters.value = value;
-				var newTableRow = new ret.tableRowModel(rowParameters);
-				newTableRow.save(function(err) {
-					if (err) {
-						stateHolder.simpleAddMessage(stateHolder.username, err);
+			if (!(table.publicEdit)) {
+				var serverID = stateHolder.serverID;
+				if (pieces[2] == 'channel') {
+					if (!serverID) {
+						stateHolder.simpleAddMessage(stateHolder.username, 'You must use this command from a channel so that I know what server to use.');
 						return next();
 					}
 
-					stateHolder.simpleAddMessage(stateHolder.username, 'Saved.');
-					return next();
-				});
+					var admin = stateHolder.isAdmin(stateHolder.username);
+					if (!admin) {
+						stateHolder.simpleAddMessage(stateHolder.username, 'You cannot edit this table.');
+						return next();
+					}
+				}
 			}
-		);
-	});
+
+			var rowParameters = {
+				table: table._id,
+				key: key
+			};
+
+			ret.tableRowModel.find(rowParameters).exec(
+				(err, results) => {
+					if (err) {
+						stateHolder.simpleAddMessage(stateHolder.username, err);
+						return next();						
+					}
+
+					for (var i = 0; i < results.length; i++) {
+						results[i].remove();
+					}
+
+					rowParameters.value = value;
+					var newTableRow = new ret.tableRowModel(rowParameters);
+					newTableRow.save(
+						(err) => {
+							if (err) {
+								stateHolder.simpleAddMessage(stateHolder.username, err);
+								return next();
+							}
+
+							stateHolder.simpleAddMessage(stateHolder.username, 'Saved.');
+							return next();
+						}
+					);
+				}
+			);
+		}
+	);
 };
 
 ret.del = function(pieces, stateHolder, next) {
@@ -307,30 +320,35 @@ ret.delKey = function(pieces, stateHolder, next) {
 		return next();
 	}
 
-	wrapGetTable(parameters, stateHolder, next, function(results) {
-		var table = results[0];
+	wrapGetTable(
+		parameters,
+		stateHolder,
+		next,
+		(results) => {
+			var table = results[0];
 
-		var rowParameters = {
-			table: table._id,
-			key: key
-		};
+			var rowParameters = {
+				table: table._id,
+				key: key
+			};
 
-		ret.tableRowModel.find(rowParameters).exec(
-			function(err, results) {
-				if (err) {
-					stateHolder.simpleAddMessage(stateHolder.username, err);
-					return next();						
+			ret.tableRowModel.find(rowParameters).exec(
+				(err, results) => {
+					if (err) {
+						stateHolder.simpleAddMessage(stateHolder.username, err);
+						return next();						
+					}
+
+					for (var i = 0; i < results.length; i++) {
+						results[i].remove();
+					}
+
+					stateHolder.simpleAddMessage(stateHolder.username, 'Deleted.');
+					return next();
 				}
-
-				for (var i = 0; i < results.length; i++) {
-					results[i].remove();
-				}
-
-				stateHolder.simpleAddMessage(stateHolder.username, 'Deleted.');
-				return next();
-			}
-		);
-	});
+			);
+		}
+	);
 };
 
 ret.delTable = function(pieces, stateHolder, next) {
@@ -351,31 +369,36 @@ ret.delTable = function(pieces, stateHolder, next) {
 		return next();
 	}
 
-	wrapGetTable(parameters, stateHolder, next, function(results) {
-		var table = results[0];
+	wrapGetTable(
+		parameters,
+		stateHolder,
+		next,
+		(results) => {
+			var table = results[0];
 
-		var rowParameters = {
-			table: table._id,
-		};
+			var rowParameters = {
+				table: table._id,
+			};
 
-		ret.tableRowModel.find(rowParameters).exec(
-			function(err, results) {
-				if (err) {
-					stateHolder.simpleAddMessage(stateHolder.username, err);
-					return next();						
+			ret.tableRowModel.find(rowParameters).exec(
+				(err, results) => {
+					if (err) {
+						stateHolder.simpleAddMessage(stateHolder.username, err);
+						return next();						
+					}
+
+					for (var i = 0; i < results.length; i++) {
+						results[i].remove();
+					}
+
+					table.remove();
+
+					stateHolder.simpleAddMessage(stateHolder.username, 'Deleted.');
+					return next();
 				}
-
-				for (var i = 0; i < results.length; i++) {
-					results[i].remove();
-				}
-
-				table.remove();
-
-				stateHolder.simpleAddMessage(stateHolder.username, 'Deleted.');
-				return next();
-			}
-		);
-	});
+			);
+		}
+	);
 };
 
 ret.create = function(pieces, stateHolder, next) {
@@ -402,7 +425,7 @@ ret.create = function(pieces, stateHolder, next) {
 	}
 
 	ret.tableModel.find(parameters).exec(
-		function(err, results) {
+		(err, results) => {
 			if (err) {
 				stateHolder.simpleAddMessage(stateHolder.username, err);
 				return next();
@@ -413,28 +436,28 @@ ret.create = function(pieces, stateHolder, next) {
 			}
 
 			var newTable = new ret.tableModel(parameters);
-			newTable.save(function(err) {
-				if (err) {
-					stateHolder.simpleAddMessage(stateHolder.username, err);
+			newTable.save(
+				(err) => {
+					if (err) {
+						stateHolder.simpleAddMessage(stateHolder.username, err);
+						return next();
+					}
+
+					stateHolder.simpleAddMessage(stateHolder.username, 'Created table ' + parameters.name);
 					return next();
 				}
-
-				stateHolder.simpleAddMessage(stateHolder.username, 'Created table ' + parameters.name);
-				return next();
-			});
+			);
 		}
 	);
 }
 
 ret.handle = function(pieces, stateHolder, next) {
-	console.log(pieces);
-	
 	if (pieces.length < 2) {
 		stateHolder.simpleAddMessage(stateHolder.username, 'What should I do with tables?');
 		return next();
 	}
 
-	var serverID = stateHolder.findServerID(stateHolder.channelID);
+	var serverID = stateHolder.serverID;
 	if (pieces[2] == 'channel' || pieces[2] == 'server') {
 		if (!serverID) {
 			stateHolder.simpleAddMessage(stateHolder.username, 'You must use this command from a channel so that I know what server/channel to use.');
@@ -442,7 +465,7 @@ ret.handle = function(pieces, stateHolder, next) {
 		}
 
 		if (pieces[1] != 'get' && pieces[1] != 'set') {
-			var admin = stateHolder.isAdmin(serverID, stateHolder.username);
+			var admin = stateHolder.isAdmin(stateHolder.username);
 			if (!admin) {
 				stateHolder.simpleAddMessage(stateHolder.username, 'Only administrators can use this command.');
 				return next();

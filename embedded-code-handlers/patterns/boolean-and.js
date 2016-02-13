@@ -1,39 +1,37 @@
 var helper = require('../helper.js');
+var ComparisonNode = require('../node-types/comparison-node.js');
 
 module.exports = {
-	name: 'Boolean And',
+	name: 'Boolean AND',
 	matches: function(command) {
-		return helper.doesMatch(
-			command,
-			[
-				['BOOLEAN'],
-				['BOOLEAN_AND'],
-				['BOOLEAN']
-			]
-		);
+		for (var i = command.length - 1; i > 0; i--) {
+			if (command[i].type == 'BOOLEAN_AND') {
+				return i;
+			}
+		}
+		return false;
 	},
-	work: function(stateHolder, index, command, state, handlers, execute, cb) {
-		var tmpCommand = [];
+	process: function(codeHandler, tokens, state, index, cb) {
+		var node = new ComparisonNode(
+			codeHandler,
+			'&&',
+			function(a, b) {
+				if (a == 'false') a = false;
+				if (b == 'false') b = false;
+
+				var ret = a && b;
+
+				return ret;
+			}
+		);
 		for (var i = 0; i < index; i++) {
-			tmpCommand.push(command[i]);
+			node.left.push(tokens[i]);
 		}
 
-		if (command[index].rawValue == 'true' && command[index + 2].rawValue == 'true') {
-			tmpCommand.push({
-				type: 'BOOLEAN',
-				rawValue: 'true'
-			});
-		} else {
-			tmpCommand.push({
-				type: 'BOOLEAN',
-				rawValue: 'false'
-			});
+		for (var i = index + 1; i < tokens.length; i++) {
+			node.right.push(tokens[i]);
 		}
 
-		for (var i = index + 3; i < command.length; i++) {
-			tmpCommand.push(command[i]);
-		}
-
-		return cb(tmpCommand);
+		return cb('', node);
 	}
 };

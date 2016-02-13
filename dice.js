@@ -35,6 +35,9 @@ function doDiceRolling(tokens, self, cb) {
 
         tokens[i].results = [];
         tokens[i].parsed = parsed;
+        if (parsed.times > 100) {
+          throw new Error('You cannot roll more than 100 dice.');
+        }
         for (var p = 0; p < parsed.times; p++) {
           tokens[i].results.push(self.roll(parsed.faces));
         }
@@ -253,20 +256,16 @@ Dice.prototype.execute = function execute(command, callback) {
     });
   });
   lex.setInput(command);
-
   try {
     lex.lex();
   } catch (e) {
-    console.log(e, command);
-    return {
-      command: command,
-      output: command + '::' + e
-    };
+    return callback(e);
   }
 
   var self = this;
   var cb = callback;
 
+  try {
   applyModifiers(tokens, function(tokens) {
     doDiceRolling(tokens, self, function(tokens) {
       var rawResults = tokens;
@@ -324,11 +323,14 @@ Dice.prototype.execute = function execute(command, callback) {
             data.output += ' = `' + result + '`';
             data.totalResult = result;
           }
-          return cb(data);
+          return cb(null, data);
         });
       });
     });
   });
+  } catch (e) {
+    return cb(e);
+  }
 }
 
 // parses a command given in dice notation

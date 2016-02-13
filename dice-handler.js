@@ -46,7 +46,9 @@ module.exports = function(pieces, stateHolder, next) {
 	}
 
 	var dice = new Dice();
-	dice.execute(rollString, function(result) {
+	dice.execute(rollString, function(error, result) {
+		if (error) return next(error);
+		
 		stateHolder.simpleAddMessage(stateHolder.channelID, result.output);
 
 		next();

@@ -1,6 +1,6 @@
 var Dice = require('./dice.js');
 var ret = {};
-var embeddedCodeHandler = require('./embedded-code-handler.js');
+var embeddedCodeHandler = require('./embedded-code-handlers/base/embedded-code-handler.js');
 
 var weaponKeys = [
 	'name',
@@ -29,7 +29,7 @@ function getActiveCharacter(stateHolder, fail, pass) {
 	};
 
 	ret.characterModel.find(parameters).exec(
-		function(err, res) {
+		(err, res) => {
 			if (err) {
 				stateHolder.simpleAddMessage(stateHolder.username, err);
 				return fail();
@@ -91,10 +91,12 @@ function doWeaponCreate(pieces, stateHolder, activeCharacter, next) {
 		}
 	);
 	activeCharacter.markModified('weapons');
-	activeCharacter.save(function(err) {
-		stateHolder.simpleAddMessage(stateHolder.username, 'Saved.');
-		return next();
-	});
+	activeCharacter.save(
+		(err) => {
+			stateHolder.simpleAddMessage(stateHolder.username, 'Saved.');
+			return next();
+		}
+	);
 }
 
 function doWeaponSet(pieces, stateHolder, activeCharacter, next) {
@@ -121,15 +123,16 @@ function doWeaponSet(pieces, stateHolder, activeCharacter, next) {
 			}
 
 			activeCharacter.weapons[i][key] = value;
-			activeCharacter.save(function(err) {
-				if (err) {
-					stateHolder.simpleAddMessage(stateHolder.username, err);
-					console.log(err);
-				} else {
-					stateHolder.simpleAddMessage(stateHolder.username, 'Saved weapon variable.');
+			activeCharacter.save(
+				(err) => {
+					if (err) {
+						throw new Error(err);
+					} else {
+						stateHolder.simpleAddMessage(stateHolder.username, 'Saved weapon variable.');
+					}
+					return next();
 				}
-				return next();
-			});
+			);
 
 			return;
 		}
@@ -154,12 +157,16 @@ function doWeaponDrop(pieces, stateHolder, activeCharacter, next) {
 	for (var i = 0; i < activeCharacter.weapons.length; i++) {
 		if (activeCharacter.weapons[i].name == finalParam) {
 			activeCharacter.weapons.splice(i, 1);
-			return activeCharacter.save(function(err) {
-				if (err) { console.log(err); }
+			return activeCharacter.save(
+				(err) => {
+					if (err) {
+						throw new Error(err);
+					}
 
-				stateHolder.simpleAddMessage(stateHolder.username, 'Dropped weapon ' + finalParam + ' from character ' + activeCharacter.name);
-				return next();
-			});
+					stateHolder.simpleAddMessage(stateHolder.username, 'Dropped weapon ' + finalParam + ' from character ' + activeCharacter.name);
+					return next();
+				}
+			);
 		}
 	}
 }
@@ -171,7 +178,7 @@ function doWeaponGrab(pieces, stateHolder, activeCharacter, next) {
 	}
 
 	var weaponStoreModel = ret.mongoose.model('WeaponStore');
-	var server = stateHolder.findServerID(stateHolder.channelID);
+	var server = stateHolder.serverID;
 	if (!server) {
 		stateHolder.simpleAddMessage(stateHolder.username, "This command must be run from a channel.");
 		return next();
@@ -180,65 +187,64 @@ function doWeaponGrab(pieces, stateHolder, activeCharacter, next) {
 		server: server,
 		shortName: pieces[3]
 	};
-	weaponStoreModel.find(params).exec(function(err, results) {
-		if (err) {
-			stateHolder.simpleAddMessage(stateHolder.username, err);
-			console.log(err);
-			return next();
-		}
-
-		if (results.length == 0) {
-			stateHolder.simpleAddMessage(stateHolder.username, 'No weapon found.');
-			return next();
-		}
-
-		var weapon = results[0];
-
-		var weaponName = '';
-		for (var i = 4; i < pieces.length; i++) {
-			if (weaponName != '') weaponName += ' ';
-			weaponName += pieces[i];
-		}
-		if (weaponName == '') weaponName = weapon.name;
-
-		var abilityScore = 'strength';
-		if (weapon.properties.indexOf('versatile') != -1) {
-			if (activeCharacter.dexterity > activeCharacter.strength) {
-				abilityScore = 'dexterity';
+	weaponStoreModel.find(params).exec(
+		(err, results) => {
+			if (err) {
+				throw new Error(err);
 			}
-		}
 
-		var isCurrent = (activeCharacter.weapons.length == 0);
-		var re = new RegExp("([0-9]+)d([0-9]+)");
-		var criticalRoll = weapon.damageRoll.match(re);
-		if (criticalRoll) {
-			criticalRoll = (parseInt(criticalRoll[1]) * 2) + 'd' + criticalRoll[2];
-		}
-		activeCharacter.weapons.push(
-			{
-				name: weaponName,
-				abilityScore: abilityScore,
-				damageType: weapon.damageType,
-				critRoll: criticalRoll,
-				normalRoll: weapon.damageRoll,
-				magicModifier: 0,
-				isCurrent: isCurrent,
-				complexity: weapon.complexity,
-				range: weapon.ragnge,
-				cost: weapon.cost,
-				weight: weapon.weight,
-				properties: weapon.properties
+			if (results.length == 0) {
+				stateHolder.simpleAddMessage(stateHolder.username, 'No weapon found.');
+				return next();
 			}
-		);
-		activeCharacter.markModified('weapons');
-		activeCharacter.save(function(err) {
-			stateHolder.simpleAddMessage(stateHolder.username, 'Saved.');
-			return next();
-		});
 
+			var weapon = results[0];
 
+			var weaponName = '';
+			for (var i = 4; i < pieces.length; i++) {
+				if (weaponName != '') weaponName += ' ';
+				weaponName += pieces[i];
+			}
+			if (weaponName == '') weaponName = weapon.name;
 
-	});
+			var abilityScore = 'strength';
+			if (weapon.properties.indexOf('versatile') != -1) {
+				if (activeCharacter.dexterity > activeCharacter.strength) {
+					abilityScore = 'dexterity';
+				}
+			}
+
+			var isCurrent = (activeCharacter.weapons.length == 0);
+			var re = new RegExp("([0-9]+)d([0-9]+)");
+			var criticalRoll = weapon.damageRoll.match(re);
+			if (criticalRoll) {
+				criticalRoll = (parseInt(criticalRoll[1]) * 2) + 'd' + criticalRoll[2];
+			}
+			activeCharacter.weapons.push(
+				{
+					name: weaponName,
+					abilityScore: abilityScore,
+					damageType: weapon.damageType,
+					critRoll: criticalRoll,
+					normalRoll: weapon.damageRoll,
+					magicModifier: 0,
+					isCurrent: isCurrent,
+					complexity: weapon.complexity,
+					range: weapon.ragnge,
+					cost: weapon.cost,
+					weight: weapon.weight,
+					properties: weapon.properties
+				}
+			);
+			activeCharacter.markModified('weapons');
+			activeCharacter.save(
+				(err) => {
+					stateHolder.simpleAddMessage(stateHolder.username, 'Saved.');
+					return next();
+				}
+			);
+		}
+	);
 }
 
 ret.doWeapon = function(pieces, stateHolder, activeCharacter, next) {
@@ -308,21 +314,22 @@ function modifyAttackRoll(roll, activeCharacter, stateHolder, next) {
 		name: 'modifyAttackRoll'
 	};
 
-	varModel.find(params).exec(function(err, res) {
-		if (err) {
-			stateHolder.simpleAddMessage(stateHolder.username, err);
-			res = [];
-		}
+	varModel.find(params).exec(
+		(err, res) => {
+			if (err) {
+				stateHolder.simpleAddMessage(stateHolder.username, err);
+				res = [];
+			}
 
-		if (res.length) {
-			var code = res[0].value;
+			if (res.length) {
+				var code = res[0].value;
 
-			var pieces = code.split(" ");
-			pieces.unshift("!!");
+				var pieces = code.split(" ");
+				pieces.unshift("!!");
 
-			stateHolder.incomingVariables = {
-				rollString: roll
-			};
+				stateHolder.incomingVariables = {
+					rollString: roll
+				};
 
 			stateHolder.inAttackRoll = true;
 			embeddedCodeHandler.handle(pieces, stateHolder, function(err, res) {
@@ -332,7 +339,7 @@ function modifyAttackRoll(roll, activeCharacter, stateHolder, next) {
 		} else {
 			return next(roll);
 		}
-	});
+	);
 }
 
 function modifyDamageRoll(roll, attackRoll, activeCharacter, stateHolder, next) {
@@ -346,22 +353,22 @@ function modifyDamageRoll(roll, attackRoll, activeCharacter, stateHolder, next) 
 		name: 'modifyDamageRoll'
 	};
 
-	varModel.find(params).exec(function(err, res) {
-		if (err) {
-			stateHolder.simpleAddMessage(stateHolder.username, err);
-			res = [];
-		}
+	varModel.find(params).exec(
+		(err, res) => {
+			if (err) {
+				stateHolder.simpleAddMessage(stateHolder.username, err);
+				res = [];
+			}
 
-		if (res.length) {
-			var code = res[0].value;
+			if (res.length) {
+				var code = res[0].value;
 
-			var pieces = code.split(" ");
-			pieces.unshift("!!");
+				var pieces = code.split(" ");
+				pieces.unshift("!!");
 
 			var dieResult = 0;
 			for (var i = 0; i < attackRoll.rawResults.length; i++) {
 				if (attackRoll.rawResults[i].type == 'die') {
-					console.log(attackRoll.rawResults[i]);
 					if (attackRoll.rawResults[i].kept && attackRoll.rawResults[i].kept.length == 1) {
 						dieResult = attackRoll.rawResults[i].kept[0];
 						break;
@@ -370,12 +377,11 @@ function modifyDamageRoll(roll, attackRoll, activeCharacter, stateHolder, next) 
 						break;
 					}
 				}
-			}
 
-			stateHolder.incomingVariables = {
-				rollString: roll,
-				attackOnDie: dieResult
-			};
+				stateHolder.incomingVariables = {
+					rollString: roll,
+					attackOnDie: dieResult
+				};
 
 			stateHolder.inAttackRoll = true;
 			embeddedCodeHandler.handle(pieces, stateHolder, function(err, res) {
@@ -385,7 +391,7 @@ function modifyDamageRoll(roll, attackRoll, activeCharacter, stateHolder, next) 
 		} else {
 			return next({ rollString: roll });
 		}
-	});
+	);
 }
 
 function doAttack(activeCharacter, weapon, stateHolder, next) {
@@ -456,10 +462,21 @@ function doAttack(activeCharacter, weapon, stateHolder, next) {
 					var dieResults = [];
 					for (var i = 0; i < result.rawResults.length; i++) {
 						if (result.rawResults[i].type == 'die') {
-							for (var m = 0; m < result.rawResults[i].results.length; m++) {
-								dieResults[dieResults.length] = result.rawResults[i].results[m];
-							}
+							toHitOnDie = result.rawResults[i].results[0];
+							break;
 						}
+					}
+					var toHit = result.output;
+					var isCrit = (toHitOnDie == 20);
+
+					var diceToRoll = '';
+					var damageRoll;
+					if (isCrit) {
+						damageRoll = weapon.critRoll;
+						diceToRoll += weapon.critRoll || '2d' + weapon.damageDie;
+					} else {
+						damageRoll = weapon.normalRoll;
+						diceToRoll += weapon.normalRoll || '1d' + weapon.damageDie;
 					}
 
 					attackFormat2(stateHolder, activeCharacter, weapon, toHitOnDie, toHit, damageRoll, result.output, footer);
@@ -473,40 +490,44 @@ function doAttack(activeCharacter, weapon, stateHolder, next) {
 }
 
 ret.attack = function(pieces, stateHolder, next) {
-	getActiveCharacter(stateHolder, next, function(activeCharacter) {
-		var activeWeapon = null;
+	getActiveCharacter(
+		stateHolder,
+		next,
+		(activeCharacter) => {
+			var activeWeapon = null;
 
-		if (pieces.length >= 2) {
-			var weaponName = pieces[1];
-			for (var i = 2; i < pieces.length; i++) {
-				weaponName += ' ' + pieces[i];
-			}
+			if (pieces.length >= 2) {
+				var weaponName = pieces[1];
+				for (var i = 2; i < pieces.length; i++) {
+					weaponName += ' ' + pieces[i];
+				}
 
-			for (var i = 0; i < activeCharacter.weapons.length; i++) {
-				var weapon = activeCharacter.weapons[i];
-				if (weapon.name == weaponName) {
-					activeWeapon = weapon;
-					break;
+				for (var i = 0; i < activeCharacter.weapons.length; i++) {
+					var weapon = activeCharacter.weapons[i];
+					if (weapon.name == weaponName) {
+						activeWeapon = weapon;
+						break;
+					}
 				}
 			}
-		}
 
-		if (!activeWeapon) {
-			for (var i = 0; i < activeCharacter.weapons.length; i++) {
-				var weapon = activeCharacter.weapons[i];
-				if (weapon.isCurrent) {
-					activeWeapon = weapon;
-					break;
+			if (!activeWeapon) {
+				for (var i = 0; i < activeCharacter.weapons.length; i++) {
+					var weapon = activeCharacter.weapons[i];
+					if (weapon.isCurrent) {
+						activeWeapon = weapon;
+						break;
+					}
 				}
 			}
-		}
 
-		if (activeWeapon) {
-			return doAttack(activeCharacter, activeWeapon, stateHolder, next);
+			if (activeWeapon) {
+				return doAttack(activeCharacter, activeWeapon, stateHolder, next);
+			}
+			stateHolder.simpleAddMessage(stateHolder.username, "No active weapon.");
+			return next();
 		}
-		stateHolder.simpleAddMessage(stateHolder.username, "No active weapon.");
-		return next();
-	});
+	);
 };
 
 module.exports = ret;

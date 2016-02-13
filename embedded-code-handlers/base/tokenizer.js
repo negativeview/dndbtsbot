@@ -6,13 +6,11 @@
  * token a name.
  */
 
-var breakIntoStatementsAndBlocks = require('./break-into-statements-and-blocks.js');
-var decideStringOrVariable       = require('./decide-string-or-variable.js');
-var fixStrings                   = require('./fix-strings.js');
-var lexer                        = require('lex');
-var removeWhitespace             = require('./remove-whitespace.js');
+var fixStrings       = require('./fix-strings.js');
+var lexer            = require('lex');
+var removeWhitespace = require('./remove-whitespace.js');
 
-module.exports = function(command, ret, cb) {
+module.exports = function(command, cb) {
 	var lex = new lexer();
 
 	var tokens = [];
@@ -20,238 +18,300 @@ module.exports = function(command, ret, cb) {
 	lex.addRule(/\{[0-9]+\+?\}/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'MACRO_ARGUMENT'
 		});
 	});
 
+	lex.addRule(/\./gm, function(lexeme) {
+		tokens.push({
+			rawValue: '.',
+			stringValue: lexeme,
+			type: 'DOT'
+		});
+	});
 	lex.addRule(/[ \t\n\r]/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'WHITESPACE'
-		});
-	});
-	lex.addRule(/username/gm, function(lexeme) {
-		tokens.push({
-			rawValue: stateHolder.actualUsername,
-			type: 'QUOTED_STRING'
-		});
-	});
-	lex.addRule(/echo/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'ECHO'
-		});
-	});
-	lex.addRule(/pm/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'PM'
-		});
-	});
-	lex.addRule(/ignore/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'IGNORE'
-		});
-	});
-	lex.addRule(/var\(/gm, function(lexeme) {
-		tokens.push({
-			rawValue: 'var',
-			type: 'FUNCTION'
-		});
-		tokens.push({
-			rawValue: '(',
-			type: 'LEFT_PAREN'
-		});
-	});
-	lex.addRule(/foreach/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'FOREACH'
-		});
-	});
-	lex.addRule(/delete/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'DELETE'
-		});
-	});
-	lex.addRule(/if/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'IF'
-		});
-	});
-	lex.addRule(/else/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'ELSE'
 		});
 	});
 	lex.addRule(/\+/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'PLUS'
 		});
 	});
 	lex.addRule(/\-/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'MINUS'
 		});
 	});
 	lex.addRule(/\*/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'ASTERISK'
 		});
 	});
 	lex.addRule(/\//, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'FORWARDSLASH'
 		});
 	});
 	lex.addRule(/\?/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'QUESTION_MARK'
 		});
 	});
 	lex.addRule(/:/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'COLON'
+		});
+	});
+	lex.addRule(/!=/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			stringValue: lexeme,
+			type: 'NOT_EQUALS'
+		});
+	});
+	lex.addRule(/<=/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			stringValue: lexeme,
+			type: 'LE'
 		});
 	});
 	lex.addRule(/==/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'DOUBLE_EQUALS'
 		});
 	});
 	lex.addRule(/</gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'LEFT_ANGLE'
 		});
 	});
 	lex.addRule(/>/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'RIGHT_ANGLE'
 		});
 	});
 	lex.addRule(/\!/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'EXCLAMATION'
 		});
 	});
 	lex.addRule(/=/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'EQUALS'
 		});
 	});
 	lex.addRule(/;/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'SEMICOLON'
 		});
 	});
 	lex.addRule(/\(/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'LEFT_PAREN'
 		});
 	});
 	lex.addRule(/\)/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'RIGHT_PAREN'
 		});
 	});
 	lex.addRule(/\[/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'LEFT_BRACKET'
 		});
 	});
 	lex.addRule(/\]/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'RIGHT_BRACKET'
 		});
 	});
 	lex.addRule(/\{/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'LEFT_CURLY'
 		});
 	});
 	lex.addRule(/\}/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'RIGHT_CURLY'
 		});
 	});
 	lex.addRule(/\&\&/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'BOOLEAN_AND'
 		});
 	});
 	lex.addRule(/\|\|/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'BOOLEAN_OR'
 		});
 	});
 	lex.addRule(/'/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'SINGLE_QUOTE'
 		});
 	});
 	lex.addRule(/["“]/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
+			stringValue: lexeme,
 			type: 'DOUBLE_QUOTE'
 		});
 	});
 	lex.addRule(/[0-9]+/, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,
-			type: 'QUOTED_STRING',
+			stringValue: lexeme,
+			type: 'BARE_STRING',
 			value: lexeme
 		});
 	});
-	lex.addRule(/::/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'DOUBLECOLON'
-		});
-	});
-	lex.addRule(/[^ '"\[\]\(\)\t\n;]+/gm, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			type: 'STRING'
-		});
+	lex.addRule(/[^ '"\[\]\.\(\)\t\n\{\};]+/gm, function(lexeme) {
+		switch (lexeme) {
+			case 'roll':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'ROLL'
+				});
+				break;
+			case 'else':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'ELSE'
+				});
+				break;
+			case 'ignore':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'IGNORE'
+				});
+				break;
+			case 'foreach':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'FOREACH'
+				});
+				break;
+			case 'if':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'IF'
+				});
+				break;
+			case 'table':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'TABLE'
+				});
+				break;
+			case 'echo':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'ECHO'
+				});
+				break;
+			case 'pm':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'PM'
+				});
+				break;
+			case 'delete':
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'DELETE'
+				});
+				break;
+			default:
+				tokens.push({
+					rawValue: lexeme,
+					stringValue: lexeme,
+					type: 'BARE_STRING'
+				});
+		}
 	});
 
 	lex.setInput(command);
 
-	try {
-		lex.lex();
-	} catch (e) {
-		console.log(e);
-	}
+	lex.lex();
 
-	tokens = fixStrings(tokens);
-	tokens = removeWhitespace(tokens);
-	tokens = decideStringOrVariable(ret, tokens);
-	statements = breakIntoStatementsAndBlocks(tokens);
+	fixStrings(
+		tokens,
+		(error, tokensWithQuotedStrings) => {
+			if (error) {
+				return cb(error);
+			}
 
-	return cb(statements);
+			process.nextTick(() => {
+				removeWhitespace(
+					tokensWithQuotedStrings,
+					(error, finalizedTokens) => {
+						if (error) {
+							return cb(error);
+						}
+
+						process.nextTick(() => {
+							cb(null, finalizedTokens);
+						});
+					}
+				);
+			});
+		}
+	);
 }

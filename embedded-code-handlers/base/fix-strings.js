@@ -2,7 +2,7 @@
  * This file turns strings and string-like things into QUOTED_STRING tokens.
  */
 
-module.exports = function(command) {
+module.exports = function(command, callback) {
 	var workingCommand = [];
 	var inString = false;
 	var workingString = '';
@@ -25,6 +25,7 @@ module.exports = function(command) {
 				inString = false;
 				token = {
 					type: 'QUOTED_STRING',
+					stringValue: '"' + workingString + '"',
 					rawValue: workingString
 				};
 				workingString = '';
@@ -41,7 +42,7 @@ module.exports = function(command) {
 			if (i != 0) erroredLine += ' ';
 			erroredLine += command[i].rawValue;
 		}
-		throw "Missing closing " + stringType + " in line `" + erroredLine + "`";
+		throw new Error("Missing closing " + stringType + " in line `" + erroredLine + "`");
 	}
-	return workingCommand;
+	return callback(null, workingCommand);
 }
