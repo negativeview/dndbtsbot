@@ -1,6 +1,12 @@
 module.exports = function(mongoose) {
 	var Schema = mongoose.Schema;
 
+	var TokenSchema = new Schema({
+		token: String,
+		user: String
+	});
+	mongoose.model('Token', TokenSchema);
+
 	var NewVarSchema = new Schema({
 		/**
 		 * Only one of these should be defined at a time.

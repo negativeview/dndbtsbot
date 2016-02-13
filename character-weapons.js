@@ -331,13 +331,14 @@ function modifyAttackRoll(roll, activeCharacter, stateHolder, next) {
 					rollString: roll
 				};
 
-			stateHolder.inAttackRoll = true;
-			embeddedCodeHandler.handle(pieces, stateHolder, function(err, res) {
-				stateHolder.inAttackRoll = false;
-				return next(res.variables.rollString);
-			});
-		} else {
-			return next(roll);
+				stateHolder.inAttackRoll = true;
+				embeddedCodeHandler.handle(pieces, stateHolder, function(err, res) {
+					stateHolder.inAttackRoll = false;
+					return next(res.variables.rollString);
+				});
+			} else {
+				return next(roll);
+			}
 		}
 	);
 }
@@ -366,30 +367,32 @@ function modifyDamageRoll(roll, attackRoll, activeCharacter, stateHolder, next) 
 				var pieces = code.split(" ");
 				pieces.unshift("!!");
 
-			var dieResult = 0;
-			for (var i = 0; i < attackRoll.rawResults.length; i++) {
-				if (attackRoll.rawResults[i].type == 'die') {
-					if (attackRoll.rawResults[i].kept && attackRoll.rawResults[i].kept.length == 1) {
-						dieResult = attackRoll.rawResults[i].kept[0];
-						break;
-					} else if (attackRoll.rawResults[i].results && attackRoll.rawResults[i].results.length == 1) {
-						dieResult = attackRoll.rawResults[i].results[0];
-						break;
+				var dieResult = 0;
+				for (var i = 0; i < attackRoll.rawResults.length; i++) {
+					if (attackRoll.rawResults[i].type == 'die') {
+						if (attackRoll.rawResults[i].kept && attackRoll.rawResults[i].kept.length == 1) {
+							dieResult = attackRoll.rawResults[i].kept[0];
+							break;
+						} else if (attackRoll.rawResults[i].results && attackRoll.rawResults[i].results.length == 1) {
+							dieResult = attackRoll.rawResults[i].results[0];
+							break;
+						}
 					}
+
+					stateHolder.incomingVariables = {
+						rollString: roll,
+						attackOnDie: dieResult
+					};
+
+					stateHolder.inAttackRoll = true;
+					embeddedCodeHandler.handle(pieces, stateHolder, function(err, res) {
+						stateHolder.inAttackRoll = false;
+						return next(res.variables);
+					});
 				}
-
-				stateHolder.incomingVariables = {
-					rollString: roll,
-					attackOnDie: dieResult
-				};
-
-			stateHolder.inAttackRoll = true;
-			embeddedCodeHandler.handle(pieces, stateHolder, function(err, res) {
-				stateHolder.inAttackRoll = false;
-				return next(res.variables);
-			});
-		} else {
-			return next({ rollString: roll });
+			} else {
+				return next({ rollString: roll });
+			}
 		}
 	);
 }

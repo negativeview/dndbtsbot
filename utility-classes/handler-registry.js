@@ -9,7 +9,7 @@ var tableHandler        = require('../table-handler.js');
 var varHandler          = require('../var-handler.js');
 var weaponsStore        = require('../weapons-store.js');
 var shortRollHandler    = require('../shorthand-dice-rolls.js');
-var liarsDice           = require('../liars-dice.js');
+var Token               = require('../token.js');
 
 function HandlerRegistry(stateHolder) {
 	this.stateHolder = stateHolder;
@@ -17,6 +17,8 @@ function HandlerRegistry(stateHolder) {
 	this.bot = stateHolder.bot;
 
 	var embeddedCodeHandler = new EmbeddedCodeHandler(stateHolder, this);
+
+	var token = new Token(this.mongoose);
 
 	this.handlers = {
 		'!2': shortRollHandler.normal,
@@ -37,7 +39,7 @@ function HandlerRegistry(stateHolder) {
 		'!character': characterHandler.handle,
 		'!attack': characterHandler.attack,
 		'!weaponstore': weaponsStore.handle,
-		'!liarsdice': liarsDice.handle
+		'!token': token.handle.bind(token)
 	};
 
 	rollstatsHandler.init(diceHandler);
