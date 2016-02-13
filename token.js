@@ -4,7 +4,6 @@ var auth = require('./authenticate.js');
 var preamble = auth.webURL + '/';
 
 function Token(mongoose, bot) {
-	this.preamble = bot.
 	this.mongoose = mongoose;
 }
 
