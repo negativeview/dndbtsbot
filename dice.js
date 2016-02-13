@@ -259,7 +259,7 @@ Dice.prototype.execute = function execute(command, callback) {
   try {
     lex.lex();
   } catch (e) {
-    return callback(e);
+    return callback(e + '::' + command);
   }
 
   var self = this;

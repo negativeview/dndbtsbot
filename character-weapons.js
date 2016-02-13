@@ -399,7 +399,16 @@ function modifyDamageRoll(roll, attackRoll, activeCharacter, stateHolder, next) 
 					}
 				);
 			} else {
-				return next(roll);
+				return next(
+					{
+						rollString: {
+							stringValue: roll
+						},
+						footer: {
+							stringValue: ''
+						}
+					}
+				);
 			}
 		}
 	);
@@ -410,6 +419,11 @@ function doAttack(activeCharacter, weapon, stateHolder, next) {
 
 	if (!weapon.abilityScore) {
 		stateHolder.simpleAddMessage(stateHolder.username, "Need an abilityScore set for this weapon to be able to attack.");
+		return next();
+	}
+
+	if (!activeCharacter[weapon.abilityScore]) {		
+		stateHolder.simpleAddMessage(stateHolder.username, "Your character's " + weapon.abilityScore + " needs to be set.");
 		return next();
 	}
 
@@ -436,6 +450,7 @@ function doAttack(activeCharacter, weapon, stateHolder, next) {
 		roll += ' + ' + weapon.magicModifier;
 	}
 
+	console.log('pre modified roll:' + roll);
 	modifyAttackRoll(
 		roll,
 		activeCharacter,
@@ -477,6 +492,7 @@ function doAttack(activeCharacter, weapon, stateHolder, next) {
 						activeCharacter,
 						stateHolder,
 						function(variables) {
+							console.log('modifiedDamageRoll', variables);
 							var modifiedDamageRoll = variables.rollString.stringValue;
 							var footer = variables.footer.stringValue;
 
