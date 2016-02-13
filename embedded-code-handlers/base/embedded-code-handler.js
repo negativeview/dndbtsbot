@@ -102,6 +102,7 @@ EmbeddedCodeHandler.prototype.handle = function(pieces, stateHolder, externalCal
 	 * system it's an array of words split on spaces. Put them back
 	 * together.
 	 */
+	stateHolder.verified = false;
 	var command = '';
 	for (var i = 1; i < pieces.length; i++) {
 		if (command != '')
