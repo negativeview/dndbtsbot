@@ -335,7 +335,7 @@ function modifyAttackRoll(roll, activeCharacter, stateHolder, next) {
 				var embeddedCodeHandler = new EmbeddedCodeHandler(stateHolder, stateHolder.executionHelper.handlers);
 				embeddedCodeHandler.handle(pieces, stateHolder, function(err, res) {
 					stateHolder.inAttackRoll = false;
-					return next(res.variables.rollString);
+					return next(res.variables.rollString.stringValue);
 				});
 			} else {
 				return next(roll);
