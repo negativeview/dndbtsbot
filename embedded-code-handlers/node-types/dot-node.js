@@ -1,6 +1,7 @@
 var util = require('util');
 var SyntaxTreeNode = require('../base/syntax-tree-node.js');
 var ChannelNamespace = require('../namespaces/channel-namespace.js');
+var CharacterNamespace = require('../namespaces/character-namespace.js');
 var UserNamespace = require('../namespaces/user-namespace.js');
 var ServerNamespace = require('../namespaces/server-namespace.js');
 var Variable = require('../base/variable.js');
@@ -64,6 +65,9 @@ DotNode.prototype.leftDone = function(cb, codeState, error, result) {
 					break;
 				case 'user':
 					namespace = new UserNamespace(this.codeHandler.stateHolder);
+					break;
+				case 'character':
+					namespace = new CharacterNamespace(this.codeHandler.stateHolder);
 					break;
 			}
 			if (namespace) {
