@@ -1,3 +1,5 @@
+var Character = require('./character-sheet/character.js');
+
 var async = require('async');
 var weapons = require('./character-weapons.js');
 var Dice = require('./dice.js');

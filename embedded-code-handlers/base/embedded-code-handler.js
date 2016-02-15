@@ -205,6 +205,8 @@ EmbeddedCodeHandler.prototype.executeString = function(command, codeState, exter
 EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeState, error, tokens, parentElement) {
 	if (error) return externalCallback(error);
 
+	console.log('tokenList', tokens);
+
 	if ('programNode' in codeState) {
 		var stn = codeState.programNode;
 	} else {

@@ -67,6 +67,8 @@ SquareBracketNode.prototype.rightDone = function(cb, codeState, variable, error,
 		(error, stringValue) => {
 			if (error) return cb(error);
 			variable.index = stringValue;
+
+			console.log('variable', variable);
 			return cb(null, variable);
 		}
 	);
