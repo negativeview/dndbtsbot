@@ -17,6 +17,8 @@ function Dice(options) {
 
 function doDiceRolling(tokens, self, cb) {
 	// Handle the actual rolling.
+	var totalNumber = 0;
+
 	for (var i = 0; i < tokens.length; i++) {
 		var token = tokens[i];
 		switch (token.type) {
@@ -41,6 +43,9 @@ function doDiceRolling(tokens, self, cb) {
 					throw new Error('You cannot roll more than 100 dice.');
 				}
 				for (var p = 0; p < parsed.times; p++) {
+					totalNumber++;
+					if (totalNumber > 200) break;
+					
 					var result = self.roll(parsed.faces);
 					tokens[i].results.push(result);
 					if (result == parsed.faces && parsed.exploding) {
@@ -53,7 +58,6 @@ function doDiceRolling(tokens, self, cb) {
 				break;
 		}
 	}
-	console.log(tokens);
 	cb(tokens);
 }
 
@@ -281,68 +285,81 @@ Dice.prototype.execute = function execute(command, callback) {
 	var cb = callback;
 
 	try {
-		applyModifiers(tokens, function(tokens) {
-			doDiceRolling(tokens, self, function(tokens) {
-				var rawResults = tokens;
-				createNumberEquivalents(tokens, function(tokens) {
-					doMath(tokens, function(result) {
-						var data = {
-							command: command,
-							rawResults: rawResults,
-							output: ''
-						};
+		applyModifiers(
+			tokens,
+			(tokens) => {
+				doDiceRolling(
+					tokens,
+					self,
+					(tokens) => {
+						var rawResults = tokens;
+						createNumberEquivalents(
+							tokens,
+							(tokens) => {
+								doMath(
+									tokens,
+									(result) => {
+										var data = {
+											command: command,
+											rawResults: rawResults,
+											output: ''
+										};
 
-						if (isPlain) {
-							data.output = result;
-						} else if (isSimple) {
-							data.output = '`' + result + '`';
-						} else {
-							for (var i = 0; i < tokens.length; i++) {
-								if (data.output != '')
-									data.output += ' ';
-								data.output += tokens[i].lexeme;
+										if (isPlain) {
+											data.output = result;
+										} else if (isSimple) {
+											data.output = '`' + result + '`';
+										} else {
+											for (var i = 0; i < tokens.length; i++) {
+												if (data.output != '')
+													data.output += ' ';
+												data.output += tokens[i].lexeme;
 
-								if (tokens[i].results) {
-									data.output += ' (';
-									if (tokens[i].kept) {
-										data.output += '~~';
-										data.output += tokens[i].dropped.join(', ');
-										data.output += '~~';
-										data.output += ', ';
+												if (tokens[i].results) {
+													data.output += ' (';
+													if (tokens[i].kept) {
+														data.output += '~~';
+														data.output += tokens[i].dropped.join(', ');
+														data.output += '~~';
+														data.output += ', ';
 
-										for (var p = 0; p < tokens[i].kept.length; p++) {
-											if (p != 0)
-												data.output += ', ';
-											var value = tokens[i].kept[p];
-											if (value == 1 || value == tokens[i].parsed.faces) {
-												data.output += '**' + value + '**';
-											} else {
-												data.output += value;
+														for (var p = 0; p < tokens[i].kept.length; p++) {
+															if (p != 0)
+																data.output += ', ';
+															var value = tokens[i].kept[p];
+															if (value == 1 || value == tokens[i].parsed.faces) {
+																data.output += '**' + value + '**';
+															} else {
+																data.output += value;
+															}
+														}
+													} else {
+														for (var p = 0; p < tokens[i].results.length; p++) {
+															if (p != 0)
+																data.output += ', ';
+															var value = tokens[i].results[p];
+															if (value == 1 || value == tokens[i].parsed.faces) {
+																data.output += '**' + value + '**';
+															} else {
+																data.output += value;
+															}
+														}
+													}
+													data.output += ')';
+												}
 											}
+											data.output += ' = `' + result + '`';
+											data.totalResult = result;
 										}
-									} else {
-										for (var p = 0; p < tokens[i].results.length; p++) {
-											if (p != 0)
-												data.output += ', ';
-											var value = tokens[i].results[p];
-											if (value == 1 || value == tokens[i].parsed.faces) {
-												data.output += '**' + value + '**';
-											} else {
-												data.output += value;
-											}
-										}
+										return cb(null, data);
 									}
-									data.output += ')';
-								}
+								);
 							}
-							data.output += ' = `' + result + '`';
-							data.totalResult = result;
-						}
-						return cb(null, data);
-					});
-				});
-			});
-		});
+						);
+					}
+				);
+			}
+		);
 	} catch (e) {
 		return cb(e);
 	}
@@ -354,9 +371,9 @@ Dice.prototype.parse = function parse(command) {
 
 	if (typeof command !== 'string') {
 		throw new Error('Parameter `command` must be a string, not undefined');
-}
+	}
 
-var pieces = command.split(/[-+\*]/);
+	var pieces = command.split(/[-+\*]/);
 
 	// determine number of dice to roll
 	var times = command.match(/(\d+)d/i);
@@ -378,7 +395,7 @@ var pieces = command.split(/[-+\*]/);
 		keep = command.match(/\(kh(\d+)\)/i);
 		parsed.keep = keep && keep[1] && parseInt(keep[1]) || null;
 		parsed.keepType = 1;
-}
+	}
 
 	// determine if should keep the lowest rolled dice
 	var lowest = /-L/.test(command);
@@ -403,12 +420,12 @@ Dice.prototype.format = function format(parsed) {
 
 	if (typeof parsed === 'undefined') {
 		return self.options.command || 'd20';
-}
+	}
 
 	// add the number of dice to be rolled
 	if (parsed.times) {
 		command += parsed.times;
-}
+	}
 
 	// add the number of faces
 	command += (parsed.faces) ? 'd' + parsed.faces : 'd' + 20;
@@ -416,26 +433,26 @@ Dice.prototype.format = function format(parsed) {
 	// add dice to keep command
 	if (parsed.keep) {
 		command += '(k' + parsed.keep + ')';
-}
+	}
 
 	// add keep lowest command
 	if (parsed.lowest) {
 		command += '-L';
-}
+	}
 
 	// add the multipier
 	if (parsed.multiplier && parsed.multiplier != '1') {
 		command += 'x' + parsed.multiplier;
-}
+	}
 
 	// add the modifier
 	if (parsed.modifier && parsed.modifier > 0) {
 		command += '+' + parsed.modifier;
-} else if (parsed.modifier) {
+	} else if (parsed.modifier) {
 		command += parsed.modifier;
-}
+	}
 
-return command || undefined;
+	return command || undefined;
 }
 
 module.exports = Dice;
