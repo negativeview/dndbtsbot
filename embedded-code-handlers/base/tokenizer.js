@@ -86,6 +86,13 @@ module.exports = function(command, cb) {
 			type: 'NOT_EQUALS'
 		});
 	});
+	lex.addRule(/>=/gm, function(lexeme) {
+		tokens.push({
+			rawValue: lexeme,
+			stringValue: lexeme,
+			type: 'GE'
+		});
+	});
 	lex.addRule(/<=/gm, function(lexeme) {
 		tokens.push({
 			rawValue: lexeme,

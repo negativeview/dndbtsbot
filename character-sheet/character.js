@@ -1,16 +1,10 @@
+var CharacterAbilityScores = require('./character-ability-scores.js');
 var CodeState = require('../embedded-code-handlers/base/code-state.js');
 var Dice = require('../dice.js');
 var EmbeddedCodeHandler = require('../embedded-code-handlers/base/embedded-code-handler.js');
 
 function Character(storedCharacter) {
-	this.abilityScores = {
-		strength: 10,
-		dexterity: 10,
-		constitution: 10,
-		intelligence: 10,
-		wisdom: 10,
-		charisma: 10
-	};
+	this.abilityScores = new CharacterAbilityScores(this);
 
 	this.saves = [
 		{
@@ -261,19 +255,12 @@ Character.prototype.getSkill = function(skillName, arguments, cb) {
 };
 
 Character.prototype.getModifier = function(abilityName) {
-	if (!(abilityName in this.abilityScores)) {
-		throw new Error('No such ability: ' + abilityName);
-	}
-
-	var score = this.abilityScores[abilityName];
-	var modifier = Math.floor((score - 10) / 2);
-
-	return modifier;
+	return this.abilityScores.getModifier(abilityName);
 };
 
 Character.prototype.getVariable = function(variableName, stateHolder, cb) {
-	if (variableName in this.abilityScores) {
-		return cb(null, this.abilityScores[variableName]);
+	if (this.abilityScores.isAbilityScore(variableName)) {
+		return cb(null, this.abilityScores.get(variableName));
 	} else if (variableName in this.computed.variables) {
 		stateHolder.incomingVariables = {
 		};

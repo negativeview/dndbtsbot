@@ -34,6 +34,7 @@ var patterns = [
 		patterns.doubleEquals,
 		patterns.notEquals,
 		patterns.le,
+		patterns.ge,
 		patterns.lessThan,
 		patterns.greaterThan
 	],

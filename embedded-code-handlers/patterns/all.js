@@ -19,6 +19,7 @@ module.exports = {
 	elseBranch: require('./else.js'),
 	foreach: require('./foreach.js'),
 	le: require('./le.js'),
+	ge: require('./ge.js'),
 	lessThan: require('./less-than.js'),
 	greaterThan: require('./greater-than.js'),
 	asterisk: require('./asterisk.js'),

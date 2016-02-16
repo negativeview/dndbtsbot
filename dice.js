@@ -47,6 +47,11 @@ function doDiceRolling(tokens, self, cb) {
 					if (totalNumber > 200) break;
 					
 					var result = self.roll(parsed.faces);
+					if (token.roLess && token.roLess == result) {
+						console.log('Rerolling ' + result);
+						result = self.roll(parsed.faces);
+						console.log('Got ' + result + ' on a reroll');
+					}
 					tokens[i].results.push(result);
 					if (result == parsed.faces && parsed.exploding) {
 						p--;
@@ -139,6 +144,12 @@ function applyModifiers(tokens, cb) {
 			case 'die':
 				lastDie = i;
 				break;
+			case 'ro<':
+				if (lastDie == -1) {
+					throw 'Cannot ro< without a die roll.';
+				}
+				tokens[lastDie].roLess = token.num;
+				break;
 			case 'advantage':
 				if (lastDie == -1) {
 					throw 'Cannot set advantage without a die roll.';
@@ -216,6 +227,13 @@ Dice.prototype.execute = function execute(command, callback) {
 		tokens.push({
 			type: '-',
 			lexeme: lexeme
+		});
+	});
+	lex.addRule(/ro<(\d+)/, function(lexeme, num) {
+		tokens.push({
+			type: 'ro<',
+			lexeme: lexeme,
+			num: num
 		});
 	});
 	lex.addRule(/-?(\d+)d(\d+)/i, function(lexeme) {
