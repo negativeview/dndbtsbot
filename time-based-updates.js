@@ -39,7 +39,7 @@ TimeBasedUpdates.prototype.updateSingleServer = function(serverID, cb) {
 		(channelID, cb) => {
 			this.updateSingleChannel(serverID, channelID, cb);
 		},
-		() => { return; }
+		() => { return cb(); }
 	);
 };
 
