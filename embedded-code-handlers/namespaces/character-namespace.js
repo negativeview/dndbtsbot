@@ -37,7 +37,7 @@ CharacterNamespace.prototype.getScalarValue = function(key, cb) {
 			if (err) return cb(err);
 
 			if (key in this.activeCharacter) {
-				return cb(this.activeCharacter[key]);
+				return cb(null, this.activeCharacter[key]);
 			}
 		}
 	);

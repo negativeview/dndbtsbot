@@ -1,15 +1,16 @@
-var characterHandler    = require('../character-handler.js');
-var diceHandler         = require('../dice-handler.js');
-var echoHandler         = require('../echo-handler.js');
-var EmbeddedCodeHandler = require('../embedded-code-handlers/base/embedded-code-handler.js');
-var helpHandler         = require('../help-handler.js');
-var macroHandler        = require('../macro-handler.js');
-var rollstatsHandler    = require('../roll-stats.js');
-var tableHandler        = require('../table-handler.js');
-var varHandler          = require('../var-handler.js');
-var weaponsStore        = require('../weapons-store.js');
-var shortRollHandler    = require('../shorthand-dice-rolls.js');
-var Token               = require('../token.js');
+var characterHandler     = require('../character-handler.js');
+var characterHandlerNext = require('../character-handler-v2.js');
+var diceHandler          = require('../dice-handler.js');
+var echoHandler          = require('../echo-handler.js');
+var EmbeddedCodeHandler  = require('../embedded-code-handlers/base/embedded-code-handler.js');
+var helpHandler          = require('../help-handler.js');
+var macroHandler         = require('../macro-handler.js');
+var rollstatsHandler     = require('../roll-stats.js');
+var tableHandler         = require('../table-handler.js');
+var varHandler           = require('../var-handler.js');
+var weaponsStore         = require('../weapons-store.js');
+var shortRollHandler     = require('../shorthand-dice-rolls.js');
+var Token                = require('../token.js');
 
 function HandlerRegistry(stateHolder) {
 	this.stateHolder = stateHolder;
@@ -37,6 +38,7 @@ function HandlerRegistry(stateHolder) {
 		'!!': embeddedCodeHandler.handle.bind(embeddedCodeHandler),
 		'!<': embeddedCodeHandler.debug.bind(embeddedCodeHandler),
 		'!character': characterHandler.handle,
+		'!character2': characterHandlerNext.handle,
 		'!attack': characterHandler.attack,
 		'!weaponstore': weaponsStore.handle,
 		'!token': token.handle.bind(token)
@@ -48,6 +50,7 @@ function HandlerRegistry(stateHolder) {
 	varHandler.init(this.mongoose);
 	tableHandler.init(this.mongoose);
 	characterHandler.init(this.mongoose, this);
+	characterHandlerNext.init(this.mongoose, this);
 	weaponsStore.init(this.mongoose);
 }
 
