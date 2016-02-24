@@ -198,19 +198,32 @@ module.exports = function(command, cb) {
 			type: 'BOOLEAN_OR'
 		});
 	});
-	lex.addRule(/'/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			stringValue: lexeme,
-			type: 'SINGLE_QUOTE'
-		});
+	lex.addRule(/"[^"]*"/, function(lexeme) {
+		tokens.push(
+			{
+				rawValue: lexeme,
+				stringValue: lexeme,
+				type: 'DOUBLE_QUOTE'
+			}
+		);
 	});
-	lex.addRule(/["“]/, function(lexeme) {
-		tokens.push({
-			rawValue: lexeme,
-			stringValue: lexeme,
-			type: 'DOUBLE_QUOTE'
-		});
+	lex.addRule(/'[^']*'/, function(lexeme) {
+		tokens.push(
+			{
+				rawValue: lexeme,
+				stringValue: lexeme,
+				type: 'DOUBLE_QUOTE'
+			}
+		);
+	});
+	lex.addRule(/“[^“]*“/, function(lexeme) {
+		tokens.push(
+			{
+				rawValue: lexeme,
+				stringValue: lexeme,
+				type: 'DOUBLE_QUOTE'
+			}
+		);
 	});
 	lex.addRule(/[0-9]+/, function(lexeme) {
 		tokens.push({
@@ -220,7 +233,7 @@ module.exports = function(command, cb) {
 			value: lexeme
 		});
 	});
-	lex.addRule(/[^ '"\[\]\.\(\)\t\n\{\};]+/gm, function(lexeme) {
+	lex.addRule(/[a-zA-Z][a-zA-Z0-9]*/gm, function(lexeme) {
 		switch (lexeme) {
 			case 'roll':
 				tokens.push({
