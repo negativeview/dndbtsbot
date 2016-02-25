@@ -3,10 +3,11 @@ var HandlerRegistry = require('./handler-registry.js');
 
 var ret = {};
 
-function ExecutionHelper(stateHolder) {
+function ExecutionHelper(stateHolder, executionContext) {
 	this.stateHolder = stateHolder;
+	this.executionContext = executionContext;
 	this.stateHolder.executionHelper = this;
-	this.handlers = new HandlerRegistry(stateHolder);
+	this.handlers = new HandlerRegistry(stateHolder, executionContext);
 }
 
 ExecutionHelper.prototype.handle = function(message, cb) {
@@ -38,8 +39,6 @@ ExecutionHelper.prototype.handle = function(message, cb) {
 		messages[messages.length] = message.replace("\n", '');
 	}
 
-	console.log('messages', messages);
-
 	this.handleParsedMessages(messages, cb);
 };
 
@@ -49,20 +48,31 @@ ExecutionHelper.prototype.handleParsedMessages = function(messages, cb) {
 		(statement, next) => {
 			var pieces = statement.split(" ");
 			var command = pieces[0];
-
-			var commandFound = this.handlers.findCommand(command);
-			if (commandFound) {
-				this.handlers.execute(
-					command,
-					pieces,
-					next
-				);
+			if (this.executionContext.allowedCommand(command)) {
+				console.log('Executing ' + command);
+				this.executionContext.addCommand(command);
+				var commandFound = this.handlers.findCommand(command);
+				if (commandFound) {
+						this.handlers.execute(
+							command,
+							pieces,
+							(error) => {
+								this.executionContext.removeCommand(command);
+								next(error);
+							}
+						);
+				} else {
+					this.handlers.macro(
+						command,
+						pieces,
+						(error) => {
+							this.executionContext.removeCommand(command);
+							next(error);
+						}
+					);
+				}
 			} else {
-				this.handlers.macro(
-					command,
-					pieces,
-					next
-				);
+				return next('You cannot call ' + command + ' from itself.');
 			}
 		},
 		(err) => {

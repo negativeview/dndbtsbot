@@ -1,11 +1,13 @@
-function CharacterAbilityScores(character) {
-	this.character = character;
-	this.strength = 10;
-	this.dexterity = 10;
-	this.constitution = 10;
-	this.intelligence = 10;
-	this.wisdom = 10;
-	this.charisma = 10;
+function CharacterAbilityScores(character, executionContext) {
+	console.log(executionContext.variables);
+
+	this.character    = character;
+	this.strength     = executionContext.variables.character.strength.value;
+	this.dexterity    = executionContext.variables.character.dexterity.value;
+	this.constitution = executionContext.variables.character.constitution.value;
+	this.intelligence = executionContext.variables.character.intelligence.value;
+	this.wisdom       = executionContext.variables.character.wisdom.value;
+	this.charisma     = executionContext.variables.character.charisma.value;
 }
 
 CharacterAbilityScores.prototype.getModifier = function(abilityName) {

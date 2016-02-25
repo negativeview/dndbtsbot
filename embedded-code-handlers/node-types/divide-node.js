@@ -23,8 +23,6 @@ DivideNode.prototype.execute = function(parent, codeState, cb) {
 DivideNode.prototype.leftDone = function(cb, codeState, error, value) {
 	if (error) return cb(error);
 
-	console.log('leftDone', value);
-
 	switch (value.type) {
 		case 'VARIABLE':
 			value.getScalarValue(
@@ -77,8 +75,6 @@ DivideNode.prototype.leftTwo = function (cb, codeState, err, val) {
 DivideNode.prototype.rightDone = function(cb, codeState, leftValue, error, rightNode) {
 	if (error) return cb(error);
 
-	console.log('rightDone', leftValue);
-
 	switch (rightNode.type) {
 		case 'BARE_STRING':
 			if (parseInt(rightNode.stringValue) != NaN) {
@@ -107,8 +103,6 @@ DivideNode.prototype.rightDone = function(cb, codeState, leftValue, error, right
 
 DivideNode.prototype.totalDone = function(cb, codeState, leftValue, error, rightValue) {
 	if (error) return cb(error);
-
-	console.log('leftValue', leftValue);
 
 	if (typeof(leftValue) == 'number' || leftValue.match(/^[\-\+]?[0-9]+$/)) {
 		if (typeof(rightValue) == 'number' || rightValue.match(/^[\-\+]?[0-9]+$/)) {

@@ -86,9 +86,96 @@ ParenthesisNode.prototype.executeSecond = function(cb, codeState, error, value) 
 				this
 			);
 			break;
+		case 'BARE_STRING':
+			this.handleMacro(
+				value,
+				codeState,
+				cb
+			);
+			break;
 		default:
 			throw new Error('Not an if: ' + value.type);
 	}
+};
+
+ParenthesisNode.prototype.handleMacro = function(node, codeState, cb) {
+	if (!this.codeHandler.executionContext.allowedCommand(node)) {
+		return cb('You cannot call ' + node + ' from itself.');
+	}
+
+	var adminModel = this.codeHandler.mongoose.model('AdminMacro');
+	var params = {};
+	params.name = node.stringValue;
+	if (params.name[0] != '!')
+		params.name = '!' + params.name;
+	params.server = this.codeHandler.stateHolder.serverID;
+
+	if (!params.server) {
+		return this.handleUserMacro(node, codeState, cb);
+	}
+
+	adminModel.find(params).exec(
+		(error, result) => {
+			if (error) return cb(error);
+
+			if (result.length) {
+				return this.handleFoundMacro(result[0], codeState, cb);
+			}
+
+			return this.handleUserMacro(node, codeState, cb);
+		}
+	);
+};
+
+ParenthesisNode.prototype.handleFoundMacro = function(macro, codeState, cb) {
+	this.codeHandler.handleTokenList(
+		(error, result) => {
+			if (error) return cb(error);
+
+			helper.convertToString(
+				result,
+				codeState,
+				(error, stringValue) => {
+					if (error) return cb(error);
+
+					var executionHelper = this.codeHandler.stateHolder.executionHelper;
+					executionHelper.handle(
+						macro.macro,
+						(error, resultB) => {
+							if (error) return cb(error);
+
+							return cb(null, '');
+						}
+					);
+				}
+			);
+		},
+		codeState,
+		null,
+		this.sub,
+		this
+	);
+};
+
+ParenthesisNode.prototype.handleUserMacro = function(node, codeState, cb) {
+	var model = this.codeHandler.mongoose.model('Macro');
+	var params = {};
+	params.name = node.stringValue;
+	if (params.name[0] != '!')
+		params.name = '!' + params.name;
+	params.user = this.codeHandler.stateHolder.username;
+
+	model.find(params).exec(
+		(error, result) => {
+			if (error) return cb(error);
+
+			if (result.length) {
+				return this.handleFoundMacro(result[0], codeState, cb);
+			}
+
+			return cb('No such macro found: ' + node.stringValue);
+		}
+	);
 };
 
 ParenthesisNode.prototype.executeForForeach = function(cb, foreachNode, error, node) {

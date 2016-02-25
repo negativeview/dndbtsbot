@@ -13,8 +13,6 @@ ret.get = function(isAdmin, pieces, stateHolder, next) {
 			params.name = '!' + params.name;
 	}
 
-	console.log(params);
-
 	model.find(params).exec(
 		(err, res) => {
 			if (err) {

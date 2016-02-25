@@ -3,8 +3,8 @@ var CodeState = require('../embedded-code-handlers/base/code-state.js');
 var Dice = require('../dice.js');
 var EmbeddedCodeHandler = require('../embedded-code-handlers/base/embedded-code-handler.js');
 
-function Character(storedCharacter) {
-	this.abilityScores = new CharacterAbilityScores(this);
+function Character(storedCharacter, executionContext) {
+	this.abilityScores = new CharacterAbilityScores(this, executionContext);
 
 	this.saves = [
 		{
@@ -172,11 +172,6 @@ function Character(storedCharacter) {
 		this.computed.saves[this.saves[i].key] = {
 			comp: 'output = roll("1d20 + " + ((character.' + this.saves[i].key + ' - 10) / 2))'
 		};
-	}
-
-	var keys = Object.keys(this.abilityScores);
-	for (var i = 0; i < keys.length; i++) {
-		if (storedCharacter[keys[i]]) this.abilityScores[keys[i]] = storedCharacter[keys[i]];
 	}
 
 	console.log(this.computed);

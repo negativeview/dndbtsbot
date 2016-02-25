@@ -12,7 +12,7 @@ function TimeBasedUpdates(bot, mongoose, messageQueue) {
 	this.updateHour = null;
 }
 
-TimeBasedUpdates.prototype.update = function() {
+TimeBasedUpdates.prototype.update = function(executionContext) {
 	var m = moment().utc();
 	var hours = m.hours();
 
@@ -24,26 +24,25 @@ TimeBasedUpdates.prototype.update = function() {
 	async.eachSeries(
 		Object.keys(this.bot.servers),
 		(serverID, cb) => {
-			this.updateSingleServer(serverID, cb);
+			this.updateSingleServer(executionContext, serverID, cb);
 		},
 		() => { return; }
 	);
 };
 
-TimeBasedUpdates.prototype.updateSingleServer = function(serverID, cb) {
-	console.log('Updating server ' + serverID);
+TimeBasedUpdates.prototype.updateSingleServer = function(executionContext, serverID, cb) {
 	var channels = Object.keys(this.bot.servers[serverID].channels);
 
 	async.eachSeries(
 		channels,
 		(channelID, cb) => {
-			this.updateSingleChannel(serverID, channelID, cb);
+			this.updateSingleChannel(executionContext, serverID, channelID, cb);
 		},
 		() => { return cb(); }
 	);
 };
 
-TimeBasedUpdates.prototype.updateSingleChannel = function(serverID, channelID, cb) {
+TimeBasedUpdates.prototype.updateSingleChannel = function(executionContext, serverID, channelID, cb) {
 	var model = this.mongoose.model('Table');
 
 	var params = {
@@ -53,12 +52,12 @@ TimeBasedUpdates.prototype.updateSingleChannel = function(serverID, channelID, c
 
 	model.find(params).exec(
 		(error, table) => {
-			this.updateSingleChannelBasedOnSettings(cb, channelID, serverID, error, table);
+			this.updateSingleChannelBasedOnSettings(cb, executionContext, channelID, serverID, error, table);
 		}
 	);
 };
 
-TimeBasedUpdates.prototype.updateSingleChannelBasedOnSettings = function(cb, channelID, serverID, error, table) {
+TimeBasedUpdates.prototype.updateSingleChannelBasedOnSettings = function(cb, executionContext, channelID, serverID, error, table) {
 	if (error) return cb(error);
 
 	if (table.length == 0) return cb();
@@ -72,12 +71,12 @@ TimeBasedUpdates.prototype.updateSingleChannelBasedOnSettings = function(cb, cha
 
 	model.find(parameters).exec(
 		(error, rows) => {
-			this.updateSingleChannelBasedOnRows(cb, channelID, serverID, error, rows);
+			this.updateSingleChannelBasedOnRows(cb, executionContext, channelID, serverID, error, rows);
 		}
 	);
 };
 
-TimeBasedUpdates.prototype.updateSingleChannelBasedOnRows = function(cb, channelID, serverID, error, rows) {
+TimeBasedUpdates.prototype.updateSingleChannelBasedOnRows = function(cb, executionContext, channelID, serverID, error, rows) {
 	if (error) return cb(error);
 	if (rows.length == 0) return cb();
 
@@ -87,7 +86,7 @@ TimeBasedUpdates.prototype.updateSingleChannelBasedOnRows = function(cb, channel
 	}
 
 	var stateHolder         = new StateHolder(this.messageQueue, null, this.bot, this.mongoose, null, channelID, null);
-	var handlerRegistry     = new HandlerRegistry(stateHolder);
+	var handlerRegistry     = new HandlerRegistry(stateHolder, executionContext);
 	var embeddedCodeHandler = new EmbeddedCodeHandler(stateHolder, handlerRegistry);
 
 	var moment = require('moment');
@@ -114,20 +113,16 @@ TimeBasedUpdates.prototype.updateSingleChannelBasedOnRows = function(cb, channel
 
 	var m = this;
 	if (tableRebuild.title) {
-		console.log(tableRebuild.title);
 		embeddedCodeHandler.executeString(
 			tableRebuild.title,
 			codeState,
 			(error, topLevelNode) => {
-				console.log('res:', topLevelNode);
 				if (error) {
 					throw new Error(error);
 				}
 
 				var actualTopic = m.bot.servers[serverID].channels[channelID].topic;
 				var newTopic = topLevelNode.codeHandler.codeState.variables.title;
-
-				console.log('Setting to ', newTopic);
 
 				if (newTopic && newTopic.stringValue && newTopic.stringValue != actualTopic) {
 					m.bot.editChannelInfo(

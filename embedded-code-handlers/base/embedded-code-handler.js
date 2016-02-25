@@ -61,8 +61,9 @@ var patterns = [
 	]
 ];
 
-function EmbeddedCodeHandler(stateHolder, handlerRegistry) {
+function EmbeddedCodeHandler(stateHolder, executionContext, handlerRegistry) {
 	this.stateHolder = stateHolder;
+	this.executionContext = executionContext;
 	this.mongoose = stateHolder.mongoose;
 	this.varModel = this.mongoose.model('Var');
 	this.characterModel = this.mongoose.model('Character');
@@ -206,8 +207,6 @@ EmbeddedCodeHandler.prototype.executeString = function(command, codeState, exter
 EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeState, error, tokens, parentElement) {
 	if (error) return externalCallback(error);
 
-	console.log('tokenList', tokens);
-
 	if ('programNode' in codeState) {
 		var stn = codeState.programNode;
 	} else {
@@ -229,7 +228,6 @@ EmbeddedCodeHandler.prototype.handleTokenList = function(externalCallback, codeS
 						if (error) return externalCallback(error);
 						process.nextTick(() => {
 							try {
-								console.log('Executing ' + newNode.type);
 								newNode.execute(parentElement ? parentElement : stn, codeState, externalCallback);
 							} catch (e) {
 								console.log('error in handleTokenList', e.stack);

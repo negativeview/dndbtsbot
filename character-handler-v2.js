@@ -40,9 +40,10 @@ function getActiveCharacter(stateHolder, fail, pass) {
 	);
 }
 
-ret.init = function(mongoose, handlers) {
+ret.init = function(mongoose, handlers, executionContext) {
 	ret.characterModel = mongoose.model('Character');
 	ret.handlers = handlers;
+	ret.executionContext = executionContext;
 
 	weapons.init(mongoose, handlers);
 
@@ -97,7 +98,7 @@ ret.handleSaveRoll = function(pieces, stateHolder, next) {
 		stateHolder,
 		next,
 		(activeCharacter) => {
-			var character = new Character(activeCharacter);
+			var character = new Character(activeCharacter, ret.executionContext);
 			character.getSave(
 				save,
 				stateHolder,

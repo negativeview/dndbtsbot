@@ -12,12 +12,12 @@ var weaponsStore         = require('../weapons-store.js');
 var shortRollHandler     = require('../shorthand-dice-rolls.js');
 var Token                = require('../token.js');
 
-function HandlerRegistry(stateHolder) {
+function HandlerRegistry(stateHolder, executionContext) {
 	this.stateHolder = stateHolder;
 	this.mongoose = stateHolder.mongoose;
 	this.bot = stateHolder.bot;
 
-	var embeddedCodeHandler = new EmbeddedCodeHandler(stateHolder, this);
+	var embeddedCodeHandler = new EmbeddedCodeHandler(stateHolder, executionContext, this);
 
 	var token = new Token(this.mongoose);
 
@@ -50,7 +50,7 @@ function HandlerRegistry(stateHolder) {
 	varHandler.init(this.mongoose);
 	tableHandler.init(this.mongoose);
 	characterHandler.init(this.mongoose, this);
-	characterHandlerNext.init(this.mongoose, this);
+	characterHandlerNext.init(this.mongoose, this, executionContext);
 	weaponsStore.init(this.mongoose);
 }
 

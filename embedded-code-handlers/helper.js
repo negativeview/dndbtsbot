@@ -33,6 +33,8 @@ ret.recursiveVariable = function(thing, codeState, cb) {
 ret.convertToString = function(thing, codeState, cb) {
 	if (typeof(thing) == 'string' || typeof(thing) == 'number') {
 		return cb(null, thing);
+	} else if (typeof(thing) == 'undefined') {
+		return cb(null, '');
 	}
 	
 	switch (thing.type) {

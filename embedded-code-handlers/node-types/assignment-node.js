@@ -13,7 +13,6 @@ util.inherits(AssignmentNode, SyntaxTreeNode);
 AssignmentNode.prototype.execute = function(parent, codeState, cb) {
 	this.codeHandler.handleTokenList(
 		(error, result) => {
-			console.log('assignment-node.execute.2');
 			this.leftDone(cb, codeState, error, result);
 		},
 		codeState,

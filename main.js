@@ -1,5 +1,6 @@
 var auth             = require('./authenticate.js');
 var async            = require('async');
+var ExecutionContext = require('./utility-classes/execution-context.js');
 var ExecutionHelper  = require('./utility-classes/execution-helper.js');
 var MessageQueue     = require('./utility-classes/message-queue.js');
 var mongoose         = require('mongoose');
@@ -31,23 +32,28 @@ process.on(
 function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 	if (user == bot.username || user == bot.id) return;
 
-	timeBasedUpdates.update();
-
 	if (message[0] != '!') return;
 
-	var stateHolder = new StateHolder(messageQueue, user, bot, mongoose, userID, channelID, rawEvent);
-	var executionHelper = new ExecutionHelper(stateHolder);
-	executionHelper.handle(
-		message,
-		(err) => {
-			if (err) {
-				console.log('error in main:', err);
-				stateHolder.simpleAddMessage(channelID, err);
-			}
-			stateHolder.doFinalOutput();
-			forcePump();
-			if (err) return;
-			bot.deleteMessage({channel: rawEvent.d.channel_id, messageID: rawEvent.d.id});
+	var executionContext = new ExecutionContext(bot, rawEvent);
+	executionContext.preseedVariables(
+		mongoose,
+		() => {
+			timeBasedUpdates.update(executionContext);
+
+			var stateHolder = new StateHolder(messageQueue, user, bot, mongoose, userID, channelID, rawEvent);
+			var executionHelper = new ExecutionHelper(stateHolder, executionContext);
+			executionHelper.handle(
+				message,
+				(err) => {
+					if (err) {
+						stateHolder.simpleAddMessage(channelID, err);
+					}
+					stateHolder.doFinalOutput();
+					forcePump();
+					if (err) return;
+					bot.deleteMessage({channel: rawEvent.d.channel_id, messageID: rawEvent.d.id});
+				}
+			);
 		}
 	);
 }
