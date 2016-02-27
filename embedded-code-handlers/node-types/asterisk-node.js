@@ -32,7 +32,7 @@ AsteriskNode.prototype.leftDone = function(cb, codeState, error, value) {
 			);
 			return;
 		case 'BARE_STRING':
-			if (parseInt(value.stringValue)) {
+			if (!isNaN(parseInt(value.stringValue))) {
 				this.codeHandler.handleTokenList(
 					(error, value2) => {
 						this.rightDone(cb, codeState, value.stringValue, error, value2);
@@ -42,6 +42,27 @@ AsteriskNode.prototype.leftDone = function(cb, codeState, error, value) {
 					this.right
 				);
 				return;				
+			} else {
+				console.log('Echo a');
+				if (value.stringValue in codeState.variables) {
+					console.log('Echo b');
+					var leftVariable = codeState.variables[value.stringValue];
+					if (typeof(leftVariable) == 'object') {
+						leftVariable = leftVariable.stringValue;
+					}
+
+					console.log('Echo c', leftVariable);
+
+					this.codeHandler.handleTokenList(
+						(error, value2) => {
+							this.rightDone(cb, codeState, leftVariable, error, value2);
+						},
+						codeState,
+						null,
+						this.right
+					);
+					return;
+				}
 			}
 			break;
 		case 'QUOTED_STRING':
@@ -77,12 +98,17 @@ AsteriskNode.prototype.rightDone = function(cb, codeState, leftValue, error, rig
 
 	switch (rightNode.type) {
 		case 'BARE_STRING':
-			if (parseInt(rightNode.stringValue) != NaN) {
+			if (!isNaN(parseInt(rightNode.stringValue))) {
+				console.log('parseInt', parseInt(rightNode.stringValue));
 				this.totalDone(cb, codeState, leftValue, null, rightNode.stringValue);
 				return;				
 			} else {
 				if (rightNode.stringValue in codeState.variables) {
-					this.totalDone(cb, codeState, leftValue, null, codeState.variables[rightNode.stringValue]);
+					var rightVariable = codeState.variables[rightNode.stringValue];
+					if (typeof(rightVariable) == 'object') {
+						rightVariable = rightVariable.stringValue;
+					}
+					this.totalDone(cb, codeState, leftValue, null, rightVariable);
 					return;
 				}
 			}
@@ -102,16 +128,22 @@ AsteriskNode.prototype.rightDone = function(cb, codeState, leftValue, error, rig
 };
 
 AsteriskNode.prototype.totalDone = function(cb, codeState, leftValue, error, rightValue) {
-	if (leftValue.match(/^[\-\+]?[0-9]+$/)) {
-		if (rightValue.match(/^[\-\+]?[0-9]+$/)) {
+	console.log(leftValue);
+	if (typeof(leftValue) == 'number' || leftValue.match(/^[\-\+]?[0-9]+$/)) {
+		console.log(rightValue);
+		if (typeof(rightValue) == 'number' || rightValue.match(/^[\-\+]?[0-9]+$/)) {
 			var retNode = new SyntaxTreeNode(codeState.programNode.codeHandler);
 			retNode.type = 'QUOTED_STRING';
 			retNode.stringValue = parseInt(leftValue) * parseInt(rightValue);
 			return cb(null, retNode);
+		} else {
+			console.log('rightValue', rightValue);
 		}
+	} else {
+		console.log('leftValue', leftValue);
 	}
 
-	throw new Error('Multiplying things that are not numbers? What are you thinking??');
+	throw new Error('Multiplying things that are not numbers? What are you thinking?? (' + leftValue + ', ' + rightValue + ', ' + parseInt(rightValue) + ')');
 }
 
 module.exports = AsteriskNode;
