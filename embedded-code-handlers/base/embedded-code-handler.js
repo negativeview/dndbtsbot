@@ -116,7 +116,14 @@ EmbeddedCodeHandler.prototype.handle = function(pieces, stateHolder, externalCal
 	 * Set up our CodeState object, which handles things like input
 	 * arguments, the current code stack, etc.
 	 */
-	var codeState = new CodeState();
+	var codeState;
+	if (this.stateHolder.codeState) {
+		codeState = this.stateHolder.codeState;
+	} else {
+		codeState = new CodeState();
+		this.stateHolder.codeState = codeState;
+	}
+
 	if (this.stateHolder.incomingVariables)
 		codeState.addVariables(this.stateHolder.incomingVariables);
 
