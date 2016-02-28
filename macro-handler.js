@@ -207,7 +207,7 @@ ret.attempted = function(pieces, stateHolder, next) {
 			if (res.length) {
 				command = res[0].macro;
 				stateHolder.adminDetermined = true;
-				stateHolder.isAdmin = true;
+				stateHolder._isAdmin = true;
 				stateHolder.executionHelper.handle(command, next);
 			} else {
 				var parameters = {
