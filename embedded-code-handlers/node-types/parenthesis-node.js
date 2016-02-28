@@ -119,7 +119,12 @@ ParenthesisNode.prototype.handleMacro = function(node, codeState, cb) {
 			if (error) return cb(error);
 
 			if (result.length) {
-				return this.handleFoundMacro(result[0], codeState, cb);
+				this.codeHandler.stateHolder.isAdmin();
+				var adminCache = this.codeHandler.stateHolder._isAdmin;
+				return this.handleFoundMacro(result[0], codeState, (error, res) => {
+					this.codeHandler.stateHolder._isAdmin = adminCache;
+					return cb(error, res);
+				});
 			}
 
 			return this.handleUserMacro(node, codeState, cb);
