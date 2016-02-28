@@ -120,6 +120,7 @@ DotNode.prototype.rightDone = function(cb, namespace, error, result) {
 
 	switch (result.type) {
 		case 'BARE_STRING':
+			console.log('BARE_STRING', namespace, result.stringValue);
 			var variable = new Variable(namespace, result.stringValue);
 			return cb(null, variable);
 		default:
