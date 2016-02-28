@@ -48,7 +48,7 @@ ExecutionHelper.prototype.handleParsedMessages = function(messages, cb) {
 		(statement, next) => {
 			var pieces = statement.split(" ");
 			var command = pieces[0];
-			if (this.executionContext.allowedCommand(command)) {
+			if (command == '!!' || this.executionContext.allowedCommand(command)) {
 				console.log('Executing ' + command);
 				this.executionContext.addCommand(command);
 				var commandFound = this.handlers.findCommand(command);
