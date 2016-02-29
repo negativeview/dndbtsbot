@@ -36,7 +36,7 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 
 	bdayIndex++;
 
-	var idx = Math.floor(bdayIndex / 1000.0);
+	var idx = Math.floor(bdayIndex / 10.0);
 	idx = idx % happyBdayArray.length;
 	var title = happyBdayArray[idx];
 
