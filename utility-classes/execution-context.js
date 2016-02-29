@@ -89,21 +89,32 @@ ExecutionContext.prototype.preseedVariables = function(mongoose, cb) {
 	);
 };
 
+ExecutionContext.prototype.preseedTypeOfVariables = function(model, params, type, cb) {
+	model.find(params).exec(
+		(error, res) => {
+			for (var i = 0; i < res.length; i++) {
+				this.variables[type][res[i].name] = {
+					src: 'MONGOOSE:' + type,
+					modified: false,
+					variables: res[i]
+				};
+			}
+
+			return cb();
+		}
+	)
+};
+
 ExecutionContext.prototype.preseedUserVariables = function(model, cb) {
 	var params = {
 		user: this.author.id
 	};
-	model.find(params).exec(
-		(error, res) => {
-			for (var i = 0; i < res.length; i++) {
-				this.variables.user[res[i].name] = {
-					src: 'MONGOOSE:USER',
-					modified: false,
-					variable: res[i]
-				};
-			}
-
-			this.preseedChannelVariables(model, cb);
+	this.preseedTypeOfVariables(
+		model,
+		params,
+		'user',
+		() => {
+			this.preseedChannelVariables(model, cb)
 		}
 	);
 }
@@ -112,16 +123,11 @@ ExecutionContext.prototype.preseedChannelVariables = function(model, cb) {
 	var params = {
 		channel: this.channel
 	};
-	model.find(params).exec(
-		(error, res) => {
-			for (var i = 0; i < res.length; i++) {
-				this.variables.channel[res[i].name] = {
-					src: 'MONGOOSE:CHANNEL',
-					modified: false,
-					variable: res[i]
-				};
-			}
-
+	this.preseedTypeOfVariables(
+		model,
+		params,
+		'channel',
+		() => {
 			this.preseedServerVariables(model, cb);
 		}
 	);
@@ -133,16 +139,12 @@ ExecutionContext.prototype.preseedServerVariables = function(model, cb) {
 	var params = {
 		server: this.server
 	};
-	model.find(params).exec(
-		(error, res) => {
-			for (var i = 0; i < res.length; i++) {
-				this.variables.server[res[i].name] = {
-					src: 'MONGOOSE:SERVER',
-					modified: false,
-					variable: res[i]
-				};
-			}
 
+	this.preseedTypeOfVariables(
+		model,
+		params,
+		'server',
+		() => {
 			return cb();
 		}
 	);

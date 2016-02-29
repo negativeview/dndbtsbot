@@ -34,6 +34,16 @@ function globalHandlerWrap(user, userID, channelID, message, rawEvent) {
 
 	if (message[0] != '!') return;
 
+	bdayIndex++;
+
+	var idx = Math.floor(bdayIndex / 1000.0);
+	idx = idx % happyBdayArray.length;
+	var title = happyBdayArray[idx];
+
+	if (title != lastTitle) {
+		bot.setPresence({game: title});
+	}
+
 	var executionContext = new ExecutionContext(bot, rawEvent);
 	executionContext.preseedVariables(
 		mongoose,
@@ -62,6 +72,19 @@ var lastUpdate = '';
 
 var messageQueue;
 var timeBasedUpdates;
+
+var bdayIndex = 0;
+var happyBdayArray = [
+	'Happy birthday',
+	'to yooooou',
+	'happy b-day',
+	'to youuuuuu',
+	'happy birthday',
+	'dear overlord',
+	'happy birthday',
+	'to yoooooou'
+];
+var lastTitle = 'Blues';
 
 function onBotReady() {
 	messageQueue = new MessageQueue();
