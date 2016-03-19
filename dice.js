@@ -47,7 +47,7 @@ function doDiceRolling(tokens, self, cb) {
 					if (totalNumber > 200) break;
 					
 					var result = self.roll(parsed.faces);
-					if (token.roLess && token.roLess == result) {
+					if (token.roLess && token.roLess < result) {
 						console.log('Rerolling ' + result);
 						result = self.roll(parsed.faces);
 						console.log('Got ' + result + ' on a reroll');
@@ -63,6 +63,7 @@ function doDiceRolling(tokens, self, cb) {
 				break;
 		}
 	}
+	console.log('cb');
 	cb(tokens);
 }
 
@@ -306,17 +307,21 @@ Dice.prototype.execute = function execute(command, callback) {
 		applyModifiers(
 			tokens,
 			(tokens) => {
+				console.log('a');
 				doDiceRolling(
 					tokens,
 					self,
 					(tokens) => {
+						console.log('b');
 						var rawResults = tokens;
 						createNumberEquivalents(
 							tokens,
 							(tokens) => {
+								console.log('c');
 								doMath(
 									tokens,
 									(result) => {
+										console.log('d');
 										var data = {
 											command: command,
 											rawResults: rawResults,
@@ -369,6 +374,7 @@ Dice.prototype.execute = function execute(command, callback) {
 											data.output += ' = `' + result + '`';
 											data.totalResult = result;
 										}
+										console.log('e');
 										return cb(null, data);
 									}
 								);
@@ -379,6 +385,7 @@ Dice.prototype.execute = function execute(command, callback) {
 			}
 		);
 	} catch (e) {
+		console.log('caught');
 		return cb(e);
 	}
 }
